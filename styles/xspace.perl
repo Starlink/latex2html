@@ -1,5 +1,5 @@
 #
-# $Id: xspace.perl,v 1.1 1997/01/27 19:40:44 JCL Exp $
+# $Id$
 # xspace.perl
 #   Jens Lippmann <lippmann@cdc.informatik.th-darmstadt.de> 26-JAN-97
 #
@@ -9,7 +9,13 @@
 # ===========
 #  jcl = Jens Lippmann
 #
-# $Log: xspace.perl,v $
+# $Log$
+# Revision 1.1  2004/02/20 13:13:28  nxg
+# Initial import
+#
+# Revision 1.1  1998/08/20 16:03:47  pdraper
+# *** empty log message ***
+#
 # Revision 1.1  1997/01/27 19:40:44  JCL
 # initial revision
 #

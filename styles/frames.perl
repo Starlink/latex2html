@@ -1,4 +1,4 @@
-# $Id: frames.perl,v 1.4 1997/07/11 11:28:56 RRM Exp $
+# $Id$
 # frames.perl - Martin Wilck (martin@tropos.de) 22.5.96
 # 
 # 
@@ -12,7 +12,13 @@
 # mwk = Martin Wilck
 # rrm = Ross Moore <ross@mpce.mq.edu.au>
 #
-# $Log: frames.perl,v $
+# $Log$
+# Revision 1.1  2004/02/20 13:13:28  nxg
+# Initial import
+#
+# Revision 1.1  1998/08/20 16:03:35  pdraper
+# *** empty log message ***
+#
 # Revision 1.4  1997/07/11 11:28:56  RRM
 #  -  replace  (.*) patterns with something allowing \n s included
 #

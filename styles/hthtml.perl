@@ -1,6 +1,6 @@
 #
 # -*-perl-*-
-# $Id: hthtml.perl,v 1.1 1996/12/21 19:54:08 JCL Exp $
+# $Id$
 #
 package main;
 #

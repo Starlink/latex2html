@@ -469,7 +469,9 @@ sub do_env_tabular {
 
 	    if ( $colspan ) {
 		for ( $cellcount = 0; $colspan > 0; $colspan-- ) {
-		    $colspec[$i++] =~ s/<TD/$cellcount++;"<$celltype"/ge;
+#PWD: removed as multicolumns break when this is applied.
+#		    $colspec[$i++] =~ s/<TD/$cellcount++;"<$celltype"/ge;
+                  $cellcount++; $i++;
 		}
 		$i--;
 		$colspec =~ s/>$content_mark/ COLSPAN=$cellcount$&/;
@@ -810,6 +812,24 @@ sub do_env_eqnarraystar {
     else { $_ }
 }
 
+#PWD: Added this. ## Define the multicolumn command
+# Modifies the $colspec and $colspan variables of the tabular subroutine
+sub do_cmd_multicolumn {
+    local($_) = @_;
+    local($dmy1,$dmy2,$dmy3,$dmy4,$spancols,$text);
+    $spancols = &missing_braces unless (
+        (s/$next_pair_pr_rx/$spancols=$2;''/eo)
+        ||(s/$next_pair_rx/$spancols=$2;''/eo));
+    $colspan = 0+$spancols;
+    $colspec =~ /^<([A-Z]+)/;
+    local($celltag) = $1;
+    s/$next_pair_pr_rx//o;
+    ($dmy1,$dmy2,$dmy3,$dmy4,$colspec) = &translate_colspec($2, $celltag);
+    s/$next_pair_pr_rx/$text=$2;''/eo;
+    $text = &translate_commands($text) if ($text =~ /\\/);
+    $text;
+}
+
 
 $raw_arg_cmds{tabular} = 1;
 $raw_arg_cmds{tabularstar} = 1;
@@ -820,11 +840,3 @@ $raw_arg_cmds{supertabularstar} = 1;
 
 
 1;
-
-
-
-
-
-
-
-

@@ -1,4 +1,4 @@
-# $Id: germanb.perl,v 1.6 1997/06/13 13:54:51 RRM Exp $
+# $Id$
 # GERMAN.PERL by Nikos Drakos <nikos@cbl.leeds.ac.uk> 25-11-93
 # Computer Based Learning Unit, University of Leeds.
 #
@@ -12,7 +12,13 @@
 #
 # Change Log:
 # ===========
-# $Log: germanb.perl,v $
+# $Log$
+# Revision 1.1  2004/02/20 13:13:28  nxg
+# Initial import
+#
+# Revision 1.1  1998/08/20 16:03:37  pdraper
+# *** empty log message ***
+#
 # Revision 1.6  1997/06/13 13:54:51  RRM
 #     Allow  &#34;  to be translated back into  \dq{}
 #

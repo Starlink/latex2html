@@ -141,6 +141,7 @@ manual.aux + manual.cb: \
 	    support.tex userman.tex hypextra.tex features.tex \
 	    problems.tex l2hfiles.dat  manhtml.tex l2hman.sty
 	$(LATEX) manual.tex
+	$(LATEX) manual.tex
 
 manual.glo + manual.idx: \
 	    manual.tex credits.tex licence.tex overview.tex \

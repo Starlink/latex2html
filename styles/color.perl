@@ -1,4 +1,4 @@
-# $Id: color.perl,v 1.9 1997/06/06 12:02:44 RRM Exp $
+# $Id$
 # color.perl by Michel Goossens <goossens@cern.ch>  01-14-96
 #
 # Extension to LaTeX2HTML V 96.2 to support color.sty
@@ -13,7 +13,13 @@
 #
 # Change Log:
 # ===========
-# $Log: color.perl,v $
+# $Log$
+# Revision 1.1  2004/02/20 13:13:28  nxg
+# Initial import
+#
+# Revision 1.1  1998/08/20 16:03:32  pdraper
+# *** empty log message ***
+#
 # Revision 1.9  1997/06/06 12:02:44  RRM
 #  -  Changed some VERBOSITY levels
 #  -  added some error-detection to  finding the requested color

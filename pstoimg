@@ -1,12 +1,15 @@
+: # *-*-perl-*-*
+  eval 'exec perl -S  $0 "$@"'
+  if $running_under_some_shell;
 #!/usr/local/bin/perl
 
 # This variable can be set manually or by the installation script
 # to point to the DIRECTORY where the latex2html files can be found.
-$LATEX2HTMLDIR="$ENV{'L2HMODULE'}/user";# Inserted by installation script
+$LATEX2HTMLDIR=$ENV{'L2HMODULE'};
 
 $dd = "/";  # directory delimiter character; change if necessary !
 
-# $Id: pstoimg,v 1.22 1997/07/03 07:27:14 RRM Exp $
+# $Id$
 #
 # pstoimg V97.1
 #
@@ -32,7 +35,16 @@ $dd = "/";  # directory delimiter character; change if necessary !
 # Nikos Drakos (ND), nikos@cbl.leeds.ac.uk
 # Computer Based Learning Unit, University of Leeds.
 #
-# $Log: pstoimg,v $
+# $Log$
+# Revision 1.1  2004/02/20 13:13:28  nxg
+# Initial import
+#
+# Revision 1.2  2003/04/14 14:42:04  pdraper
+# Fixed for newer versions of pnmcrop.
+#
+# Revision 1.1  1998/08/20 15:49:29  pdraper
+# *** empty log message ***
+#
 # Revision 1.22  1997/07/03 07:27:14  RRM
 #      Fixed up the $/ for the  %%Papersize  search;  thanks Axel
 #
@@ -226,6 +238,9 @@ $TOP_JUSTIFY=0; # No right justifying by default
 $SHORE_UP=0; # No pixel alignment by default
 
 $BASE = $FILE = undef;
+
+
+$IMAGE_TYPE = 'gif';
 
 ######################################################################
 
@@ -520,25 +535,28 @@ sub crop_scale_etc {
     local($_,$cmd,$type,$width,$height,$just);
     open(STDERR, ">${dd}dev${dd}null") unless $DEBUG;
 
+    # PWD: newer versions need this...
+    $PNMCROPOPTS = "-sides";
+
     if($RIGHT_JUSTIFY || $TOP_JUSTIFY || $CENTER || $EXTRA_CROP || $SHORE_UP) {
         # Crop the image right away
-	$cmd = "$PNMCROP < $in ";
+	$cmd = "$PNMCROP $PNMCROPOPTS < $in ";
         # RRM: Remove justification bars
 	$EXTRA_CROP =~ s/h/bt/g;
 	$EXTRA_CROP =~ s/v/rl/g; 
 	while ($EXTRA_CROP) { 
-	    $cmd = "$PNMCROP < $in " unless ($cmd);
+	    $cmd = "$PNMCROP $PNMCROPOPTS < $in " unless ($cmd);
 	    $EXTRA_CROP =~ s/^(.)/$edge=$1;''/e;
 	    if ($edge =~ /[tblra]/) {
-		if ($edge =~ /b/) { $cmd .= "| $PNMCROP -bot " }
-		elsif ($edge =~ /a/) { $cmd .= "| $PNMCROP " } 
-		else { $cmd .= "| $PNMCROP -$edge " } 
+		if ($edge =~ /b/) { $cmd .= "| $PNMCROP $PNMCROPOPTS -bot " }
+		elsif ($edge =~ /a/) { $cmd .= "| $PNMCROP $PNMCROPOPTS " } 
+		else { $cmd .= "| $PNMCROP $PNMCROPOPTS -$edge " } 
        	    } elsif ($edge =~ /s/) {
 		print "Running $cmd > $tmp\n" if $DEBUG;
 		rename ($tmp,$in) unless system("$cmd > $tmp");
 
 		#RRM: shave at most 1 row of white from the bottom
-		$cmd = "$PNMCROP -bot < $in ";
+		$cmd = "$PNMCROP $PNMCROPOPTS -bot < $in ";
                 print "Running $cmd > $tmp 2>shave.msg\n" if $DEBUG;
                 local($shave) = system("$cmd > $tmp 2>shave.msg");
 		if (!$shave) {
@@ -566,7 +584,7 @@ sub crop_scale_etc {
 	}
     } else {
         # Start command pipe
-	$cmd = "$PNMCROP < $in ";
+	$cmd = "$PNMCROP $PNMCROPOPTS < $in ";
 	$cmd .= "| $PNMFLIP -$GS_UNROTATE " if($GS_ROTATE);
 	$cmd .= "| $PNMFLIP -$FLIP " if($FLIP);
     }

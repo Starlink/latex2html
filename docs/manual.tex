@@ -65,6 +65,10 @@
 \setcounter{footnote}{0}
 %end{latexonly}
 
+%  get rid of changebar.
+\renewenvironment{changebar}{}{}
+
+
 %
 \begin{htmlonly}
  \def\makeglossary{}
@@ -76,8 +80,8 @@
 % use %sort -f -u manual.idx > manual.index for a primitive index
 %
 %  NOTE:  You must use LaTeX2e in order to process this document
-%	If you do not have LaTeX2e, a PostScript version
-%	(manual.ps) is included with this distribution.
+%       If you do not have LaTeX2e, a PostScript version
+%       (manual.ps) is included with this distribution.
 %
 %%%%%%%%%%%%%%%%%%% No changes beyond this point %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -427,8 +431,8 @@ Nikos Drakos
 %
 % Glossary info stored in:  manual.gls ,  which was created using:
 %
-% 	makeindex -o manual.gls -s l2hglo.ist manual.glo
-% 	
+%       makeindex -o manual.gls -s l2hglo.ist manual.glo
+%       
 \begin{latexonly}
 \InputIfFileExists{manual.gls}{\clearpage\typeout{^^Jcreating Glossary...}}%
 {\typeout{^^JNo Glossary, since  manual.gls  could not be found.^^J}}
@@ -437,7 +441,7 @@ Nikos Drakos
 \begin{htmlonly}
 \section{Glossary of variables and file-names\label{Glossary}}
 \begin{htmllist}\htmlitemmark{OrangeBall}
-\input l2hfiles.dat	%%%%  <<<<<<<<<<  don't forget, in final version !!!
+\input l2hfiles.dat     %%%%  <<<<<<<<<<  don't forget, in final version !!!
 \end{htmllist}
 \end{htmlonly}
 
@@ -453,8 +457,8 @@ Nikos Drakos
 %
 % Index info stored in:  manual.ind ,  which was created using:
 %
-% 	makeindex -s l2hidx.ist manual.idx
-% 	
+%       makeindex -s l2hidx.ist manual.idx
+%       
 \printindex
 
 %

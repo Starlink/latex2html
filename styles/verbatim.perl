@@ -1,5 +1,5 @@
 #
-# $Id: verbatim.perl,v 1.3 1996/12/23 01:33:58 JCL Exp $
+# $Id$
 # verbatim.perl
 #   Jens Lippmann <lippmann@cdc.informatik.th-darmstadt.de> 17-DEC-96
 #
@@ -9,7 +9,13 @@
 # ===========
 #  jcl = Jens Lippmann <http://www-jb.cs.uni-sb.de/~www/people/lippmann>
 #
-# $Log: verbatim.perl,v $
+# $Log$
+# Revision 1.1  2004/02/20 13:13:28  nxg
+# Initial import
+#
+# Revision 1.1  1998/08/20 16:03:46  pdraper
+# *** empty log message ***
+#
 # Revision 1.3  1996/12/23 01:33:58  JCL
 # uses now shell variable TEXINPUTS (this is set up by LaTeX2HTML before)
 # to locate the input file

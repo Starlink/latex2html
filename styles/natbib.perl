@@ -1,4 +1,4 @@
-# $Id: natbib.perl,v 1.7 1997/07/11 11:28:52 RRM Exp $
+# $Id$
 # natbib.perl - LaTeX2HTML support for the LaTeX2e natbib package
 #  (flexible author-year citations)
 # Martin Wilck, 20.5.1996 (martin@tropos.de)
@@ -8,7 +8,13 @@
 # mwk = Martin Wilck
 # rrm = Ross Moore <ross@mpce.mq.edu.au>
 #
-# $Log: natbib.perl,v $
+# $Log$
+# Revision 1.1  2004/02/20 13:13:28  nxg
+# Initial import
+#
+# Revision 1.1  1998/08/20 16:03:44  pdraper
+# *** empty log message ***
+#
 # Revision 1.7  1997/07/11 11:28:52  RRM
 #  -  replace  (.*) patterns with something allowing \n s included
 #

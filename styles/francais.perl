@@ -1,4 +1,4 @@
-# $Id: francais.perl,v 1.2 1996/12/23 01:39:53 JCL Exp $
+# $Id$
 # FRENCH.PERL by Nikos Drakos <nikos@cbl.leeds.ac.uk> 25-11-93
 # Computer Based Learning Unit, University of Leeds.
 #
@@ -9,7 +9,13 @@
 #
 # Change Log:
 # ===========
-# $Log: francais.perl,v $
+# $Log$
+# Revision 1.1  2004/02/20 13:13:28  nxg
+# Initial import
+#
+# Revision 1.1  1998/08/20 16:03:36  pdraper
+# *** empty log message ***
+#
 # Revision 1.2  1996/12/23 01:39:53  JCL
 # o added informative comments and CVS log history
 # o changed usage of <date> to an OS independent construction, the

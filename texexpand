@@ -1,6 +1,9 @@
+: # *-*-perl-*-*
+  eval 'exec perl -S  $0 "$@"'
+  if $running_under_some_shell;
 #!/usr/local/bin/perl
 
-# $Id: texexpand,v 1.11 1997/06/15 18:26:00 JCL Exp $
+# $Id$
 #
 # texexpand for LaTeX2HTML 96.2
 
@@ -111,7 +114,13 @@
 #   mro = Marek Rouchal <marek@saftsack.fs.uni-bayreuth.de>
 #   jcl = Jens Lippmann <lippmann@cdc.informatik.th-darmstadt.de>
 #
-# $Log: texexpand,v $
+# $Log$
+# Revision 1.1  2004/02/20 13:13:28  nxg
+# Initial import
+#
+# Revision 1.1  1998/08/20 15:49:35  pdraper
+# *** empty log message ***
+#
 # Revision 1.11  1997/06/15 18:26:00  JCL
 # Now texexpand will only merge files that exist *and* are readable.
 # (Trying to merge a void link caused it to crash on my site.)

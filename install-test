@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 
-# $Id: install-test,v 1.5 1997/07/07 00:38:59 JCL Exp $
+# $Id$
 # LaTeX2HTML Version 96.2 : install_test
 
 $dd = '/';  # directory delimiter;

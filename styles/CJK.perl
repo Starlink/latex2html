@@ -1,6 +1,6 @@
 
 ########################################################################
-# $Id: CJK.perl,v 1.2 1996/12/17 17:11:41 JCL Exp $
+# $Id$
 # CJK.perl
 #   Jens Lippmann <lippmann@cdc.informatik.th-darmstadt.de>,
 #   Boy Yang <yangboy@math.ntu.edu.tw>,
@@ -14,7 +14,13 @@
 # ===========
 #  jcl = Jens Lippmann <http://www-jb.cs.uni-sb.de/~www/people/lippmann>
 #
-# $Log: CJK.perl,v $
+# $Log$
+# Revision 1.1  2004/02/20 13:13:28  nxg
+# Initial import
+#
+# Revision 1.1  1998/08/20 16:03:28  pdraper
+# *** empty log message ***
+#
 # Revision 1.2  1996/12/17 17:11:41  JCL
 # typo
 #

@@ -6,7 +6,7 @@ $LATEX2HTMLDIR="$ENV{'L2HMODULE'}/user";# Inserted by installation script
 
 $dd = "/";  # directory delimiter character; change if necessary !
 
-# $Id: pstoimg_nopipes,v 1.3 1997/07/03 07:30:08 RRM Exp $
+# $Id$
 #
 # pstoimg V97.1
 #
@@ -33,7 +33,13 @@ $dd = "/";  # directory delimiter character; change if necessary !
 # Nikos Drakos (ND), nikos@cbl.leeds.ac.uk
 # Computer Based Learning Unit, University of Leeds.
 #
-# $Log: pstoimg_nopipes,v $
+# $Log$
+# Revision 1.1  2004/02/20 13:13:28  nxg
+# Initial import
+#
+# Revision 1.1  1998/08/20 15:49:31  pdraper
+# *** empty log message ***
+#
 # Revision 1.3  1997/07/03 07:30:08  RRM
 #  -   Fixed up the  $/  for the  %%Papersize search
 #  -   Allow  $DEBUG  as a predefined variable

@@ -1,11 +1,14 @@
-#!/usr/local/bin/perl 
+: # *-*-perl-*-*
+  eval 'exec perl -S $0 "$@"'
+  if $running_under_some_shell;
+#!/usr/local/bin/perl
 
 'di';
 'ig00';
 
 # This variable can be set manually or by the installation script
 # to point to the DIRECTORY where the latex2html files can be found.
-$LATEX2HTMLDIR="$ENV{'L2HMODULE'}/user";# Inserted by installation script
+$LATEX2HTMLDIR=$ENV{'L2HMODULE'};
 
 # LaTeX2HTML by Nikos Drakos <nikos@cbl.leeds.ac.uk>
 
@@ -186,8 +189,8 @@ while ($ARGV[0] =~ /^-/) {
 	if (/^(\+?)(\d+)$/) {
 	    $MAX_SPLIT_DEPTH = $2;
 	    if ($1) { $MAX_SPLIT_DEPTH *= -1; $REL_DEPTH = 1 }
-	} else { 
-	    print("Unrecognised value for -split: $_\n") && &usage && die 
+	} else {
+	    print("Unrecognised value for -split: $_\n") && &usage && die
         };
     }
     elsif (/^-link$/) {
@@ -673,7 +676,7 @@ sub driver {
 	    "\n  Output may look weird or may be faulty!\n"
 		if %commands_outside_math;
     print "\nDone.\n";
-    $end_time = time; 
+    $end_time = time;
     $total_time = $end_time - $start_time;
     print join(' ',"Timing:",$total_time,"seconds")
 	if ($TIMING||$DEBUG||($VERBOSITY > 2));
@@ -861,7 +864,7 @@ sub process_ext_file {
 	if ($ext eq "aux") {
 	    $preamble_aux .= "\\AtBeginDocument{\\input $file }\n";
 	}
-    } else { 
+    } else {
 	print "\n*** Could not find file: $file ***\n" if ($DEBUG)
     };
     $found;
@@ -985,11 +988,11 @@ sub pre_process {
  	if ($after =~ /\s*\\end{$env[*]?}/) { # Must NOT use the s///o option!!!
 	    ($contents, $after) = ($`, $');
  	    $contents =~ s/^\n+//;
-	
+
 	    # re-insert comments
 	    $contents =~ s/$comment_mark(\d+)/$comments{$1}/g;
 
-	    # revert '\\ ' -> '\\' only once 
+	    # revert '\\ ' -> '\\' only once
 	    if ($env =~ /rawhtml|$keepcomments_rx/i) {
 		$contents = &revert_to_raw_tex($contents);
 	    } else {
@@ -1096,7 +1099,8 @@ sub slurp_input_and_partition_and_pre_process {
 	    # ... so that we can return to it
 	    seek(SINPUT, $pos, 0);
 	    print STDERR "\nDoing $1";
-	    ++$count}
+	    ++$count;
+          }
 	else {
 	    $string{'STRING'} .= $_}
     }
@@ -1141,9 +1145,11 @@ sub write_string_out {
 	&write_mydb_simple("preamble", $preamble);
 	&write_mydb_simple("preamble_aux", $preamble_aux);
 	&close_dbm_database;
+#  PWD: linux requires this.
+        kill (1, $$);
 	exit 0;
     };
-    waitpid($pid,0);
+    waitpid($pid,2);
     &open_dbm_database;
 }
 
@@ -1178,7 +1184,7 @@ sub mark_string {
 	    s/{([^{}]*)}/join("",$O,++$id,$C,$1,$O,$id,$C)/geo;
     }
     local($before,$after) = ('','');
-    while (/\{/) { 
+    while (/\{/) {
 	local($before) = $`;
 	local($after) = $';
 	if ((@UNMATCHED_OPENING) && ($before =~ /\}/)){
@@ -1192,7 +1198,7 @@ sub mark_string {
 	s/\{/join("",$O,++$id,$C)/geo;
 	$before = $`;
 	$after = $';
-        if ($after =~ /\}/) { 
+        if ($after =~ /\}/) {
 	    $after =~ s/\}/join("",$O,$id,$C)/geo;
 	    $_ = join('',$before,$O,$id,$C,$after);
 	} else {
@@ -1211,7 +1217,7 @@ sub mark_string {
         } else {
 	    print "\n *** there was an unmatched closing \} ";
 	    local($beforeline,$prevline,$afterline) = ($`, $`.$& , $');
-	    $* = 1; $prevline =~ /\n([^\n]+)\}$/; 
+	    $* = 1; $prevline =~ /\n([^\n]+)\}$/;
 	    if ($1) {
 		print "at the end of:\n" . $1 . "\}\n\n";
 	    } else {
@@ -1293,7 +1299,7 @@ sub convert_iso_latin_chars {
 		elsif ( "$&" eq "\}" ) { $level-- }
 		else { print $_ }
 		print "$level";
-	    } 
+	    }
 	    $before .= $after;
 	} elsif ($delim eq "<") {
             # brackets numbered, but maybe not processed...
@@ -1367,13 +1373,13 @@ sub normalize_language_changes {
 #  e) \begin{verbatim}
 #  f) \begin{latexonly}
 #  g) %begin{latexonly}
-# 
+#
 # a)-d) cause texexpand to drop its contents, it will not show up in the
 # output file. You can use this to 'comment out' a bunch of files, say.
-# 
+#
 # e)-g) prevent texexpand from expanding input files, but the environment
 # content goes fully into the output file.
-# 
+#
 # Together with each merging of \input etc. there are so-called %%%texexpand
 # markers accompanying the boundary.
 #
@@ -1504,10 +1510,10 @@ sub translate {
 	if ((! $TITLE) || ($TITLE eq $default_title)) {
 	    local($curr_sec_tex) = &revert_to_raw_tex($curr_sec);
 	    print STDERR "\"$curr_sec_tex\" for $CURRENT_FILE\n" if ($VERBOSITY);
-	} else { 
+	} else {
 	    local($tmp) = &purify($TITLE,1);
 	    $tmp = &revert_to_raw_tex($tmp);
-	    print STDERR "\"$tmp\" for $CURRENT_FILE\n" if ($VERBOSITY); 
+	    print STDERR "\"$tmp\" for $CURRENT_FILE\n" if ($VERBOSITY);
 	}
 
 	if ((/\\latextohtmlditchpreceding/)||(/\\startdocument/)) {
@@ -1602,7 +1608,7 @@ sub translate {
 	&save_array_in_file ("index", "sub_index", %sub_index) if %sub_index;
 	&save_array_in_file ("index", "index_labels", %index_labels) if %index_labels;
 	&save_array_in_file ("index", "index_segment", %index_segment) if %index_segment;
-	&save_array_in_file ("index", "printable_key", %printable_key) 
+	&save_array_in_file ("index", "printable_key", %printable_key)
 	    if (%printable_key || %index_segment);
     }
     &save_array_in_file ("internals", "ref_files", %ref_files) if $changed;
@@ -1778,7 +1784,7 @@ sub wrap_math_environment {
 		$thismath .= "\$";
 		$_ = $saved;
 	    }
-	    $processed_text .= &make_any_wrapper(1,$wrapper) . $delim 
+	    $processed_text .= &make_any_wrapper(1,$wrapper) . $delim
 		. $thismath . &make_any_wrapper(0,$wrapper);
 	} else {
 	    print STDERR "\n\n *** Error: unclosed math or extra `\$', before:\n$thismath\n\n";
@@ -1916,7 +1922,7 @@ sub process_environment {
 	return ($contents);
 
 #    elsif (&special_env) {	# &special_env modifies $contents
-    } else { 
+    } else {
 	local($no_special_chars) = 0;
 	local($failed) = 0;
 	local($has_special_chars) = 0;
@@ -1972,7 +1978,7 @@ sub simple_math_env {
     local($mathcontents) = @_;
     if (!($mathcontents)) {
 	return();
-    } elsif ($NO_SIMPLE_MATH) { 
+    } elsif ($NO_SIMPLE_MATH) {
 	$failed = 1;
 	return($mathcontents);
 
@@ -1998,7 +2004,7 @@ sub simple_math_env {
 sub process_math_in_latex {
     local($mode,$style,$level,$math) = @_;
     if ($level) { $style = (($level > 1) ? "script" : "") . "script" }
-    elsif (! $style) { 
+    elsif (! $style) {
 	$style = (($mode =~/display|equation/)? "display" : "") }
     $style = "\\${style}style" if ($style);
 
@@ -2013,7 +2019,7 @@ sub process_math_in_latex {
     # the delimiter \001 inhibits an unwanted \n at image-replacement
     $math . "\001";
 }
-     
+
 
 
 sub defined_env {
@@ -2157,7 +2163,7 @@ sub process_undefined_environment {
         $raw_contents =~ s/\\pagebreak|\\newpage|\\clearpage/\\\\/go;
 	print STDERR "\nLATEX {$env}:\n$raw_contents\n" if ($VERBOSITY > 3);
 	local($box_type) = '';
-	if ($raw_contents =~ /\\special\s*\{/) { 
+	if ($raw_contents =~ /\\special\s*\{/) {
 	    $tex_specials{$name} = "1";
             &write_warnings("\nenvironment $name contains \\special commands");
             print STDERR "\n *** environment $name contains \\special commands ***\n"
@@ -2179,7 +2185,7 @@ sub process_undefined_environment {
 	    }
 	    $box_type = "v";
 	}
-	
+
 	#RRM: include the TeX-code for the appropriate type of box.
         eval "\$raw_contents = \&make_$box_type"."box($name, \$raw_contents);";
 
@@ -2211,7 +2217,7 @@ sub process_undefined_environment {
 }
 
 sub special_encoding { # locally sets $EXTRA_IMAGE_SCALE
-    local($env,$_,$contents) = @_; 
+    local($env,$_,$contents) = @_;
     local($exscale) = /extrascale=([\.\d]*)/;
     local($EXTRA_IMAGE_SCALE) = $exscale if ($exscale);
     &encode(&addto_encoding($env,$contents));
@@ -2464,7 +2470,7 @@ sub extract_image {
 	&syswait("cp $psname.ps ${PREFIX}$img")
     } else {
 	$img =  "$basename.$IMAGE_TYPE";
-	($scale, $external, $thumbnail, $map, $psimage, $align, $usemap, 
+	($scale, $external, $thumbnail, $map, $psimage, $align, $usemap,
 	 $flip, $aalias, $trans, $exscale, $alt, $exstr) = split('#', $img_params{$name});
 	$lwidth = ($align =~ s/nojustify/middle/) ? 0 : $LINE_WIDTH;
 	$alt = "ALT=\"$name\"" unless $alt;
@@ -2480,8 +2486,8 @@ sub extract_image {
            # RRM: deal with size data
  	    if ($width{$name} < 0) {
 		if (($EXTRA_IMAGE_SCALE)&&($PK_GENERATION)) {
-	    	    $height = int(				
-			$EXTRA_IMAGE_SCALE*$height{$name}+	
+	    	    $height = int(
+			$EXTRA_IMAGE_SCALE*$height{$name}+
 			$EXTRA_IMAGE_SCALE*$depth{$name} +.5);
 		    $width = int($EXTRA_IMAGE_SCALE*$width{$name}-.5);
 		} else {
@@ -2566,11 +2572,11 @@ sub extract_image {
                  . (($DEBUG)? "-debug " : '' )
                  . (($DISCARD_PS)? "-discard " : '' )
                  . (($INTERLACE)? "-interlace " : '' )
-                 . ((($ANTI_ALIAS_TEXT||($aalias))&&(!($aalias =~/no/)))? 
+                 . ((($ANTI_ALIAS_TEXT||($aalias))&&(!($aalias =~/no/)))?
 		    "-antialias -depth 1 " :'')
 		 . (($custom_size)? "-geometry $custom_size " : '' )
                  . (($scale != 1)? "-scale $scale " : '' )
-                 . (($EXTRA_IMAGE_SCALE != 1)? 
+                 . (($EXTRA_IMAGE_SCALE != 1)?
 		    "-shoreup $EXTRA_IMAGE_SCALE$under " :'')
                  . ((($TRANSPARENT_FIGURES ||($trans))
 		     &&(!($trans =~ /no/)))? "-transparent " : '')
@@ -2597,7 +2603,7 @@ sub extract_image {
                  . (($INTERLACE) ? "-interlace " : '' )
                  . ((($ANTI_ALIAS_TEXT||($aalias))&&(!($aalias =~ /no/)))?
 		    "-antialias -depth 1 " :'')
-                 . ((($EXTRA_IMAGE_SCALE)&&($EXTRA_IMAGE_SCALE!= 1))? 
+                 . ((($EXTRA_IMAGE_SCALE)&&($EXTRA_IMAGE_SCALE!= 1))?
 		        "-shoreup $EXTRA_IMAGE_SCALE " :'')
                  . (($scale ne 1) ? "-scale $scale " : '' )
 		 . (($custom_size) ? "-geometry $custom_size " : '' )
@@ -2666,7 +2672,7 @@ sub flatten_math {
     local ($_) = @_;
     $_ = &revert_to_raw_tex($_);
     s/[ \t]+/ /g;
-    $* = 1;			# Multiline matching ON  
+    $* = 1;			# Multiline matching ON
     s/$tex2html_wrap_rx//g;
     s/(\\begin\{[^\}]*\})(\s*(\[[^]]*\]))?[ \t]*(\n)?/$1$3\n/g;
     s/\n?(\\end\{[^\}]*\})\n?/$1/g;
@@ -2674,7 +2680,7 @@ sub flatten_math {
     s/>(\w)?/($1)?"\\gt $1":"\\gt"/eg;		# replace > by \gt
     s/\\\|(\w)?/($1)?"\\Vert $1":"\\Vert"/eg; 	# replace \| by \Vert
     s/\|(\w)?/($1)?"\\vert $1":"\\vert"/eg; 	# replace | by \vert
-    s/\\\\/\\\\ /g; 	# insert space after \\ 
+    s/\\\\/\\\\ /g; 	# insert space after \\
     s/\\"/\\uml /g;	# screen umlaut accents...
     s/"/\'\'/g;		# replace " by ''
     s/\\\#/\\char93 /g;	# replace \# by \char93 else caching fails
@@ -2837,8 +2843,8 @@ sub process_command {
 		}
 	    } elsif ($ignore{$cmd}) { # Ignored command
 		$after = join('', " ", $after) if ($cmd eq " "); # catches `\ '
-	    } elsif ($new_command{$cmd}) { 
-                # e.g. some \the$counter 
+	    } elsif ($new_command{$cmd}) {
+                # e.g. some \the$counter
 		local($argn, $body, $opt) = split(/:!:/, $new_command{$cmd});
 		do { local($_) = $body;
 		     $body = &make_unique } if ($body =~ /$O/);
@@ -2859,26 +2865,26 @@ sub process_command {
 		    if (defined $failed) {
                         $failed = 1;
 		        $ref_before .= "$cmd";
-		    } else { 
+		    } else {
 			$tmp = "wrap_cmd_$cmd";
 			++$unknown_commands{$cmd} unless ($AUX_FILE||(defined &$tmp));
 		        if ($VERBOSITY > 2) {
-			    print STDERR "\n*** Unknown command[1]: \\$cmd *** \n" 
+			    print STDERR "\n*** Unknown command[1]: \\$cmd *** \n"
                                 unless ($AUX_FILE||(defined &$tmp));
 		        }
 	            }
 #		    $ref_before .= "$cmd" if ($failed);
 		}
-	    } elsif ($cmd eq "\n") { $ref_before .= " "; 
+	    } elsif ($cmd eq "\n") { $ref_before .= " ";
 	    } else {
 		# Do not add if reading an auxiliary file
-		if (defined $failed) { 
+		if (defined $failed) {
                     $failed = 1;
-		} else { 
+		} else {
 	            local($tmp)="wrap_cmd_$cmd";
                     ++$unknown_commands{$cmd} unless ($AUX_FILE||(defined &$tmp));
 		    if ($VERBOSITY > 2) {
-                        print STDERR "\n*** Unknown command: \\$cmd [2]*** \n" 
+                        print STDERR "\n*** Unknown command: \\$cmd [2]*** \n"
                             unless ($AUX_FILE||(defined &$tmp));
                     }
 	        }
@@ -2905,7 +2911,7 @@ sub make_math_box_images {
     local($slevel,$blevel) = 0;
 
     while (/<BOX>/) {
-	$pre .= $`; $tmp = $`; $this = ''; $post = $';	
+	$pre .= $`; $tmp = $`; $this = ''; $post = $';
         # compute the super/sub-scripting level for each entity
         $tmp =~ s/<(\/?)SU[BP]>/
             if ($1) { $slevel--} else { $slevel++};''/eog;
@@ -2923,7 +2929,7 @@ sub make_math_box_images {
 	($this,$_) = &process_box_in_latex(
 		    $math_mode, $slevel, $this, $post);
 	$_ =~ s/^\s*//; # remove any leading spaces
-	$pre .= $this ."\001"; 
+	$pre .= $this ."\001";
     }
     return  if ($failed);
     $_ = $pre . $_;
@@ -2937,11 +2943,11 @@ sub make_math_entity_images {
     while (/\&\w+#(\w+);/) {
 	$pre .= $`; $tmp = $`; $this = $1; $post = $';
         $tmp =~ s/<(\/?)SU[BP]>/
-            if ($1) { $slevel--} else { $slevel++};''/eog; 
+            if ($1) { $slevel--} else { $slevel++};''/eog;
 	($this,$_) = &process_entity_in_latex(
 		    $math_mode, $slevel, $this, $post);
 	$_ =~ s/^\s*//; # remove any leading spaces
-	$pre .= $this ."\001"; 
+	$pre .= $this ."\001";
     }
     $_ = $pre . $_;
 }
@@ -2982,7 +2988,7 @@ sub process_entity_in_latex {
 sub process_box_in_latex {
     local($mode,$level,$inside,$after) = @_;
     local($math_style,$which,$pre,$post,$tmp) = ('','',"\{","\}");
-    
+
     if ($level) {
 	$math_style = "\\". (($level > 1) ? "script" : "")."scriptstyle"
     } else {
@@ -2991,7 +2997,7 @@ sub process_box_in_latex {
 
     if ($inside =~ /<((LEFT)|(RIGHT))>/ ) {
 	$pre = "\\left"; $post = "\\right";
-	if ($2) { 
+	if ($2) {
 	    $tmp = $`; $inside = $';
 	    $pre .= (($tmp) ? $tmp : ".") . "\{";
 	    if ( $inside =~ /<RIGHT>/ ) {
@@ -3012,7 +3018,7 @@ sub process_box_in_latex {
 	elsif ($4) { $which = "atopwithdelims\(\)" }
     }
 
-    local($latex_code) = join('', "\$" , $math_style , $pre 
+    local($latex_code) = join('', "\$" , $math_style , $pre
 	  , (($which)? "\\$which" : "") , $post , "\$" );
 
     if ($after =~ s/<SUP ALIGN=\"CENTER\">([^<]*)<\/SUP>/
@@ -3020,7 +3026,7 @@ sub process_box_in_latex {
 	$latex_code = join('', "\\stackrel" , $latex_code
 			   , "\{" , $tmp , "\}" );
     }
-    
+
     $global{'max_id'}++;
     ( &process_undefined_environment('tex2html_wrap_inline'
 	     ,$global{'max_id'}, $latex_code ) , $after);
@@ -3043,7 +3049,7 @@ sub substitute_meta_cmds {
     &tokenize($meta_cmd_rx);	#JCL(jcl-del) - put delimiter after meta command
     print "\nProcessing macros ..." if (%new_command || %new_environment);
     # First complete any replacement left-over from the previous part.
-    if ($UNFINISHED_ENV) { 
+    if ($UNFINISHED_ENV) {
 	s/$UNFINISHED_ENV/$REPLACE_END_ENV/;
 	$UNFINISHED_ENV = '';
 	$REPLACE_END_ENV = '';
@@ -3193,9 +3199,9 @@ sub substitute_newcmd {
 	$cnt = $tmp =~ s/\#$i//g ;
 	if ($cnt > 1 ) {
 	    $tmp = $_;
-	    while ($cnt > 1) { 
-		if ( s/\#$i/$arg/) { 
-		    &make_unique if ($arg =~ /$O/ ); 
+	    while ($cnt > 1) {
+		if ( s/\#$i/$arg/) {
+		    &make_unique if ($arg =~ /$O/ );
 		    &make_unique_p if ($arg =~ /$OP/ );
 		}
 		$cnt--;
@@ -3295,7 +3301,7 @@ sub substitute_newcmd {
     $aftdel = ' '
 	if /(^|[^\\])\\[a-zA-Z]+$/ && $after=~/^[a-zA-Z]/;
     $_ = join('', $before, $befdel, $_, $aftdel, $after);
-}
+ }
 
 #RRM:  use this to test whether a specific command is substituting correctly
 sub trace_cmd {
@@ -3359,8 +3365,8 @@ sub substitute_newenv {
         if ($cnt > 1) {
             $tmp = $_;
             while ($cnt > 1) {
-		if ( s/\#$i/$arg/) { 
-		    &make_unique if ($arg =~ /$O/ ); 
+		if ( s/\#$i/$arg/) {
+		    &make_unique if ($arg =~ /$O/ );
 		    &make_unique_p if ($arg =~ /$OP/ );
 		}
                 $cnt--;
@@ -3501,7 +3507,7 @@ sub get_body_newtheorem {
 	    $cmd = "the$ctr";
 	    $tmp = "do_cmd_$cmd";
 	    do {
-                $new_command{$cmd} = join(':!:',0,$body,'}') 
+                $new_command{$cmd} = join(':!:',0,$body,'}')
 	    } unless (defined &$tmp);
 	    &write_mydb("new_command", $cmd, $new_command{$cmd});
 	    eval "sub do_cmd_$cmd {\n"
@@ -3562,13 +3568,13 @@ sub do_env_theorem_type {
 	$title = $label;
     }
     if ($name) {
-	$name =~ s/^\s*|\s*$//g; 
+	$name =~ s/^\s*|\s*$//g;
 	$name = join('', " <B>(", $name, ") </B>");
     }
     $_ = join('',"<P>\n", $title, "$name", "</P>\n<P>", $_,"</P>\n<P>");
 
-    if (($border||($attribs))&&($HTML_VERSION > 2.1 )) { 
-	&make_table( $border, $attribs, '', '', '', $_ ) 
+    if (($border||($attribs))&&($HTML_VERSION > 2.1 )) {
+	&make_table( $border, $attribs, '', '', '', $_ )
     } else { $_ }
 }
 
@@ -3630,7 +3636,7 @@ sub get_next_optional_argument {
     local($next, $pat);
     s/$optional_arg_rx/$next=$1;$pat=$&;''/eo
 	if (/\s*[[]/ && (! $`)); # if the first character is a [
-    # if  nested inside {}s  we need to get more tokens  
+    # if  nested inside {}s  we need to get more tokens
     if ($pat) {
 	# check for \item, indicating something has gone wrong
 	if ($pat =~ /\\item/ ) {
@@ -3707,11 +3713,11 @@ sub get_next_def_arg {
 
 #### Key-value parsing added by RRM
 #
-#   This cleans-up the key-value pairs for a given tag, 
+#   This cleans-up the key-value pairs for a given tag,
 #   by removing unnecessary spaces and commas, inserting quotes
 #   around the value and puts a preceding space.
 #   The key becomes upper-case, while the value becomes lower-case.
-#   If specific `tags' are provided, then checking is done to verify 
+#   If specific `tags' are provided, then checking is done to verify
 #   that the keys and values are valid for these tags, eliminating
 #   any that are not; unmatched keys or values are handled as well.
 #   If no tags are provided, then just a list of pairs is returned.
@@ -3731,11 +3737,11 @@ sub parse_keyvalues {
 	    $taglist .= $$name;
 	    $taglist =~ s/,,/,/;
 	    s/(^|,)\s*([a-zA-Z]+)\s*\=\s*"?(\w+)"?\s*/$attributes{$2}="$3";''/eg;
-	    foreach $key (keys %attributes){ 
+	    foreach $key (keys %attributes){
 		$KEY = $key;
 		$KEY =~ tr/a-z/A-Z/;
-		if ($taglist =~ /,$KEY,/i) {	        
-		    local($keyname) = $tag."__".$KEY; 
+		if ($taglist =~ /,$KEY,/i) {
+		    local($keyname) = $tag."__".$KEY;
 		    local($keyvalues) = '';
 		    if ($$keyname) {
 			$keyvalues = $$keyname;
@@ -3752,7 +3758,7 @@ sub parse_keyvalues {
 			    $atts = $attributes{$key};
 			    if ($atts =~ /$keyvalues/) {
 				$atts =~ tr/A-Z/a-z/;
-				$attribs .= " $KEY=\"$atts\"";				
+				$attribs .= " $KEY=\"$atts\"";
 				print "$KEY=$atts " if ($VERBOSITY > 4);
 			    } else { &invalid_tag($tag,$KEY,$atts) }
 			} else {
@@ -3772,7 +3778,7 @@ sub parse_keyvalues {
 	# with no tags provided, just list the key-value pairs
 	$_ = $saved;
 	s/\s*(\w+)\s*=\s*\"?(\w+)\"?\s*,?/$attributes{$1}=$2;''/eg;
-	foreach $key (keys %attributes){ 
+	foreach $key (keys %attributes){
 	    $KEY = $key;
 	    $KEY =~ tr/a-z/A-Z/;
 	    $atts = $attributes{$key};
@@ -3789,7 +3795,7 @@ sub invalid_tag {
 }
 
 # RRM
-#   This creates key-value pairs from values only, 
+#   This creates key-value pairs from values only,
 #   by checking whether the data matches any key to the provided tags.
 #   Only the first match found is retained.
 #   Attributes with no values are also recognised here.
@@ -3803,7 +3809,7 @@ sub parse_valuesonly {
 	local($name)= $tag."_attribs";
 	$taglist = $$name;
 	$values = $saved;
-        $values =~ s/\s*\"?([^,\s\"]+)\"?\s*,?/$i++;$attributes{$i}=$1};''/eg;
+        $values =~ s/\s*\"?([^,\s\"]+)\"?\s*,?/$i++;$attributes{$i}=$1;''/eg;
         local($j) = 0;
 	while ($j < $i) {
 	    $j++;
@@ -3832,7 +3838,7 @@ sub parse_valuesonly {
 # RRM
 #   Extracts key-value pairs using a supplied (comma-separated) list.
 #   When no list is given, it checks for a pre-defined list for the tag.
-#   
+#
 sub extract_attributes {
     local($tag,$taglist,$_) = @_;
     local($key,$attribs,$unused,%attributes);
@@ -3841,7 +3847,7 @@ sub extract_attributes {
 	if ($$name) { $taglist = $$name }
     }
     s/\s*(\w+)\s*=\s*\"?(\w+)\"?\s*,?/$attributes{$1}=$2;''/eg;
-    foreach $key (keys %attributes){ 
+    foreach $key (keys %attributes){
 	if ($taglist =~ /\,$key\,/) {
 	    $attribs .= " $key=\"$attributes{$key}\"";
 	    &write_warnings("valid attribute $key for $tag\n");
@@ -3870,7 +3876,7 @@ sub find_attribute {
     foreach $key (@keys) {
 	$name = $tag."__".$key;
 	$attrib_vals = $$name;
-	if ($attrib_vals =~ /\,$attrib\,/i ) { 
+	if ($attrib_vals =~ /\,$attrib\,/i ) {
 	    return ($key);
 	}
     }
@@ -3884,7 +3890,7 @@ sub find_attribute {
 	next if ($attribs =~ / $key=/);
 	$name = $tag."__".$key."_rx";
 	$attrib_vals = $$name;
-	if ( $attrib =~ /^$attrib_vals$/ ) { 
+	if ( $attrib =~ /^$attrib_vals$/ ) {
 	    return ($key);
 	}
     }
@@ -3995,7 +4001,7 @@ sub make_latex{
     $preamble = "\\documentclass\{article\}%\\usepackage{html}%\n\\makeatletter"
 	unless ($preamble);
     $preamble_aux = '' unless (($preamble_aux)&&($contents =~ /\\(hyper)?(ref|cite)/));
-    
+
     local($paperwidth) = '';
     if ($PAPERSIZE) { $paperwidth = &adjust_textwidth($PAPERSIZE); }
     else { $paperwidth = &adjust_textwidth("a5"); }
@@ -4011,7 +4017,7 @@ sub make_latex{
     "\\let\\real\@float=\\\@float \\let\\realend\@float=\\end\@float\n" .
     "\\def\\\@float{\\let\\\@savefreelist\\\@freelist\\real\@float}\n" .
 #    "\\def\\\@float{\\\@dbflt}\n" .
-    "\\def\\end\@float{\\realend\@float\\global\\let\\\@freelist\\\@savefreelist}\n" . 
+    "\\def\\end\@float{\\realend\@float\\global\\let\\\@freelist\\\@savefreelist}\n" .
     "\\let\\real\@dbflt=\\\@dbflt \\let\\end\@dblfloat=\\end\@float\n" .
     "\\let\\\@largefloatcheck=\\relax\n" .
     "\\def\\\@dbflt{\\let\\\@savefreelist\\\@freelist\\real\@dbflt}\n" .
@@ -4044,7 +4050,7 @@ sub make_latex{
     "  \\kern.5pt\\kern$kern pt\\hbox{\\hglue.5pt\\copy\\sizebox\\hglue$kern pt}\\kern.5pt%\n" .
     "  \\ifdim\\dp\\sizebox>0pt\\kern$kern pt\\fi}%\n" .
     "  \\ifdim\\hsize>\\wd\\sizebox \\hrule depth1pt\\fi}}}\n" .
-    "\\def\\centerinlinemath{\\dimen1=\\ht\\sizebox\n" . 
+    "\\def\\centerinlinemath{\\dimen1=\\ht\\sizebox\n" .
     "  \\ifdim\\dimen1<\\dp\\sizebox \\ht\\sizebox=\\dp\\sizebox\n" .
     "  \\else \\dp\\sizebox=\\ht\\sizebox \\fi}\n\n" .
     "\\def\\lthtmlcheckvsize{\\ifdim\\ht\\sizebox<\\vsize\\expandafter\\vfill\n" .
@@ -4142,7 +4148,7 @@ sub make_head_and_body {
     $isolanguage = 'EN' unless $isolanguage;
 #JCL(jcl-tcl)
 # clean title as necessary
-# the first words ... is a kludge, but reasonable (or not?) 
+# the first words ... is a kludge, but reasonable (or not?)
 #RRM: why bother? --- as long as it is pure text.
     $title = &purify($title,1);
 #    $title = &get_first_words($title, $WORDS_IN_NAVIGATION_PANEL_TITLES);
@@ -4156,8 +4162,8 @@ sub make_head_and_body {
         , "\n  Jens Lippman, Marek Rouchal, Martin Wilck and others"
 	, " -->\n<HTML>\n<HEAD>\n<TITLE>", $title, "</TITLE>\n"
 	, &meta_information($title)
-	,  ($CHARSET && $HTML_VERSION ge "2.1" ? 
-	      "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=$CHARSET\">\n" 
+	,  ($CHARSET && $HTML_VERSION ge "2.1" ?
+	      "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=$CHARSET\">\n"
 	      : "" )
 	, ($BASE ? "<BASE HREF=\"$BASE\">\n" : "" )
 #	, "<LINK REL=\"STYLESHEET\" TYPE=\"text/css\" HREF=\"$FILE.css\">", $more_links_mark
@@ -4333,7 +4339,7 @@ sub post_process {
 
 	    local($child_star);
 	    if (/$childlinks_mark\#(\d)\#/) { $child_star = $1 }
-	    $child_links = &add_child_links('',$depth, $child_star,$key, @keys);    
+	    $child_links = &add_child_links('',$depth, $child_star,$key, @keys);
 	    if (($child_links)&&(!/$childlinks_mark/)&&($MAX_SPLIT_DEPTH > 1)) {
 		if ($depth < $MAX_SPLIT_DEPTH -1) {
 	            $_ = join('', $header, $_, &child_line(), $childlinks_mark, "\#0\#" );
@@ -4360,7 +4366,7 @@ sub post_process {
 }
 
 sub post_replace_markers {
-    $* = 1;			# Multiline matching ON  
+    $* = 1;			# Multiline matching ON
     # clean up starts and ends of  P, BR and DIV tags
     s/(<\/?(P|BR|DIV)>)\s*(\w)/$1\n$3/go unless ($file eq $citefile);
     s/([^\s])(<(BR|DIV))/$1\n$2/go unless ($file eq $citefile);
@@ -4368,7 +4374,7 @@ sub post_replace_markers {
 
     # anchor images when otherwise there is an invisible-anchor
     s/(<A[^>]*>)\&\#160;<\/A>\s?(<(P|DIV)[^>]*>)\s*(<IMG[^>]*>)\s*(<\/(P|DIV)>)/
-	do{ $keep="$2$1$4<\/A>"; 
+	do{ $keep="$2$1$4<\/A>";
 	    $after = &after_punct_break($5);
 	    $keep.$after;
 	    } /ego;
@@ -4604,7 +4610,7 @@ sub add_child_links {
 	    $title = "\n".$title if !($title =~/^\n/);
 	    next if (($exclude)&&(				# doing Table-of-Contents
 		(($TOC_DEPTH)&&($next_depth > $TOC_DEPTH))	# and  too deep
-		||(($star)&&(!$TOC_STARS)) ));			# or no starred sections 
+		||(($star)&&(!$TOC_STARS)) ));			# or no starred sections
 	    $file = "" if (!$MAX_SPLIT_DEPTH); # Martin Wilck
 	    next if ($exclude eq $title);
 	    $file = join('', $file, "#SECTION", split(' ', $next));
@@ -4620,7 +4626,7 @@ sub add_child_links {
 		} else {
 		    $_ .= "<UL>\n";
 		}
-		$open{$ldepth}++; 
+		$open{$ldepth}++;
 	    # append item to this list
 		$_ .= "<LI>". &make_href($file,$title) . "\n";
 	    }
@@ -4650,7 +4656,7 @@ sub add_child_links {
 	# close-off any remaining <UL> lists
 	    local $cnt = (split('/',%open))[0];
 	    local $i = $cnt;
-		while ($i > $depth) { 
+		while ($i > $depth) {
 		    if ($open{$i}) {
 			$_ .= "</UL>";
 			delete $open{$i};
@@ -4696,7 +4702,9 @@ sub make_href {
     #$link =~ s/&#126;/$percent_mark . "7E"/geo;
     if ($text eq $link) { $text =~ s/~/&#126;/g; }
     $link =~ s/~/&#126;/g;
-    "<A NAME=\"tex2html$name\"\n HREF=\"$link\">$text</A>";
+
+    #PWD: remove "\n" from between NAME and HREF. This breaks hlink.
+    "<A NAME=\"tex2html$name\" HREF=\"$link\">$text</A>";
 }
 
 sub make_named_href {
@@ -4737,7 +4745,7 @@ sub make_section_heading {
 	# there are embedded anchors; these cannot be nested
 	local ($tmp) = $text;
 	$tmp =~ s/<//o ;	# find 1st <
-	if ($`) {		# anchor text before the first < 
+	if ($`) {		# anchor text before the first <
 #	    $text = "<A NAME=\"SECTION$section_tag\">\n" . $` . "</A>\n<" . $';
 	    $text = "<A NAME=\"SECTION$section_tag\">\n" . $` . "</A>";
 	    $pre_anchors = "<" . $';
@@ -4747,7 +4755,7 @@ sub make_section_heading {
 	} else {
 	    # $text starts with a tag
 	    local($after,$tmp) = ($','');
-	    if ( $after =~ /^A[^\w]/i ) {	
+	    if ( $after =~ /^A[^\w]/i ) {
 		# it is an anchor already, so need a separate line
 		$text = "<A NAME=\"SECTION$section_tag\">$anchor_invisible_mark</A><BR>\n$text";
 	    } else {
@@ -5003,7 +5011,7 @@ sub make_file {
     local($filename, $title) = @_;
     $_ = join('',&make_head_and_body($title,""),$_,&make_address);
 #JCL(jcl-tcl)
-    &replace_markers unless ($filename eq $footfile); 
+    &replace_markers unless ($filename eq $footfile);
 #    &text_cleanup;
 #
     open(FILE,">$filename") || print "Cannot open $filename $!\n";
@@ -5064,7 +5072,7 @@ sub replace_cross_ref_marks {
 	    '"' . "$ref_label#$label" . "\">" . $ref_mark . "<\/A>"
 	}/geo;
 
-    # This is for pagerefs which cannot have symbolic labels ??? 
+    # This is for pagerefs which cannot have symbolic labels ???
 #    s/$cross_ref_mark#(\w+)#\w+>/
     s/$cross_ref_mark#([^#]+)#[^>]+>/
 	do {$label = $1;
@@ -5075,7 +5083,7 @@ sub replace_cross_ref_marks {
 	}/geo;
 }
 
-#RRM: this simply absorbs the name from the invisible anchor following, 
+#RRM: this simply absorbs the name from the invisible anchor following,
 #     when the anchor itself is not already named.
 sub extend_ref {
     if ($ref_label !=~ /NAME=/) { $label .= "\"\n".$name  }
@@ -5095,7 +5103,7 @@ sub replace_external_ref_marks {
     local($label, $link);
 #    s/$external_ref_mark#(\w+)#(\w+)>$external_ref_mark/
     s/$external_ref_mark#([^#]+)#([^>]+)>$external_ref_mark/
-	do {($label,$id) = ($1,$2); 
+	do {($label,$id) = ($1,$2);
 	    $link = $external_labels{$label};
 	    print "\nLINK: $label : $link" if ($VERBOSITY > 3);
 	    '"'. "$link#$label" . "\">\n"
@@ -5246,12 +5254,12 @@ sub simplify {
     $_;
 }
 sub extract_anchors {
-    local($_) = @_; 
+    local($_) = @_;
     local($anchors) = '';
     while (s/<A[^>]*>($anchor_mark|$anchor_invisible_mark)<\/A>//o) {
 	$anchors .= $&;
     }
-    ($anchors,$_); 
+    ($anchors,$_);
 }
 
 # This routine must be called once on the text only,
@@ -5391,7 +5399,7 @@ sub set_depth_levels {
 	      do {$outermost_level = 'section'; 3;});
 
     #RRM:  but calculate value for $MAX_SPLIT_DEPTH when a $REL_DEPTH was given
-    if ($REL_DEPTH && $MAX_SPLIT_DEPTH) { 
+    if ($REL_DEPTH && $MAX_SPLIT_DEPTH) {
 	$MAX_SPLIT_DEPTH = $level + $MAX_SPLIT_DEPTH;
     } elsif (!($MAX_SPLIT_DEPTH)) { $MAX_SPLIT_DEPTH = 1 };
 
@@ -5637,7 +5645,7 @@ sub make_name {
     # Remove 0's from the end of $packed_curr_sec_id
 	$packed_curr_sec_id =~ s/(_0)*$//;
 	$packed_curr_sec_id =~ s/^0$//o; # Top level file
-	join("",($packed_curr_sec_id ? 
+	join("",($packed_curr_sec_id ?
 	    "${PREFIX}node". ++$OUT_NODE : $sec_name), $EXTN);
     }
 }
@@ -5732,7 +5740,7 @@ sub revert_to_raw_tex {
     &revert_verb_marks;
     $* = 1;
     s/$tex2html_wrap_rx//go; # remove artificial environments
-    s/\n{3,}/\n\n/g; # remove multiple (3+) new-lines 
+    s/\n{3,}/\n\n/g; # remove multiple (3+) new-lines
     s/^\n+$//g; # ...especially if that is all there is!
     $* = 0;
     s/^\s*$//g if ($PREAMBLE); #remove blank lines in the preamble
@@ -5931,7 +5939,7 @@ sub embed_image {
 	    $size = &scaled_image_size($exscale, $size) if
 		($name =~ /inline|indisplay|entity|equation|math|eqn|makeimage/);
 	}
-	$image_size{$url} = $size 
+	$image_size{$url} = $size
 	    unless ((! $size) || ($size eq "WIDTH=\"0\" HEIGHT=\"0\""));
 	$url = &find_unique($url);
     }
@@ -5944,7 +5952,7 @@ sub embed_image {
 	local($pxs,$len) = &convert_length($2);
 	$usersize = " WIDTH=\"$pxs\"";
     }
-    if ($exstr =~ s/height\s*=\s*(\"?)([^\s,]+)\1($|\s|,)//io) { 
+    if ($exstr =~ s/height\s*=\s*(\"?)([^\s,]+)\1($|\s|,)//io) {
 	local($pxs,$len) = &convert_length($2);
 	$usersize .= " HEIGHT=\"$pxs\"";
     }
@@ -5953,17 +5961,17 @@ sub embed_image {
     } elsif (($name =~ /equation|eqnarray\d/)&&(!$align)) {
 	if ($HTML_VERSION >= 3.2) {
 	    $aalign =  ($EQN_TAGS eq "L") ? "right" : "left" ;
-	    $aalign .= "\" ALIGN=\"middle"; } 
+	    $aalign .= "\" ALIGN=\"middle"; }
 	elsif ($EQN_TAGS eq "L") { $aalign = "left" }
 	elsif ($EQN_TAGS eq "R") { $aalign = "right" }
     } elsif ($name =~ /inline|indisplay|entity|xy|diagram/ && $depth{$name} != 0) {
-	$aalign = "MIDDLE\" BORDER=\"0" 
+	$aalign = "MIDDLE\" BORDER=\"0"
     } else {  $aalign = "BOTTOM\" BORDER=\"0" }
 
     $aalign = "\U$align" if $align;
     $ausemp = "\UUSEMAP=$usemap" if $usemap;
 
-    #append any extra valid options 
+    #append any extra valid options
     $ismap .= parse_keyvalues ($exstr, ("IMG")) if ($exstr);
 
     if ($thumbnail) {
@@ -5999,9 +6007,9 @@ sub embed_image {
 	local($imagesize) = $image_size{$url};
 	$imagesize = $usersize if ($usersize);
 	### MEH Add width and height to IMG
-	### Patched by <hswan@perc.Arco.com>:  Fixed \htmladdimg 
+	### Patched by <hswan@perc.Arco.com>:  Fixed \htmladdimg
 	if ( $imagesize || $name eq "external" || $NO_IMAGES || $PS_IMAGES) {
-	    $result = join('', "<IMG ", $imagesize 
+	    $result = join('', "<IMG ", $imagesize
 			   , (($aalign)? " ALIGN=\"$aalign\"" : ''), $ismap );
 	    if ($ausemp) { $result .= " $ausemp" }
 	    $result .= "\n SRC=\"$url\"";
@@ -6286,7 +6294,7 @@ sub ignore_commands {
 	$cmd =~ s/ //;
 	++$ignore{$cmd};
 	local ($body, $code, $thisone) = ("", "");
-	
+
 	# alter the pattern here to debug particular commands
 #	$thisone = 1 if ($cmd =~ /span/);
 
@@ -6346,7 +6354,7 @@ sub ignore_numeric_argument {
 
 sub process_in_latex_helper {
     local($ctr,$val,$cmd) = @_;
-    ($ASCII_MODE ? "[$cmd]" : 
+    ($ASCII_MODE ? "[$cmd]" :
 	&process_in_latex("\\setcounter{$ctr}{$val}\\$cmd"))
 }
 
@@ -6453,7 +6461,7 @@ sub generate_sectioning_subs {
 	eval "sub do_cmd_$key" . "star {"
 	    . 'local($after) = @_;'
 		. '&do_cmd_section_helper(' . $val . ');}';
-	# Now define the macro  \the$key  
+	# Now define the macro  \the$key
 	&process_commands_wrap_deferred("the$key \# {}\n");
 	local($_) = "<<1>>$key<<1>>";
 	&make_unique; $body = $_;
@@ -6474,7 +6482,7 @@ sub addto_dependents {
     local($ctr, $dep) = @_;
     local($tmp);
     $tmp = $dependent{$ctr};
-    if ($tmp) { 
+    if ($tmp) {
 	$dependent{$ctr} = join($delim, $tmp, $dep);
     } else {
 	$dependent{$ctr} = $dep;
@@ -6511,8 +6519,8 @@ sub do_cmd_section_helper {
     $titletext = "$section_number " . $titletext if $section_number;
     $titletext = &simplify($titletext);
 #    $TITLE = &purify($titletext);
-    local($after) = $_; 
-    $_ = $titletext; &remove_anchors; 
+    local($after) = $_;
+    $_ = $titletext; &remove_anchors;
     if ($_) { $TITLE = $_ } else { $TITLE = '.' };
     #RRM: no preceding \n when this is the first section-head on the page.
     if (! $key || $key < $MAX_SPLIT_DEPTH) { $pre = '' };
@@ -6675,10 +6683,10 @@ sub do_env_enumerate {
 	# Search for [aAiI1] which is not between a pair of { }
 	# Other cases like "\theenumi" are not handled
 	@label_fields = $standard_label =~ /$enum_label_rx/;
-	$label_func = $enum_label_funcs{@label_fields[$#label_fields-1]} . 
+	$label_func = $enum_label_funcs{@label_fields[$#label_fields-1]} .
 		"(\'enum" . $rlevel . "\')";
 	$enum{'theenum' . $rlevel} = "\&$label_func";
-	$standard_label = 
+	$standard_label =
 		"\"@label_fields[0]\" . eval(\$enum{\"theenum$rlevel\"}) .
 		\"@label_fields[$#label_fields]\"";
 	$enum{'labelenum' . $rlevel} = "$standard_label";
@@ -6701,7 +6709,7 @@ sub do_env_enumerate {
 	    if ($item =~ /^\s*\[([^]]*)\]/) {
 		$enum{"enum" . $rlevel}--;
 		$enum_label = $1;
-	    } else { 
+	    } else {
 		$item = "[$enum_label\]$item";
 		$enum_label =~ s/\.$//;
 	    }
@@ -6741,11 +6749,11 @@ sub do_env_description {
     $compact = "" unless $compact;
     $* = 1;			# Multiline matching ON
     if ($compact) {		# itemize/enumerate with optional labels
-	s/$item_description_rx\s*($labels_rx8)?\s*/"<DT>". 
+	s/$item_description_rx\s*($labels_rx8)?\s*/"<DT>".
 	    (($9)? "<A NAME=\"$9\">$1<\/A>" : $1 ) ."\n<DD>"/eg;
     } else {
-	s/$item_description_rx\s*($labels_rx8)?\s*/"<DT>". 
-	    (($9)? "<A NAME=\"$9\"><STRONG>$1<\/STRONG><\/A>" 
+	s/$item_description_rx\s*($labels_rx8)?\s*/"<DT>".
+	    (($9)? "<A NAME=\"$9\"><STRONG>$1<\/STRONG><\/A>"
 	     : "<STRONG>$1<\/STRONG>") ."\n<DD>"/eg;
     }
     # and just in case the description is empty ...
@@ -6774,7 +6782,7 @@ sub list_helper {
     "<$tag>$_</$tag>";
 }
 
-# RRM:  A figure environment generates a picture UNLESS it contains a 
+# RRM:  A figure environment generates a picture UNLESS it contains a
 # {makeimage} sub-environment; in which case it creates a <DIV>
 # inside which the contents are interpreted as much as is possible.
 # When there are captions, this modifies $before .
@@ -6818,7 +6826,7 @@ sub do_env_figure {
 	    $table .= ">";
 	    s/^\s*|\s*$//g;
 	    join ('',"<BR>\n<DIV ALIGN=\"$halign\">$anchors$cap_anchors\n$table\n<CAPTION>"
-		, $captions , "</CAPTION>\n<TR><TD>" 
+		, $captions , "</CAPTION>\n<TR><TD>"
 		, $_ , "</TD></TR>\n</TABLE>\n</DIV><BR>" )
         } elsif ($halign) {
 	    if ($border||($attributes)) {
@@ -6829,7 +6837,7 @@ sub do_env_figure {
 		join ('', "<BR>\n<DIV ALIGN=\"CENTER\">"
 		      , &make_table( $border, $attribs, $anchors, '', $halign, $_ )
 		      , "\n</DIV><BR>");
-	    } else {  
+	    } else {
 		join ('', "<BR>\n<DIV ALIGN=\"CENTER\">$anchors\n" , $_ , "\n</DIV><BR>" );
 	    }
 	}
@@ -6837,7 +6845,7 @@ sub do_env_figure {
 	$*=1; s/^\n//; s/\n$//; $*=0;
 	if ($captions) {
 	    $halign = 'CENTER' unless $halign;
-	    join('', "<BR>\n", (($anchors) ? "$anchors" : ''), "$cap_anchors\n$captions\n<BR>" 
+	    join('', "<BR>\n", (($anchors) ? "$anchors" : ''), "$cap_anchors\n$captions\n<BR>"
 		, "\n<P ALIGN=\"$halign\">", $_, "\n</P><BR>");
         } elsif ($halign) {
             join ('', "<BR>\n$anchors", $_ , "\n<BR>" )
@@ -6857,7 +6865,7 @@ sub do_env_table {
     local ( $border, $attribs );
     &get_next_optional_argument;
 
-    # Try to establish the alignment 
+    # Try to establish the alignment
     if (/^(\[[^\]]*])?\s*\\begin<<\d*>>(\w*)<<\d*>>|\\(\w*)line/) {
 	$halign = $2.$3;
 	if ($halign =~ /right/i)  { $halign = 'RIGHT' }
@@ -6892,7 +6900,7 @@ sub do_env_table {
 	    if ($border) { $table .= " BORDER=\"$border\"" } # no checking !!
 	    $table .= ">";
             join ('', "<BR>\n<DIV ALIGN=\"$halign\">$anchors$cap_anchors\n$table\n<CAPTION>"
-                , $captions , "</CAPTION>\n<TR><TD>" 
+                , $captions , "</CAPTION>\n<TR><TD>"
 		, $_ , "</TD></TR>\n</TABLE>\n</DIV><BR>" )
         } elsif ($halign) {
 	    if ($halign) {
@@ -6923,7 +6931,7 @@ sub do_env_tablestar {
     &do_env_table(@_);
 }
 
-# RRM:  A makeimage environment generates a picture of its entire contents, 
+# RRM:  A makeimage environment generates a picture of its entire contents,
 #  UNLESS it is empty.
 #
 sub do_env_makeimage {
@@ -6933,7 +6941,7 @@ sub do_env_makeimage {
     if (s/$htmlborder_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
     if (!($_)) { return() }
     $_ = &process_undefined_environment($env, $id, $_);
-    if (($border||($attributes))&&($HTML_VERSION > 2.1 )) { 
+    if (($border||($attributes))&&($HTML_VERSION > 2.1 )) {
 	$_ = &make_table( $border, $attribs, '', '', '', $_ ) }
     $_ . "\n<BR>\n";
 }
@@ -6961,9 +6969,9 @@ sub do_env_minipage {
     if (s/$htmlborder_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
     $_ = &translate_commands($_);
     $MINIPAGE--;
-    if (($border||($attributes))&&($MINIPAGE)&&($HTML_VERSION > 2.1 )) { 
+    if (($border||($attributes))&&($MINIPAGE)&&($HTML_VERSION > 2.1 )) {
 	&make_table( $border, $attribs, '', '', '', $_ );
-    } elsif ($MINIPAGE) { 
+    } elsif ($MINIPAGE) {
 	join ('', '<BR><HR>', $_ , '<BR><HR><BR>' );
     } elsif (($border||($attributes))&&($HTML_VERSION > 2.1 )) {
 	&make_table( $border, $attribs, '', $mpfootnotes, '', $_ );
@@ -7048,7 +7056,7 @@ sub do_env_comment {
 }
 
 sub do_env_equation{
-    local($_)=@_;  
+    local($_)=@_;
     local($attribs, $border);
     if (s/$htmlborder_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
     if (/\\nonumber/) {
@@ -7058,7 +7066,7 @@ sub do_env_equation{
 	local($save) = $_;
 	$_ = join('', $save, &post_latex_do_env_equation($eqno_prefix));
     }
-    if (($border||($attribs))&&($HTML_VERSION > 2.1 )) { 
+    if (($border||($attribs))&&($HTML_VERSION > 2.1 )) {
 	join('',"<BR>\n<DIV ALIGN=\"CENTER\">\n"
             , &make_table( $border, $attribs, '', '', '', $_ )
 	    , "\n<BR CLEAR=\"ALL\">");
@@ -7072,7 +7080,7 @@ sub do_env_eqnarray{
     local($contents) = $_;
     $_ = &process_undefined_environment($env,$id,$_);
     $_ .= &post_latex_do_env_eqnarray($eqno_prefix,$contents);
-    if (($border||($attribs))&&($HTML_VERSION > 2.1 )) { 
+    if (($border||($attribs))&&($HTML_VERSION > 2.1 )) {
 	join('',"<BR>\n<DIV ALIGN=\"CENTER\">\n"
             , &make_table( $border, $attribs, '', '', '', $_ )
 	    , "\n<BR CLEAR=\"ALL\">");
@@ -7085,7 +7093,7 @@ sub do_env_tabbing {
     local($attribs, $border);
     if (s/$htmlborder_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
     $_ = &tabbing_helper($_);
-    if (($border||($attribs))&&($HTML_VERSION > 2.1 )) { 
+    if (($border||($attribs))&&($HTML_VERSION > 2.1 )) {
 	join('',"<BR>\n<DIV ALIGN=\"CENTER\">\n"
             , &make_table( $border, $attribs, '', '', '', $_ )
 	    , "\n<BR CLEAR=\"ALL\">");
@@ -7517,7 +7525,7 @@ sub do_cmd_makeatother {
 # *before* we process environments, or figures containing
 # parboxes, etc., will be mishandled.
 #
-# RRM: (added for V97.1) 
+# RRM: (added for V97.1)
 #  \parbox now uses the  _wrap_deferred  mechanism, and has a  do_cmd_parbox
 #  subroutine defined. This means that environments where parboxes are
 #  common (.g. within table cells), can detect the \parbox command and
@@ -7549,7 +7557,7 @@ sub process_commands_in_tex {
 	foreach $arg (@args) {
 	    print "\nARG: $arg" if ($thisone);
 	    if ($arg =~ /\{\}/) {
-		$body .= '$args .= "$`$&" if s/$next_pair_rx//o;'."\n"; 
+		$body .= '$args .= "$`$&" if s/$next_pair_rx//o;'."\n";
 		print "\nAFTER:$'" if (($thisone)&&($'));
 		$body .= $' if ($');
 	    } elsif ($arg =~ /\[\]/) {
@@ -7626,15 +7634,15 @@ sub process_commands_nowrap_in_tex {
 		    print "\nAFTER:$'" if (($thisone)&&($'));
 #		    $bodyA .= $' if ($');
 		    $bodyB .= $' if ($');
-		} else { 
+		} else {
 		    print "\nAFTER:$arg" if (($thisone)&&($arg));
 #		    $bodyA .= $arg if ($arg);
 		    $bodyB .= $arg if ($arg);
 		}
-	    } else { 
+	    } else {
 		print "\nAFTER:$arg" if (($thisone)&&($arg));
 #		$bodyA .= $arg if ($');
-		$bodyB .= $arg if ($'); 
+		$bodyB .= $arg if ($');
 	    }
 	}
 	# Generate 2 new subroutines
@@ -7699,7 +7707,7 @@ sub process_commands_wrap_deferred {
 		$bodyA .= "\n". 'if (/'.$endcmd.'/) { $args .= $`.$& ; $_ = $\' };';
 		$after .= $afterthis if ($afterthis);
 		print "\nAFTER:$'" if (($thisone)&&($'));
-	    } else { 
+	    } else {
 		print "\nAFTER:$arg" if (($thisone)&&($arg));
                 $bodyB .= $arg ; $after = ''
             }
@@ -7709,7 +7717,7 @@ sub process_commands_wrap_deferred {
 	# Generate 2 new subroutines
 	$codeA = "sub wrap_cmd_$cmd {" . "\n"
 	    .'local($cmd, $_) = @_; local ($args, $dummy, $pat) = "";'
-	    . $bodyA . "\n" 
+	    . $bodyA . "\n"
             . (($thisone)? ";print \"\\nwrap $cmd:\".\$args.\"\\n\";\n" : '')
 	    .'(&make_deferred_wrapper(1).$cmd.$args.&make_deferred_wrapper(0),$_)}'
 	    ."\n";
@@ -7722,7 +7730,7 @@ sub process_commands_wrap_deferred {
 	#   requiring replacement to be performed before evaluation.
 	$codeB = "sub do_dcmd_$cmd {" . "\n"
 	    .'local($cmd, $_) = @_; local ($args, $dummy, $pat) = "";'."\n"
-	    . $bodyA . "\n" 
+	    . $bodyA . "\n"
             . (($thisone)? ";print \"\\ndo_def $cmd:\".\$args.\"\\n\";\n" : '')
             . $bodyB . "}" . "\n";
 	print "\nDEF_CMD: $codeB " if ($thisone); # for debugging
@@ -7908,7 +7916,7 @@ sub do_cmd_footnote {
 	 $file = $footfile;
         } unless (($MINIPAGE)||($NO_FOOTNODE));
 
-    if ($mark) { 
+    if ($mark) {
 	$cnt = $mark;
 	if ($MINIPAGE) { $global{'mpfootnote'} = $cnt }
 	else { $global{'footnote'} = $cnt }
@@ -7968,7 +7976,7 @@ sub do_cmd_footnotemark {
 	    if ($tmp) {$br_id  = $tmp }
 	    else { $footnotes{$cnt} = $br_id }
 	}
-    } else { 
+    } else {
 	$cnt = $global{'footnote'}++ ;
     }
 
@@ -7977,8 +7985,8 @@ sub do_cmd_footnotemark {
     # Try to find a  \footnotetext  further on.
     do {
 	if (s/\\footnotetext\s*\[\s*$cnt\s*]*\]\s*$any_next_pair_pr_rx//o) {
-            ($br_id, $footnote) = ($2, $3);  
-	} else { 
+            ($br_id, $footnote) = ($2, $3);
+	} else {
 	    $br_id = "fnm$mark";
 	    $footnotes{$cnt} = $br_id;
 	}
@@ -8007,7 +8015,7 @@ sub do_cmd_footnotemark {
 	    # this may not work if there is a <BASE> tag and !($footfile) !!! #
 	    $_ = join('',&make_href("$footfile#$br_id",$marker),$_);
 	}
-    } else { 
+    } else {
         print "\nCannot find \\footnotetext for \\footnotemark $cnt";
         # this may not work if there is a <BASE> tag and !($footfile) !!! #
 	$_ = join('',&make_href("$footfile",$marker),$_)
@@ -8026,7 +8034,7 @@ sub do_cmd_footnotetext {
     local($_) = @_;
     local($mark,$dum) = &get_next_optional_argument;
     local($br_id, $footnote,$prev);
-    $footnote = &missing_braces 
+    $footnote = &missing_braces
 	unless ((s/$next_pair_pr_rx/($br_id,$footnote)=($1,$2);''/eo)
 		||(s/$next_pair_rx/($br_id,$footnote)=($1,$2);''/eo));
     if ($mark) { $prev = $footnotes{$mark} }
@@ -8055,7 +8063,7 @@ sub process_footnote {
     if ($mark) {
 	if ($mini) { $cnt = $mpfootnotes{$mark}}
 	else { $cnt = $footnotes{$mark} }
-	if ($cnt) { 
+	if ($cnt) {
 	    &write_warnings("\nredefined target for footnote $mark" )
                  unless ( $cnt eq $br_id ) }
 	if ($mini) { $mpfootnotes{$mark} = "$br_id" }
@@ -8138,6 +8146,11 @@ sub do_cmd_label {
     $label = &missing_braces
         unless ((s/$next_pair_pr_rx\n?/$label = $2;''/eo)
 		||(s/$next_pair_rx\n?/$label = $2;''/eo));
+
+    #  PWD: clean up label by removing newlines, spaces and tabs.
+    $label =~ s/\n//g;
+    $label =~ s/ //g;
+    $label =~ s/\t//g;
     &anchor_label($label,$CURRENT_FILE,$_);
 }
 
@@ -8353,8 +8366,8 @@ sub do_cmd_d_backslash {
     s/^ \*?//;
     local($spc,$dum)=&get_next_optional_argument;
     # If the [...] occurs on the next line, then it is *not* an argument to \\ .
-    $* = 1; if ($dum =~ /\n/) { 
-	$spc = $`; $spc =~ s/\s//g;  $_ = $'.$_ 
+    $* = 1; if ($dum =~ /\n/) {
+	$spc = $`; $spc =~ s/\s//g;  $_ = $'.$_
     }; $*=0;
     join('',(($spc)? &get_vspace($spc): "<BR>"),$_);
 }
@@ -8531,10 +8544,10 @@ sub get_counter_value {
     local($val,$index);
     $ctr = 'eqn_number' if ($ctr eq "equation");
     $index = $section_commands{$ctr};
-    if ($index) { 
+    if ($index) {
 	if ($SEGMENT) { $val = $segment_sec_id[$index] }
 	else { $val = $curr_sec_id[$index] }
-    } elsif (defined $global{$ctr}) { 
+    } elsif (defined $global{$ctr}) {
 	$val= $global{$ctr};
     } else {
 	&write_warnings ("counter $ctr not defined\n");
@@ -8567,7 +8580,7 @@ sub do_cmd_addtocounter {
 	      ||(s/$next_pair_pr_rx/$num = $2;''/eo));
     $latex_body .= &revert_to_raw_tex("\\addtocounter{$ctr}{$num}\n");
     $index = $section_commands{$ctr};
-    if ($index) { 
+    if ($index) {
 	if ($SEGMENT) { $segment_sec_id[$index] += $num }
 	else { $curr_sec_id[$index] += $num }
     } elsif ($ctr eq "equation") {
@@ -8924,9 +8937,9 @@ sub mbox_accent {
     local($cmd,$style,$bstyle,$estyle) = ('','');
     local(@styles) = split(',',$ACCENT_IMAGES);
     foreach $style (@styles) {
-	$style =~ s/(^\s*\\|\s*)//g; 
+	$style =~ s/(^\s*\\|\s*)//g;
 	$cmd = "do_cmd_$style";
-	if (defined &$cmd) { 
+	if (defined &$cmd) {
 	    $bstyle .= "\\$style\{" ;
 	    $estyle .= "\}";
 	} else {
@@ -9252,9 +9265,9 @@ sub do_cmd_htmltracing {
     $value = &missing_braces
         unless ((s/$next_pair_rx/$value = $2;''/eo)
 	    ||(s/$next_pair_pr_rx/$value = $2;''/eo));
-    if ($value =~ /^\s*(\d+)\s*$/) { 
+    if ($value =~ /^\s*(\d+)\s*$/) {
 	$VERBOSITY = $1;
-	if ($VERBOSITY) { 
+	if ($VERBOSITY) {
 	    print "\n\n *** setting trace-level to $VERBOSITY ***\n";
 	} else {
 	    print "\n\n *** cancelling all tracing ***\n\n";
@@ -9270,7 +9283,7 @@ sub do_cmd_htmltracing {
 
 sub initialise {
     ############################ Global variables ###############################
-    $PREAMBLE = 2;		# 1 while translating preamble, 0 while translating body 
+    $PREAMBLE = 2;		# 1 while translating preamble, 0 while translating body
     $NESTING_LEVEL = undef;	#counter for TeX group nesting level
     $OUT_NODE = 0;		# Used in making filenames of HTML nodes unique
     $eqno_prefix = '';		# default prefix on equation numbers
@@ -9354,7 +9367,7 @@ sub initialise {
     print ($HTML_OPTIONS ? "with $HTML_OPTIONS extensions\n\n\n" : "\n\n\n");
 
     if ($HTML_VERSION =~ /(2.0|3.0|3.2)/) {
-        # Require the version specific file 
+        # Require the version specific file
 	$_ = $HTML_VERSION;
 #    s/\./_/g; # not needed under Unix
 	$_ = "$LATEX2HTMLVERSIONS${dd}html$_.pl";
@@ -9364,7 +9377,7 @@ sub initialise {
 	    . "//DTD HTML $HTML_VERSION";
 
 	if ($HTML_OPTIONS) {
-            # Require the option specific files 
+            # Require the option specific files
 	    @HTML_VERSION = split(/,/, $HTML_OPTIONS);
 	    foreach ( @HTML_VERSION ) {
 		require "$LATEX2HTMLVERSIONS$dd$_.pl"
@@ -9372,7 +9385,7 @@ sub initialise {
 		print "Loading $LATEX2HTMLVERSIONS$dd$_.pl\n";
 	    }
 	}
-    } 
+    }
     else {
 	print "\n You specified an invalid version: $HTML_VERSION\n"
 	    . "In future please request extensions by name:\n"
@@ -9495,7 +9508,7 @@ sub initialise {
 
     %text_accent = ( 'hat' , '^', 'check' , 'v' , 'tilde' , '~'
                     , 'acute' , '\'' , 'grave' , '`' , 'dot' , '.'
-                    , 'ddot' , '"' , 'breve' , 'u' , 'bar' , '=' 
+                    , 'ddot' , '"' , 'breve' , 'u' , 'bar' , '='
                   );
 
     # %languages_translations holds for each known language the
@@ -9512,12 +9525,12 @@ sub initialise {
 	 'french',      'french_translation'
 	 );
 
-# Reiner: 
-#    $standard_label_rx = 
+# Reiner:
+#    $standard_label_rx =
 #	"\\s*[[]\\s*(((\$any_next_pair_rx4)|([[][^]]*[]])|[^]])*)[]]";
 #    $enum_label_rx = "^((({[^{}]*})|([^{}]))*)([aAiI1])(.*)";
 #    $enum_level = 0;	# level for enumerate (1-4, i-iv)
-    %enum = ( 
+    %enum = (
 		'enumi',	0,			# counter for level 1
 		'enumii',	0,			# counter for level 2
 		'enumiii',	0,
@@ -9527,8 +9540,8 @@ sub initialise {
 		'theenumiii',	"&roman('enumiii')",
 		'theenumiv',	"&Alph('enumiv')",
 			# e.g. eval("$enum{'labelenumi'}")
-		'labelenumi',	'eval($enum{"theenumi"}) . "."', 
-		'labelenumii',	'"(" . eval($enum{"theenumii"}) . ")"',	
+		'labelenumi',	'eval($enum{"theenumi"}) . "."',
+		'labelenumii',	'"(" . eval($enum{"theenumii"}) . ")"',
 		'labelenumiii',	'eval($enum{"theenumiii"}) . "."',
 		'labelenumiv',	'eval($enum{"theenumiv"}) . "."'
 		);
@@ -9542,7 +9555,7 @@ sub initialise {
     %RomanM = ( '1',"M",'2',"MM",'3',"MMM",'4',"MH"
 		    ,'5',"H",'6',"HM",'7',"HMM",'8',"HMMM");
 
-    %enum_label_funcs = ( 
+    %enum_label_funcs = (
 	"a", "alph", "A", "Alph", "i", "roman", "I", "Roman", "1", "arabic" );
 
 sub farabic{
@@ -9612,7 +9625,7 @@ sub convert_length {
     };
     ($pxs,$len);
 }
- 
+
 
 
 
@@ -9651,6 +9664,7 @@ center
 citation # {}
 citeauthoryear
 clearpage
+cleardoublepage
 cline # {}
 documentclass # [] # {}
 documentstyle # [] # {}
@@ -9752,7 +9766,7 @@ _IGNORED_CMDS_
 &process_commands_in_tex (<<_RAW_ARG_CMDS_);
 psfig # {} # \$args =~ s/ //g;
 fbox # {}
-etalchar # \$args =~ s/(.*)/\$\^\{\$1\}\\\$/o; 
+etalchar # \$args =~ s/(.*)/\$\^\{\$1\}\\\$/o;
 framebox # [] # [] # {}
 dag
 ddag
@@ -9833,7 +9847,7 @@ setcounter # {} # {}
 addtocounter # {} # {}
 stepcounter # {}
 refstepcounter # {}
-value # {} 
+value # {}
 thepart
 thepage
 thechapter
@@ -10079,7 +10093,7 @@ sub make_isolatin1_rx {
 
 
     # used for labels in {enumerate} environments
-    $standard_label_rx = 
+    $standard_label_rx =
 	"\\s*[[]\\s*((($any_next_pair_rx4)|([[][^]]*[]])|[^]])*)[]]";
     $enum_label_rx = "^((({[^{}]*})|([^{}]))*)([aAiI1])(.*)";
     $enum_level = 0;	# level for enumerate (1-4, i-iv)
@@ -10496,7 +10510,7 @@ The pstoimg script was written by Marek Rouchal,
 as a generalisation of the  pstogif  utility to allow graphic formats
 other than GIF to be created. Various options and enhancements have
 been added by Ross Moore.
-Some of the code is based upon the pstoppm.ps postscript program 
+Some of the code is based upon the pstoppm.ps postscript program
 originally written by Phillip Conrad (Perfect Byte, Inc.)
 and modified by L.  Peter Deutsch (Aladdin Enterprises).
 cd

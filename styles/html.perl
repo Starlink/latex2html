@@ -1,5 +1,5 @@
 #
-# $Id: html.perl,v 1.20 1997/07/04 13:40:16 RRM Exp $
+# $Id$
 #
 # HTML.PERL by Nikos Drakos <nikos@cbl.leeds.ac.uk> 2-DEC-93
 # Computer Based Learning Unit, University of Leeds.
@@ -11,7 +11,13 @@
 #
 # Modifications (Initials see Changes):
 #
-# $Log: html.perl,v $
+# $Log$
+# Revision 1.1  2004/02/20 13:13:28  nxg
+# Initial import
+#
+# Revision 1.1  1998/08/20 16:03:41  pdraper
+# *** empty log message ***
+#
 # Revision 1.20  1997/07/04 13:40:16  RRM
 #  -  \htmladdimg now handle image-maps properly, with more flexibility
 #
@@ -360,7 +366,7 @@ sub do_cmd_hypercite {
 sub do_cmd_htmlref {
     local($_) = @_;
     local($text);
-    local($opt, $dummy) = &get_next_optional_argument;
+#    local($opt, $dummy) = &get_next_optional_argument;
     s/$next_pair_pr_rx/$text = $2; ''/eo;
     &process_ref($cross_ref_mark,$cross_ref_mark,$text);
 }
@@ -458,7 +464,6 @@ sub do_cmd_HTMLsetenv { &do_cmd_HTMLset;}
 &process_commands_wrap_deferred (<<_RAW_ARG_DEFERRED_CMDS_);
 comment # <<\\endcomment>>
 htmlonly # <<\\endhtmlonly>>
-latexonly # <<\\endlatexonly>>
 imagesonly # <<\\endimagesonly>>
 rawhtml # <<\\endrawhtml>> 
 _RAW_ARG_DEFERRED_CMDS_
@@ -470,7 +475,7 @@ latex # {}
 latexhtml # {}
 htmlonly
 endhtmlonly
-latexonly # <<\\endlatexonly>>
+latexonly # {}
 imagesonly # <<\\endimagesonly>>  &do_env_imagesonly(\$args)
 rawhtml # <<\\endrawhtml>> \$_ = join('',&revert_to_raw_tex(\$args),\$_)
 _IGNORED_CMDS_
