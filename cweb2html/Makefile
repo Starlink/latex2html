@@ -1,20 +1,35 @@
+# $Id: Makefile,v 1.4 1999/12/22 19:38:55 JCL Exp $
+#
+# Makefile for the CWEB2HTML translator
+#   for use on Unix-like operating systems such as Linux only!
+#
+################################################################################
+# Copyright 1998-1999 by Jens Lippmann (lippmann@rbg.informatik.tu-darmstadt.de)
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose and without fee is hereby granted, provided that the above
+# copyright notice appears in all copies. This software is provided "as is"
+# and without any express or implied warranties.
+#
+################################################################################
+
 
 #
 # Configure:
 # This tells where latex2html can be found.
 #LATEX2HTML=/usr/local/bin/latex2html
-LATEX2HTML=/home/lippmann/latex2html/user/latex2html
+LATEX2HTML=$$HOME/bin/latex2html
 
 #
 # Configure:
 # This tells where latex2html can be found.
-CWEB2HTML=cweb2html
+CWEB2HTML=/home/lippmann/latex2html/user/cweb2html/cweb2html
 
 #
 # Optional:
 # This will appear at every invocation of LaTeX2HTML.
 # You could say "-init_file my_init.pl", "-debug", etc.
-LATEX2HTMLFLAGS= -no_subdir
+LATEX2HTMLFLAGS= -nosubdir #-debug
 
 #
 # Optional:
@@ -131,17 +146,19 @@ $(HTMLDIR)/FILE:
 #   or to set up LATEX2HTMLSTYLES, but we assume this is not done yet.
 #
 $(HTMLDIR)/FILE/FILE.html: $(DVIDIR)/FILE.dvi
-	-$(CP) *.perl\
+	-$(CP) *.tex *.perl\
 	 $(TEXDIR)/FILE.tex $(DVIDIR)/FILE.aux $(DVIDIR)/FILE.bbl\
 	 $(HTMLDIR)/FILE
 	DIR=`cd $(TEXDIR);$(PWD)`;\
-	TEXINPUTS=".:`cd $(TEXDIR);$(PWD)`:$$TEXINPUTS"; export TEXINPUTS;\
+	TEXINPUTS="`$(PWD)`:.:`cd $(TEXDIR);$(PWD)`:$$TEXINPUTS";\
+	export TEXINPUTS;\
 	cd $(HTMLDIR)/FILE;\
 	$(L2HCOMPILE) FILE.tex;\
-	$(RM) *.perl FILE.tex FILE.aux FILE.bbl
+	$(RM) *.perl *.tex FILE.aux FILE.bbl
 
 FILE.clean:: $(HTMLDIR) $(HTMLDIR)/FILE
 	-$(RM) $(HTMLDIR)/FILE/.[a-zA-Z]* $(HTMLDIR)/FILE/?*;\
+	$(RM) -r $(HTMLDIR)/FILE/TMP;\
 	$(RMDIR) $(HTMLDIR)/FILE
 
 
@@ -149,8 +166,10 @@ FILE.dvi: $(TEXDIR) $(DVIDIR) $(DVIDIR)/FILE.dvi
 	@echo $(DVIDIR)/FILE.dvi is up to date...
 
 $(DVIDIR)/FILE.dvi: $(TEXDIR)/FILE.tex
-	$(C2HCOMPILE) -dest_dir $(TEXDIR) $(TEXDIR)/FILE.tex $(TEXDIR)/FILE.scn
-	TEXINPUTS=".:`cd $(TEXDIR);$(PWD)`:$$TEXINPUTS"; export TEXINPUTS;\
+	-$(C2HCOMPILE) -dest_dir $(TEXDIR) $(TEXDIR)/FILE.tex\
+	               $(TEXDIR)/FILE.scn;\
+	TEXINPUTS="`$(PWD)`:.:`cd $(TEXDIR);$(PWD)`:$$TEXINPUTS";\
+	export TEXINPUTS;\
 	BIBINPUTS="`$(PWD)`:$$BIBINPUTS"; export BIBINPUTS;\
 	cd $(DVIDIR);\
 	$(LATEX) FILE.tex;\
@@ -168,8 +187,9 @@ FILE.tex: $(TEXDIR) $(TEXDIR)/FILE.tex
 
 $(TEXDIR)/FILE.tex: FILE.w
 	CWEBINPUTS="`$(PWD)`"; export CWEBINPUTS;\
-	cd $(TEXDIR);\
-	$(CWEAVE) $$CWEBINPUTS/FILE.w
+	cd $(TEXDIR); ln -s $$CWEBINPUTS/FILE.w .;\
+	$(CWEAVE) FILE.w;\
+	$(RM) FILE.w
 
 FILE.clean:: $(TEXDIR)
 	-$(RM) $(TEXDIR)/FILE.*
@@ -217,17 +237,19 @@ $(HTMLDIR)/wcltx:
 
 
 $(HTMLDIR)/wcltx/wcltx.html: $(DVIDIR)/wcltx.dvi
-	-$(CP) *.perl\
+	-$(CP) *.tex *.perl\
 	 $(TEXDIR)/wcltx.tex $(DVIDIR)/wcltx.aux $(DVIDIR)/wcltx.bbl\
 	 $(HTMLDIR)/wcltx
 	DIR=`cd $(TEXDIR);$(PWD)`;\
-	TEXINPUTS=".:`cd $(TEXDIR);$(PWD)`:$$TEXINPUTS"; export TEXINPUTS;\
+	TEXINPUTS="`$(PWD)`:.:`cd $(TEXDIR);$(PWD)`:$$TEXINPUTS";\
+	export TEXINPUTS;\
 	cd $(HTMLDIR)/wcltx;\
 	$(L2HCOMPILE) wcltx.tex;\
-	$(RM) *.perl wcltx.tex wcltx.aux wcltx.bbl
+	$(RM) *.perl *.tex wcltx.aux wcltx.bbl
 
 wcltx.clean:: $(HTMLDIR) $(HTMLDIR)/wcltx
 	-$(RM) $(HTMLDIR)/wcltx/.[a-zA-Z]* $(HTMLDIR)/wcltx/?*;\
+	$(RM) -r $(HTMLDIR)/wcltx/TMP;\
 	$(RMDIR) $(HTMLDIR)/wcltx
 
 
@@ -235,8 +257,10 @@ wcltx.dvi: $(TEXDIR) $(DVIDIR) $(DVIDIR)/wcltx.dvi
 	@echo $(DVIDIR)/wcltx.dvi is up to date...
 
 $(DVIDIR)/wcltx.dvi: $(TEXDIR)/wcltx.tex
-	$(C2HCOMPILE) -dest_dir $(TEXDIR) $(TEXDIR)/wcltx.tex $(TEXDIR)/wcltx.scn
-	TEXINPUTS=".:`cd $(TEXDIR);$(PWD)`:$$TEXINPUTS"; export TEXINPUTS;\
+	-$(C2HCOMPILE) -dest_dir $(TEXDIR) $(TEXDIR)/wcltx.tex\
+	               $(TEXDIR)/wcltx.scn;\
+	TEXINPUTS="`$(PWD)`:.:`cd $(TEXDIR);$(PWD)`:$$TEXINPUTS";\
+	export TEXINPUTS;\
 	BIBINPUTS="`$(PWD)`:$$BIBINPUTS"; export BIBINPUTS;\
 	cd $(DVIDIR);\
 	$(LATEX) wcltx.tex;\
@@ -253,8 +277,9 @@ wcltx.tex: $(TEXDIR) $(TEXDIR)/wcltx.tex
 
 $(TEXDIR)/wcltx.tex: wcltx.w
 	CWEBINPUTS="`$(PWD)`"; export CWEBINPUTS;\
-	cd $(TEXDIR);\
-	$(CWEAVE) $$CWEBINPUTS/wcltx.w
+	cd $(TEXDIR); ln -s $$CWEBINPUTS/wcltx.w .;\
+	$(CWEAVE) wcltx.w;\
+	$(RM) wcltx.w
 
 wcltx.clean:: $(TEXDIR)
 	-$(RM) $(TEXDIR)/wcltx.*
@@ -294,17 +319,19 @@ $(HTMLDIR)/linkex1:
 
 
 $(HTMLDIR)/linkex1/linkex1.html: $(DVIDIR)/linkex1.dvi
-	-$(CP) *.perl\
+	-$(CP) *.tex *.perl\
 	 $(TEXDIR)/linkex1.tex $(DVIDIR)/linkex1.aux $(DVIDIR)/linkex1.bbl\
 	 $(HTMLDIR)/linkex1
 	DIR=`cd $(TEXDIR);$(PWD)`;\
-	TEXINPUTS=".:`cd $(TEXDIR);$(PWD)`:$$TEXINPUTS"; export TEXINPUTS;\
+	TEXINPUTS="`$(PWD)`:.:`cd $(TEXDIR);$(PWD)`:$$TEXINPUTS";\
+	export TEXINPUTS;\
 	cd $(HTMLDIR)/linkex1;\
 	$(L2HCOMPILE) linkex1.tex;\
-	$(RM) *.perl linkex1.tex linkex1.aux linkex1.bbl
+	$(RM) *.perl *.tex linkex1.aux linkex1.bbl
 
 linkex1.clean:: $(HTMLDIR) $(HTMLDIR)/linkex1
 	-$(RM) $(HTMLDIR)/linkex1/.[a-zA-Z]* $(HTMLDIR)/linkex1/?*;\
+	$(RM) -r $(HTMLDIR)/linkex1/TMP;\
 	$(RMDIR) $(HTMLDIR)/linkex1
 
 
@@ -312,8 +339,10 @@ linkex1.dvi: $(TEXDIR) $(DVIDIR) $(DVIDIR)/linkex1.dvi
 	@echo $(DVIDIR)/linkex1.dvi is up to date...
 
 $(DVIDIR)/linkex1.dvi: $(TEXDIR)/linkex1.tex
-	$(C2HCOMPILE) -dest_dir $(TEXDIR) $(TEXDIR)/linkex1.tex $(TEXDIR)/linkex1.scn
-	TEXINPUTS=".:`cd $(TEXDIR);$(PWD)`:$$TEXINPUTS"; export TEXINPUTS;\
+	-$(C2HCOMPILE) -dest_dir $(TEXDIR) $(TEXDIR)/linkex1.tex\
+	               $(TEXDIR)/linkex1.scn;\
+	TEXINPUTS="`$(PWD)`:.:`cd $(TEXDIR);$(PWD)`:$$TEXINPUTS";\
+	export TEXINPUTS;\
 	BIBINPUTS="`$(PWD)`:$$BIBINPUTS"; export BIBINPUTS;\
 	cd $(DVIDIR);\
 	$(LATEX) linkex1.tex;\
@@ -330,8 +359,9 @@ linkex1.tex: $(TEXDIR) $(TEXDIR)/linkex1.tex
 
 $(TEXDIR)/linkex1.tex: linkex1.w
 	CWEBINPUTS="`$(PWD)`"; export CWEBINPUTS;\
-	cd $(TEXDIR);\
-	$(CWEAVE) $$CWEBINPUTS/linkex1.w
+	cd $(TEXDIR); ln -s $$CWEBINPUTS/linkex1.w .;\
+	$(CWEAVE) linkex1.w;\
+	$(RM) linkex1.w
 
 linkex1.clean:: $(TEXDIR)
 	-$(RM) $(TEXDIR)/linkex1.*
@@ -371,17 +401,19 @@ $(HTMLDIR)/linkex2:
 
 
 $(HTMLDIR)/linkex2/linkex2.html: $(DVIDIR)/linkex2.dvi
-	-$(CP) *.perl\
+	-$(CP) *.tex *.perl\
 	 $(TEXDIR)/linkex2.tex $(DVIDIR)/linkex2.aux $(DVIDIR)/linkex2.bbl\
 	 $(HTMLDIR)/linkex2
 	DIR=`cd $(TEXDIR);$(PWD)`;\
-	TEXINPUTS=".:`cd $(TEXDIR);$(PWD)`:$$TEXINPUTS"; export TEXINPUTS;\
+	TEXINPUTS="`$(PWD)`:.:`cd $(TEXDIR);$(PWD)`:$$TEXINPUTS";\
+	export TEXINPUTS;\
 	cd $(HTMLDIR)/linkex2;\
 	$(L2HCOMPILE) linkex2.tex;\
-	$(RM) *.perl linkex2.tex linkex2.aux linkex2.bbl
+	$(RM) *.perl *.tex linkex2.aux linkex2.bbl
 
 linkex2.clean:: $(HTMLDIR) $(HTMLDIR)/linkex2
 	-$(RM) $(HTMLDIR)/linkex2/.[a-zA-Z]* $(HTMLDIR)/linkex2/?*;\
+	$(RM) -r $(HTMLDIR)/linkex2/TMP;\
 	$(RMDIR) $(HTMLDIR)/linkex2
 
 
@@ -389,8 +421,10 @@ linkex2.dvi: $(TEXDIR) $(DVIDIR) $(DVIDIR)/linkex2.dvi
 	@echo $(DVIDIR)/linkex2.dvi is up to date...
 
 $(DVIDIR)/linkex2.dvi: $(TEXDIR)/linkex2.tex
-	$(C2HCOMPILE) -dest_dir $(TEXDIR) $(TEXDIR)/linkex2.tex $(TEXDIR)/linkex2.scn
-	TEXINPUTS=".:`cd $(TEXDIR);$(PWD)`:$$TEXINPUTS"; export TEXINPUTS;\
+	-$(C2HCOMPILE) -dest_dir $(TEXDIR) $(TEXDIR)/linkex2.tex\
+	               $(TEXDIR)/linkex2.scn;\
+	TEXINPUTS="`$(PWD)`:.:`cd $(TEXDIR);$(PWD)`:$$TEXINPUTS";\
+	export TEXINPUTS;\
 	BIBINPUTS="`$(PWD)`:$$BIBINPUTS"; export BIBINPUTS;\
 	cd $(DVIDIR);\
 	$(LATEX) linkex2.tex;\
@@ -407,8 +441,9 @@ linkex2.tex: $(TEXDIR) $(TEXDIR)/linkex2.tex
 
 $(TEXDIR)/linkex2.tex: linkex2.w
 	CWEBINPUTS="`$(PWD)`"; export CWEBINPUTS;\
-	cd $(TEXDIR);\
-	$(CWEAVE) $$CWEBINPUTS/linkex2.w
+	cd $(TEXDIR); ln -s $$CWEBINPUTS/linkex2.w .;\
+	$(CWEAVE) linkex2.w;\
+	$(RM) linkex2.w
 
 linkex2.clean:: $(TEXDIR)
 	-$(RM) $(TEXDIR)/linkex2.*

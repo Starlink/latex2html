@@ -637,20 +637,20 @@ change_end 98.1
 
    
    
-   A LATEX2HTML mailing list has been set up at the Argonne National
-   Labs. The LATEX2HTML mailing list archive is available.
+   A LATEX2HTML mailing list has been set up at the TeX Users Group.
+   The LATEX2HTML mailing list archive is available.
    (Thanks to Ian Foster <itf@mcs.anl.gov> and Bob Olson
    <olson@mcs.anl.gov>.)
    
-   To join send a message to: <latex2html-request@mcs.anl.gov >
+   To join send a message to: <latex2html-request@tug.org >
    with the contents:   subscribe
    
    To be removed from the list send a message to:
-   <latex2html-request@mcs.anl.gov>
+   <latex2html-request@tug.org>
    with the contents:   unsubscribe
    
    The mailing list also has a searchable online archive at
-   http://www.rosat.mpe-garching.mpg.de/mailing-lists/LaTeX2HTML/. It
+   http://www.xray.mpe.mpg.de/mailing-lists/latex2html/. It is
    recommendable to start with that URL first, to get in touch with the
    topics actually discussed and to search for articles related with your
    interests.

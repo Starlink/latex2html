@@ -47,7 +47,7 @@ particular situations are discussed elsewhere in this manual.
 \begin{itemize}
 \item \latexhtml
 {\emph{What does ``natural way to present the information'' really mean? }}
-{\large{What does ``natural way to present the information'' really mean? }}
+{{\large What does ``natural way to present the information'' really mean? }}
 \end{itemize}
 \noindent
 Text and paragraphing clearly should appear as such, whether printed
@@ -82,7 +82,7 @@ packages which currently have special support.
 \item \latexhtml
 {\emph{Some features of \texttt{HTML} have no direct counterpart in
 a \LaTeX{} typeset document.\\Can such features be used with \latextohtml? }}
-{\large{Some features of \texttt{HTML} have no direct counterpart in
+{{\large Some features of \texttt{HTML} have no direct counterpart in
 a \LaTeX{} typeset document.\\Can such features be used with \latextohtml? }}
 \end{itemize}
 \noindent
@@ -109,7 +109,7 @@ all appropriate tags are correctly closed.
 \item \latexhtml
 {\emph{What determines the amount of information that goes onto
 a single \texttt{HTML} page?\\How are different pages linked? }}
-{\large{What determines the amount of information that goes onto
+{{\large What determines the amount of information that goes onto
 a single \texttt{HTML} page?\\How are different pages linked? }}
 \end{itemize}
 \noindent
@@ -124,7 +124,7 @@ using the command-line options discussed in detail in
 \item \latexhtml
 {\emph{Does the original document have to be a valid \LaTeX{} document,
 typesetting without errors? If not, does it help if it is? }}
-{\large{Does the original document have to be a valid \LaTeX{} document,
+{{\large Does the original document have to be a valid \LaTeX{} document,
 typesetting without errors? If not, does it help if it is? }}
 \end{itemize}
 \noindent
@@ -142,7 +142,7 @@ Relevant issues are discussed
 \item \latexhtml
 {\emph{When developing a document which contains special \texttt{HTML}
 features, is it best to regularly test it in \LaTeX{} or with \latextohtml{}? }}
-{\large{When developing a document which contains special \texttt{HTML}
+{{\large When developing a document which contains special \texttt{HTML}
 features, is it best to regularly test it in \LaTeX{} or with \latextohtml{}? }}
 \end{itemize}
 \noindent
@@ -199,53 +199,42 @@ right-justified numbered equations (see \hyperref{example}{equation~}{}{eq:demo}
 tables (see \hyperref{example}{Table~}{}{tab}), 
 figures (see \hyperref{example}{Figure~}{}{fig:example}),
 and \emph{any arbitrary environment}.
-\cbversion{97.1}\begin{changebar}%
-Either the complete environment or subparts thereof\html{\dots}
-\end{changebar}%
+Either the complete environment or sub-parts thereof\html{\dots}
 are passed to \LaTeX{}  for conversion to images, which are then either included
 in the document or are made available through hypertext links.
 
 \index{figures}\index{tables}\index{thumbnail}%
 \index{figures!arbitrarily scaled}\index{tables!arbitrarily scaled}%
 \index{figures!oriented}\index{tables!oriented}%
-\cbversion{96.1}\begin{changebar}%\cbversion{96.1}%
 \item 
 figures or tables can be arbitrarily scaled and oriented, 
 and shown either as inlined images or ``thumbnail'' sketches\html{\dots}
-\cbversion{97.1}\begin{changebar}
 or their contents displayed within a table constructed
 using the \HTMLtag{TABLE} tags of \HTMLiii.
-\end{changebar}\end{changebar}
 
 \index{environment!theorem-like}%
 \index{theorems!theorem-like environments}%
 \index{counter!automatic}%
 \index{counter!dependency}%
-\cbversion{97.1}\begin{changebar}
 \item
 theorem-like environments are supported, along with
 automatic numbering and counter dependencies.
-\end{changebar}%
 
 \index{browser@browser\label{IIIbrowser}!supports images}%
 \index{browser!character-based}%
 \item 
 can produce output suitable for browsers that support inlined images 
 or character-based browsers (as specified by the user).
-\cbversion{97.1}\begin{changebar}
 In particular the \TeX{} or \LaTeX{} code for mathematical expressions
 and formulas will be displayed in character-based browsers,
 such as \env{lynx}.
-\end{changebar}
 
 \index{color!coloured text}%
 \index{color!coloured background}%
 \index{image!backdrop}\index{backdrop!tiled with an image}%
-\cbversion{96.1h}\begin{changebar}%
 \item 
 coloured text and/or background is fully supported, as is the
 ability to use an image to create a tiled backdrop.
-\end{changebar}
 
 \index{extensions@extensions\label{IIIexts}!new commands}%
 \index{extensions!new environments}%
@@ -261,10 +250,8 @@ This allows the definition of \texttt{HTML} macros in \LaTeX{} !};
 handles footnotes\footnote{Like this!}, 
 tables of contents, lists of figures and tables, 
 bibliographies and can generate an index.
-\cbversion{96.1g}\begin{changebar}%
 By including hyperlinks between index entries, 
 simple navigation aids can be built into the index, for easy browsing.
-\end{changebar}
 
 %\index{references@references\label{IIIrefs}!hyper-links}%
 \index{references@references!hyper-links}%
@@ -283,7 +270,8 @@ which may reside in remote locations;
 \item 
 translates \LaTeX{}  accent and special character 
 commands (e.g. \. {A} \O {\"o} \pounds \copyright \P) to
-the equivalent ISO--Latin--1 or Unicode character set, where possible;
+the equivalent ISO--Latin--1 or Unicode character set,
+else an image can be created;
 
 \index{hypertext links}\index{hypertext links!multi-media resources}%
 \index{hypertext links!Internet services}%
@@ -311,15 +299,13 @@ can include raw \texttt{HTML} in a \LaTeX{}  document
 \index{LaTeX blue book@\LaTeX{} blue book}%
 \item 
 can deal sensibly with 
-\html{\strikeout{at least the \appl{Common \LaTeX{} Commands}
-summarised at the back of\\}}%
-\cbversion{97.1}\begin{changebar}\cbversion{97.1}%
+\strikeout{at least the \textit{Common }\LaTeX{} \textit{Commands}
+summarised at the back of\\}%
 virtually all of the concepts and commands described in
 the \LaTeX{} \htmlcite{blue book}{lamp:latex}, 
 where there is a meaningful interpretation appropriate to
-an \texttt{HTML} document,
-\end{changebar}
-as well as many other \LaTeX{} constructions, such as are described in the 
+an \texttt{HTML} document.
+Also many other \LaTeX{} constructions are handled, including many described in the 
 \LaTeX{} \hypercite{\textit{Companion}}{\textit{Companion}}{}{goossens:latex}
 and \LaTeX{} \hypercite{\textit{Graphics Companion} (e.g. \Xy-pic)}%
 {\textit{Graphics Companion}}{\Xy-pic}{goossens:latexGraphics};
@@ -331,22 +317,17 @@ and \LaTeX{} \hypercite{\textit{Graphics Companion} (e.g. \Xy-pic)}%
 \index{tables!as images}\index{tables!as HTML@as \texttt{HTML} mark-up}%
 \index{HTML@\texttt{HTML}!Version 2.1}%
 \index{HTML@\texttt{HTML}!Version 3.0}%
-\cbversion{96.1}\begin{changebar}%
 \item 
 can be configured to translate equations either
 as GIF images or as \texttt{HTML} 3.0 mark-up
 (as browsers become available which are suitable for the task),
-\end{changebar}\cbversion{97.1}\begin{changebar}\cbversion{97.1}%
 or by making images of subparts of equations, as required.
-\end{changebar}
 
 \index{references!symbolic}\index{references!document segments}%
 \index{document!illustrative examples}%
-\cbversion{96.1}\begin{changebar}%
 \item 
 links symbolic references across document segments which have been
 independently processed;%
-\end{changebar}
 
 \index{LaTeX commands@\LaTeX{} commands!embedded}%
 \index{LaTeX commands@\LaTeX{} commands!not syntactically legal}%
@@ -374,13 +355,13 @@ However some of the links are no longer valid.
 \begin{itemize}
 \item 
 The \latextohtml{} Translator, User Manual\\
-\url{http://www-math.mpce.mq.edu.au/texdev/LaTeX2HTML/docs/manual/}\\
+\url{http://www-texdev.mpce.mq.edu.au/l2h/docs/manual/}\\
 \onlinedoc
 \html{\smallskip}%
 
 \item 
 Mathematics with \latextohtml{}\\
-\url{http://www-math.mpce.mq.edu.au/texdev/LaTeX2HTML/maths/mathdocs/}
+\url{http://www-texdev.mpce.mq.edu.au/l2h/mathdocs/amsmath2/}
 \html{\smallskip}%
 
 \item 
@@ -395,17 +376,17 @@ Mathematics with \latextohtml{}\\
 
 \item 
 What is \latextohtml{}? (with \Xy-pic diagrams)\\
-\url{http://www-math.mpce.mq.edu.au/texdev/Xypic/L2Htalk/}
+\url{http://www.maths.mq.edu.au/texdev/Xypic/L2Htalk/}
 \html{\smallskip}%
 
 \item 
 German specials in \TeX\\
-\url{http://www-math.mpce.mq.edu.au/texdev/tests/harn/node1.html}
+\url{http://www.maths.mq.edu.au/texdev/tests/harn/node1.html}
 \html{\smallskip}%
 
 \item
 Crayola Colours\\
-\url{http://www-math.mpce.mq.edu.au/~ross/latex/crayola/crayola.html}
+\url{http://www.maths.mq.edu.au/~ross/latex/crayola/crayola.html}
 \html{\smallskip}%
 
 
@@ -422,7 +403,7 @@ Crayola Colours\\
 \item 
 \Xy-pic User's Guide, accessible from the 
 \htmladdnormallinkfoot{\Xy-pic Home Page}{http://www.brics.dk/\~{}krisrose/Xy-pic.html}
-or \htmladdnormallinkfoot{``down-under''}{http://www-math.mpce.mq.edu.au/texdev/xyguide.html}
+or \htmladdnormallinkfoot{``down-under''}{http://www.maths.mq.edu.au/texdev/xyguide-html/}
 \html{\smallskip}%
 
 \item 
@@ -510,7 +491,7 @@ UTCC --- \htmladdnormallinkfoot{University of Tennessee, Computing Center}%
 \html{\smallskip}%
 
 \item ``National Symposium in Mathematics''\\
-\url{http://www-math.mpce.mq.edu.au/texdev/NatSymp/}
+\url{http://www.maths.mq.edu.au/texdev/MathSymp/}
 \html{\smallskip}
 
 \item
@@ -577,13 +558,17 @@ Resources for Economists on the Internet\\
 \begin{itemize}
 \item
 Mathematics Courses at \htmladdnormallinkfoot{Macquarie University}%
-{http://www-math.mpce.mq.edu.au/\~{}ross/index.html\#courses}\\
+{http://www.maths.mq.edu.au/\~{}ross/index.html\#courses}\\
+\htmladdnormallink{MATH130}%
+{http://www.maths.mq.edu.au/texdev/MATHS/MATH130/study_guide99/}, 
 \htmladdnormallink{MATH132}%
-{http://www-math.mpce.mq.edu.au/texdev/Assignments/MATH132/study_guide/}, 
+{http://www.maths.mq.edu.au/texdev/MATHS/MATH132/study_guide99/}, 
 \htmladdnormallink{MATH233}%
-{http://www-math.mpce.mq.edu.au/texdev/Assignments/MATH233/study_guide/}, 
+{http://www.maths.mq.edu.au/texdev/MATHS/MATH233/study_guide/}, 
 \htmladdnormallink{MATH300}%
-{http://www-math.mpce.mq.edu.au/texdev/Assignments/MATH300/study_guide/}
+{http://www.maths.mq.edu.au/texdev/MATHS/MATH300/study_guide/}
+\htmladdnormallink{MATH337}%
+{http://www.maths.mq.edu.au/texdev/MATHS/MATH337/study_guide99/}, 
 \html{\smallskip}
 
 \item 

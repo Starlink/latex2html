@@ -25,9 +25,9 @@ sub do_cmd_oe {
 sub do_cmd_OE {
     join('', &iso_map("OE", "lig"), $_[0]);}
 sub do_cmd_l {
-    join('', &iso_map("l", "stroke"), $_[0]);}
+    join('', &iso_map("l", "strok"), $_[0]);}
 sub do_cmd_L {
-    join('', &iso_map("L", "stroke"), $_[0]);}
+    join('', &iso_map("L", "strok"), $_[0]);}
 sub do_cmd_ng {
     join('', &iso_map("eng", ""), $_[0]);}
 

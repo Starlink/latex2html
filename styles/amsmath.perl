@@ -1,4 +1,5 @@
-# amstex.perl by Ross Moore <ross@mpce.mq.edu.au>  9-30-96
+# $Id: amsmath.perl,v 1.21 2000/11/04 03:32:17 RRM Exp $
+# amsmath.perl by Ross Moore <ross@mpce.mq.edu.au>  9-30-96
 #
 # Extension to LaTeX2HTML to load features from AMS-LaTeX
 #   amsfonts, amssymb, eucal, eufrak or euscript. 
@@ -7,66 +8,124 @@
 # ===========
 #
 # $Log: amsmath.perl,v $
-# Revision 1.15  1998/02/20 22:02:06  latex2html
+# Revision 1.21  2000/11/04 03:32:17  RRM
+#  --  fixed typo where $t_author should be $t_address
+#      thanks to Bruce Miller for reporting this
+#
+# Revision 1.20  1999/06/11 09:57:25  RRM
+#  --  removed unnecessary tagging for ommitted information on title-page
+#
+# Revision 1.19  1999/06/03 05:37:41  RRM
+#  --  added proper revision control
+#  --  fixed error in previous commit
+#
+# Revision 1.18  1999/06/02 11:15:53  RRM
+#  --  the \author and \address commands were not reading their argument
+#      safely --- looping could result;  now fixed.
+#
+# Revision 1.17  1998/07/22 02:03:22  RRM
+#  --  implemented {proof} environment and \qed and \qedsymbol
+#  --  amsthm  now fully implemented, no longer gets a warning message
+#
+# Revision 1.16  1998/06/01 08:15:23  latex2html
+#  --  bringing up-to-date with amstex.perl
+#
+# Revision 1.19  1998/05/29 09:46:44  latex2html
+#  --  removed unneeded declarations
+#  --  added declaration for  \operatornamewithlimits
+#  --  load  more_amsmath.perl  under more circumstances; with less parsing
+#  	aligned environments can now have images of whole table-cells
+#
+# Revision 1.18  1998/05/06 11:11:50  latex2html
+#  --  implemented the  righttag  option
+#  --  suppressed 'No implementation ...' messages
+#  --  included CD in  %AMSenvs
+#
+# Revision 1.17  1998/05/04 12:14:16  latex2html
+#  --  included  %EQNO <num> in LaTeX code that constructs image containing
+#	equation-numbering, to avoid incorrect image-reuse
+#  --  removed ALIGN attributes when using HTML 2.0
+#
+# Revision 1.16  1998/02/20 22:06:57  latex2html
 # added log
 #
-# Revision 1.14  1998/02/20 22:00:42  latex2html
-# added log
-#
-# Revision 1.13  1998/02/20 21:58:51  latex2html
-# added log
-#
-# revision 1.12
-# date: 1998/02/13 12:57:35;  author: latex2html;  state: Exp;  lines: +11 -0
+# ----------------------------
+# revision 1.15
+# date: 1998/02/13 12:57:33;  author: latex2html;  state: Exp;  lines: +11 -0
 #  --  images of {subequations} have the correct numbering and alignment
 # ----------------------------
-# revision 1.11
-# date: 1998/02/06 22:57:15;  author: latex2html;  state: Exp;  lines: +39 -2
+# revision 1.14
+# date: 1998/02/06 22:57:13;  author: latex2html;  state: Exp;  lines: +39 -2
 #  --  copied &get_eqn_number from the  more_amsmath file
 # ----------------------------
-# revision 1.10
-# date: 1998/01/27 11:33:23;  author: RRM;  state: Exp;  lines: +30 -16
+# revision 1.13
+# date: 1998/01/27 11:33:22;  author: RRM;  state: Exp;  lines: +30 -16
 #  --  \title needed updating, in line with changes in  latex2html
 # ----------------------------
-# revision 1.9
-# date: 1998/01/19 08:52:33;  author: RRM;  state: Exp;  lines: +3 -746
+# revision 1.12
+# date: 1998/01/19 08:52:29;  author: RRM;  state: Exp;  lines: +3 -746
 #  	That part of  amstex.perl and amsmath.perl that needs the `math'
 # 	extension has been split-off into  more_amsmath.perl .
 # 	This is loaded automatically with switches:
 # 		 -no_math -html_version ...,math
 # ----------------------------
-# revision 1.8
-# date: 1998/01/14 01:20:22;  author: RRM;  state: Exp;  lines: +16 -7
-#  --  bringing up-to-date with  amstex.perl
+# revision 1.11
+# date: 1997/12/19 11:36:00;  author: RRM;  state: Exp;  lines: +16 -7
+#  --  use a specified WIDTH="10%" for equation-numbering cells
+# 	(thanks to Bruce Miller for highlighting the problem)
 # ----------------------------
-# revision 1.7
-# date: 1997/12/18 11:18:33;  author: RRM;  state: Exp;  lines: +14 -9
+# revision 1.10
+# date: 1997/12/18 11:18:31;  author: RRM;  state: Exp;  lines: +14 -9
 #  --  removed  do_cmd_numberwithin  which is in the  latex2html  script
 #  --  added support for CLASS="MATH"  with $USING_STYLES
 # ----------------------------
+# revision 1.9
+# date: 1997/12/17 10:19:19;  author: RRM;  state: Exp;  lines: +30 -16
+#  --  appended environment names to the new $display_env_rx variable
+#  --  removed the need for `math' extension to be loaded
+#  --  removed a redundant closing-tag `>' --- thanks Bruce Miller
+#  --  fixed the missing equation-numbers when on the right-hand side
+# ----------------------------
+# revision 1.8
+# date: 1997/12/11 02:42:44;  author: RRM;  state: Exp;  lines: +1 -1
+#  --  missing `;' inserted at end of %AMSenvs array (thanks Bruce Miller)
+# ----------------------------
+# revision 1.7
+# date: 1997/10/10 13:15:30;  author: RRM;  state: Exp;  lines: +10 -2
+#  --  made loading of some new environments depend on having the `math'
+# 	extension loaded. This probably should be made a requirement ?
+# ----------------------------
 # revision 1.6
-# date: 1997/12/17 10:26:27;  author: RRM;  state: Exp;  lines: +30 -16
-#  --  this file should be identical to  amstex.perl
+# date: 1997/10/04 07:26:37;  author: RRM;  state: Exp;  lines: +742 -17
+#  --  handles most of the amsmath alignment macros/environments
+#  --  supports leqno/reqno options
+#  --  support for more of the AMSbook/art internal commands, that
+# 	can also be used externally; e.g. \chapterrunhead, etc.
+# 
+#     Note: not *all* of the amsmath package is fully supported in the
+# 	best possible way; we are still working on it.
 # ----------------------------
 # revision 1.5
-# date: 1997/12/11 02:44:33;  author: RRM;  state: Exp;  lines: +1 -1
-#  --  bringing this file up-to-date with  amstex.perl
-# ----------------------------
-# revision 1.4
-# date: 1997/10/14 13:14:43;  author: RRM;  state: Exp;  lines: +10 -2
-#  --  bringing this file up-to-date with  amstex.perl
-# ----------------------------
-# revision 1.3
-# date: 1997/10/05 08:37:36;  author: RRM;  state: Exp;  lines: +742 -17
-#  --  making sure this file is identical to  amstex.perl
-# ----------------------------
-# revision 1.2
-# date: 1997/07/11 11:28:59;  author: RRM;  state: Exp;  lines: +19 -19
+# date: 1997/07/11 11:28:57;  author: RRM;  state: Exp;  lines: +1 -1
 #  -  replace  (.*) patterns with something allowing \n s included
 # ----------------------------
+# revision 1.4
+# date: 1997/07/09 13:28:38;  author: RRM;  state: Exp;  lines: +18 -18
+#     Too many commas in assoc-array, Oops --- thanks Michel, well spotted
+# ----------------------------
+# revision 1.3
+# date: 1997/05/19 13:27:50;  author: RRM;  state: Exp;  lines: +29 -28
+#  -  AmS-TeX style environment delimiters need a  `\\' .
+# ----------------------------
+# revision 1.2
+# date: 1997/05/02 04:08:16;  author: RRM;  state: Exp;  lines: +189 -16
+#      Extensive changes, preparatory to complete support for AmS-LaTeX.
+#      This work is not yet complete.
+# ----------------------------
 # revision 1.1
-# date: 1997/05/19 13:53:34;  author: RRM;  state: Exp;
-#      New file;  same as  amstex.perl
+# date: 1997/03/05 00:27:17;  author: RRM;  state: Exp;
+# Support for American Math Society (AMS) packages.
+# Mostly just recognises options to the AMS packages, to suppress warnings.
 
 
 package main;
@@ -126,8 +185,10 @@ sub do_cmd_author {
     }
     &get_next_optional_argument;
     local($rest) = $_;
-    $rest =~ s/$next_pair_pr_rx//o;
-    ($t_author) =  &translate_commands($&);
+    $t_author = &missing_braces unless (
+	($rest =~ s/$next_pair_pr_rx/$t_author=$&;''/eo)
+	||($rest =~ s/$next_pair_rx/$t_author=$&;''/eo));
+    ($t_author) =  &translate_commands($t_author);
     $rest;
 }
 
@@ -140,8 +201,10 @@ sub do_cmd_address {
     }
     &get_next_optional_argument;
     local($rest) = $_;
-    $rest =~ s/$next_pair_pr_rx//o;
-    ($t_address) =  &translate_commands($&);
+    $t_address = &missing_braces unless (
+	($rest =~ s/$next_pair_pr_rx/$t_address=$&;''/eo)
+	||($rest =~ s/$next_pair_rx/$t_address=$&;''/eo));
+    ($t_address) =  &translate_commands($t_address);
     $rest;
 }
 
@@ -265,17 +328,17 @@ sub do_cmd_maketitle {
     if ($t_author) {
 	$the_title .= "<P ALIGN=CENTER><STRONG>$t_author</STRONG></P>\n";
     } else { &write_warnings("There is no author for this document."); }
-    if ($t_translator) {
+    if (($t_translator)&&!($t_translator=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
 	$the_title .= "<BR><P ALIGN=CENTER>Translated by $t_translator</P>\n";}
-    if ($t_affil) {
+    if (($t_affil)&&!($t_affil=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
 	$the_title .= "<BR><P ALIGN=CENTER><I>$t_affil</I></P>\n";}
-    if ($t_date) {
+    if (($t_date)&&!($t_date=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
 	$the_title .= "<BR><P ALIGN=CENTER><I>Date:</I> $t_date</P>\n";}
 
-    if ($t_address) {
+    if ($t_address&&!($t_address=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
 	$the_title .= "<BR><P ALIGN=LEFT><FONT SIZE=-1>$t_address</FONT></P>\n";
     } else { $the_title .= "<P ALIGN=LEFT>"}
-    if ($t_email) {
+    if ($t_email&&!($t_email=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
 	$the_title .= "<P ALIGN=LEFT><FONT SIZE=-1>$t_email</FONT></P>\n";
     } else { $the_title .= "</P>" }
     if ($t_keywords) {
@@ -360,45 +423,51 @@ sub do_env_equationstar {
     &do_env_displaymath(@_);
 }
 sub do_env_subequations {
+    local($_) = @_;
+    local($align);
+    $align = join('', " ALIGN=\""
+	    , (($EQN_TAGS =~ /L/)? 'LEFT' : 'RIGHT'), "\"")
+	unless ($HTML_VERSION < 2.2);
+
     $latex_body .= join('', "\n\\setcounter{equation}{"
 		, $global{'eqn_number'} , "}\n");
+    $_ .= "%EQNO:".$global{'eqn_number'}."\n";
     $global{'eqn_number'}++;
     local($this) = &process_undefined_environment('subequations'
-	    , ++$global{'max_id'}, @_);
+	    , ++$global{'max_id'}, $_);
     local($div) = (($HTML_VERSION < 3.2)? 'P' : 'DIV');
-    join('', '<P ALIGN="' 
-	    , (($EQN_TAGS =~ /L/)? 'LEFT' : 'RIGHT')
-	    , "\">\n" , $this, '<BR></P>' )
+    join('', "<$div$align>\n" , $this, "<BR></$div>" )
 }
 
+sub do_cmd_proofname { ($prf_name ? $prf_name : 'Proof')  . @_[0] }
+sub do_cmd_qed {
+    local($env) = 'tex2html_wrap_inline';
+    join('', &process_math_in_latex('','',0,"\\qedsymbol"), @_) }
+
+sub do_env_proof {
+    local($proof_contents) = @_;
+    local($bproof, $eproof);
+    local($proof_name,$br_id);
+    if ((defined &do_cmd_proofname)||$new_command{'proofname'}) {
+	$br_id=++$global{'max_id'};
+	$proof_name = &translate_environments("$O$br_id$C\\itshape\\proofname$O$br_id$C");
+    } else { $proof_name = '<EM>'.$prf_name.'</EM>' }
+    $bproof = (($HTML_VERSION > 3.1)? "<DIV$env_id>" : '<P>');
+    $eproof = (($HTML_VERSION > 3.1)? '</DIV>' : '</P>') . '<P></P>';
+    local($qed);
+    if ($new_command{'qed'}) {
+	$br_id = ++$global{'max_id'};
+	$qed = &translate_commands(&translate_environments("$O$br_id$C\\qed$O$br_id$C"));
+    } else { $qed = &do_cmd_qed() }
+    $br_id = ++$global{'max_id'};
+    join ('', "<P></P>\n", $bproof , $proof_name.".\n" 
+	, &translate_commands(&translate_environments("$O$br_id$C$proof_contents$O$br_id$C "))
+	, $qed , "\n".$eproof."\n" )
+}
 
 #  Suppress the possible options to   \usepackage[....]{amstex}
 #  and  {amsmath}  {amsopn}  {amsthm}
 
-sub do_amstex_noamsfonts {
-}
-sub do_amstex_psamsfonts {
-}
-sub do_amstex_intlimits {
-}
-sub do_amstex_nointlimits {
-}
-sub do_amstex_intlim {
-}
-sub do_amstex_nosumlim {
-}
-sub do_amstex_nonamelim {
-}
-sub do_amstex_nolimits {
-}
-sub do_amstex_sumlimits {
-}
-sub do_amstex_nosumlimits {
-}
-sub do_amstex_namelimits {
-}
-sub do_amstex_nonamelimits {
-}
 sub do_amstex_leqno { $EQN_TAGS = 'L'; }
 sub do_amstex_reqno { $EQN_TAGS = 'R'; }
 sub do_amsmath_leqno { $EQN_TAGS = 'L'; }
@@ -410,10 +479,20 @@ sub do_amstex_centertags {
 }
 sub do_amstex_tbtags {
 }
-sub do_amstex_righttag {
-}
+sub do_amstex_righttag { $EQN_TAGS = 'R'; }
+
 sub do_amstex_ctagsplt {
 }
+
+%styles_loaded = ( %styles_loaded
+     , 'amsbsy' , 1 , 'amscd' , 1 , 'amsfonts' , 1 , 'amsthm' , 1
+     , 'amssymb' , 1 , 'amstext' , 1 , 'amsfonts' , 1 , 'amsopn' , 1
+     , 'amstex_noamsfonts' , 1 , 'amsmath_noamsfonts' , 1
+     , 'amstex_psamsfonts' , 1 , 'amsmath_psamsfonts' , 1
+     , 'amstex_intlim' , 1 , 'amsmath_intlim' , 1
+     , 'amstex_nonamelm' , 1 , 'amsmath_nonamelm' , 1
+     , 'amstex_nosumlim' , 1 , 'amsmath_nosumlim' , 1
+    );
 
 
 %AMSenvs = (
@@ -441,6 +520,7 @@ sub do_amstex_ctagsplt {
 	, 'demo' , 'enddemo'
 	, 'roster' , 'endroster'
 	, 'ref' , 'endref'
+	, 'CD' , 'endCD'
 );
 
 
@@ -457,6 +537,7 @@ BlackBoxes
 NoBlackBoxes
 split
 operatorname
+operatornamewithlimits
 qopname # {} # {}
 text
 thetag
@@ -506,13 +587,17 @@ alignedat # <<\\endalignedat>>
 flalign # <<\\endflalign>>
 gather # <<\\endgather>>
 multline # <<\\endmultline>>
-overset # {} # {}
-sideset # {} # {}
-underset # {} # {}
-overleftarrow # {}
-overrightarrow # {}
-oversetbrace # <<\\to>> # {}
-undersetbrace # <<\\to>> # {}
+#overset # {} # {}
+#sideset # {} # {}
+#underset # {} # {}
+#overleftarrow # {}
+#underleftarrow # {}
+#overrightarrow # {}
+#underrightarrow # {}
+#overleftrightarrow # {}
+#underleftrightarrow # {}
+#oversetbrace # <<\\to>> # {}
+#undersetbrace # <<\\to>> # {}
 lcfrac # <<\\endcfrac>>
 rcfrac # <<\\endcfrac>>
 cfrac # <<\\endcfrac>>
@@ -526,6 +611,7 @@ mathfrak # {}
 _RAW_ARG_CMDS_
 
 &process_commands_inline_in_tex (<<_RAW_ARG_CMDS_);
+qedsymbol
 _RAW_ARG_CMDS_
 
 
@@ -537,8 +623,11 @@ _RAW_ARG_NOWRAP_CMDS_
 #   add later extensions, which require `math' to be loaded
 
 if (($NO_SIMPLE_MATH)&&(defined &make_math)) { 
-    print "\nLoading $LATEX2HTMLSTYLES/more_amsmath.perl";
-    require "$LATEX2HTMLSTYLES/more_amsmath.perl";
+    &do_require_package('more_amsmath');
+} elsif ($HTML_VERSION > 3.1) {
+    require "$LATEX2HTMLVERSIONS${dd}math.pl";
+    $NO_MATH_PARSING = $NO_SIMPLE_MATH = 1;
+    &do_require_package('more_amsmath');
 }
 
 

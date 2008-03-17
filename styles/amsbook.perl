@@ -40,14 +40,19 @@ sub do_amsbook_openbib{}
 
 sub do_amsbook_nomath{}
 
-sub do_amsbook_noamsfonts{&do_amsfonts_noamsfonts}
-sub do_amsbook_psamsfonts{&do_amsfonts_psamsfonts}
+sub do_amsbook_noamsfonts{
+    &do_amsfonts_noamsfonts() if (defined &do_amsfonts_noamsfonts);
+    $styles_loaded{'noamsfonts'} = 1; }
 
-sub do_amsbook_centertags{&do_amstex_centertags}
-sub do_amsbook_tbtags{&do_amstex_tbtags}
-sub do_amsbook_leqno{&do_amstex_leqno}
-sub do_amsbook_reqno{&do_amstex_reqno}
-sub do_amsbook_fleqno{&do_amstex_fleqno}
+sub do_amsbook_psamsfonts{
+    &do_amsfonts_psamsfonts() if (defined &do_amsfonts_psamsfonts);
+    $styles_loaded{'noamsfonts'} = 1; }
+
+sub do_amsbook_centertags{&do_amstex_centertags()}
+sub do_amsbook_tbtags{&do_amstex_tbtags()}
+sub do_amsbook_leqno{&do_amstex_leqno()}
+sub do_amsbook_reqno{&do_amstex_reqno()}
+sub do_amsbook_fleqno{&do_amstex_fleqno()}
 
 sub do_amsbook_makeidx{ &do_require_package('makeidx') }
 

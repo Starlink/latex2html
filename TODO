@@ -8,6 +8,9 @@ This requires:
 - in the long run support of rotation angles; these could be implemented
   in pstoimg with appropriate postscript code (like dvips does)
 
-MRO: Add support of the <EMBED> tag when $NETSCAPE_HTML is set, so that this
-stupid browser can deal with inlined PNGs correctly.
+MRO: Adapt the configuration procedure to the MacOS platform.
+
+MRO: Include the kpsewhich command in texexpand
+
+MRO: Configure for use of Type1 fonts, if available
 

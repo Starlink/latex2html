@@ -29,7 +29,9 @@ sub do_cmd_background {
 sub do_cmd_textColor {
     local($_)=@_;
     local($data,$rest);
-    s/$next_pair_pr_rx//o; $data=$2;
+    &missing_braces unless (
+	(s/$next_pair_pr_rx/$data=$2;''/eo)
+	||(s/$next_pair_rx/$data=$2;''/eo)); 
     $rest = $_;
     local($cnt) = $data =~ s/,/,/g;
     if (!($cnt== 3)) {
@@ -40,13 +42,14 @@ sub do_cmd_textColor {
     $GLOBALMODEL="[cmyk]";
     $GLOBALCOLOR="$data";
     &do_cmd_color("[cmyk]<\#0\#>$data<\#0\#>$rest");
-#    $rest;
 }
 
 sub do_cmd_Color {
     local($_)=@_;
     local($data,$rest);
-    s/$next_pair_pr_rx//o; $data=$2;
+    &missing_braces unless (
+	(s/$next_pair_pr_rx/$data=$2;''/eo)
+	||(s/$next_pair_rx/$data=$2;''/eo)); 
     $rest = $_;
     local($cnt) = $data =~ s/,/,/g;
     if (!($cnt== 3)) {
@@ -59,11 +62,12 @@ sub do_cmd_Color {
 
 sub do_cmd_subdef {
     local($_) = @_;
-    local($model,$data);
-    s/$next_pair_pr_rx//o; 
-    local($data) = $2;
-    $data =~s/^\s+//o; $data =~s/\s+$//o;
-    $data =~ s/(\w+)\s+/$model=$1/eo;
+    my $model, $data;
+    &missing_braces unless (
+	(s/$next_pair_pr_rx/$data=$2;''/eo)
+	||(s/$next_pair_rx/$data=$2;''/eo)); 
+    $data =~ s/^\s+|\s+$//go;
+    $data =~ s/^(\w+)\s+/$model=$1/eo;
     if ($model) { 
 	$data = $';
  	$data =~ s/\s+/,/g;
@@ -90,11 +94,17 @@ sub do_cmd_newColor {
     eval "sub do_cmd_text$name {"
 	. "\$GLOBALMODEL=\"\";"
 	. "\$GLOBALCOLOR=\"$name\";"
-	. "&do_named_text_color($name);"
-	. "\@_[0]}";
-    eval "sub do_cmd_$name {"
-	. "&do_named_local_color($name,\@_[0]);"
+	. "\&do_named_text_color('$name',\$_[0]);"
 	. "}";
+    print "\n$@" if ($@);
+    &process_commands_wrap_deferred("text$name \n");
+
+    eval "sub do_cmd_$name {"
+	. "\&do_named_local_color('$name',\$_[0]);"
+	. "}";
+    print "\n$@" if ($@);
+    &process_commands_wrap_deferred("$name \# \{\}\n");
+
     $rest;
 }
 
@@ -104,8 +114,9 @@ sub do_named_local_color {
 }
 
 sub do_named_text_color {
-    local($name) = @_;
-    &do_cmd_color("<\#0\#>$name<\#0\#>$_");    
+    local($name,$_) = @_;
+#    local($tex2html_deferred) = 1;
+    &do_cmd_color("<\#0\#>$name<\#0\#>".$_);  
 }
 
 
@@ -181,7 +192,16 @@ sub do_named_text_color {
 &do_cmd_newColor("White ");
 
 
-# Get rid of local color specifications, ...
+# wrap general color specifications, ...
+
+&process_commands_wrap_deferred ( <<_DEFERRED_CMDS_);
+textColor # {}
+globalColor # {}
+background # {}
+subdef # {}
+Color # {} # {}
+_DEFERRED_CMDS_
+
 
 &ignore_commands( <<_IGNORED_CMDS_);
 _IGNORED_CMDS_

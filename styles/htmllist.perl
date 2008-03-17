@@ -58,8 +58,7 @@ package main;
 #
 #  Example:
 #
-#	\begin{htmllist}
-#	\htmlitemmark{WhiteBall}
+#	\begin{htmllist}[WhiteBall]
 #	\item[Item 1:] This will have a white ball
 #	\item[Item 2:] This will also have a white ball
 #	\htmlitemmark{RedBall}
@@ -70,52 +69,90 @@ sub do_env_htmlliststar{
   &do_env_htmllist(@_," COMPACT");
 }
 
-sub do_env_htmllist{
-  local($_, $compact) = @_;
-    #RRM - catch nested lists
-  $_ = &translate_environments($_);
-
-  $compact = "" unless $compact;
-  local($imagemark,$mark,$item_len,$desc_len,$mark_len,$mark_size);
-  $imagemark = "";
-  $* = 1;
-  local($Maxlength) = 99999;
-local($i);
-  while (1) {
-    $item_len = $mark_len = $desc_len = $Maxlength;
-    $desc_len = length($`) if (/$item_description_rx/);
-    $mark_len = length($`) if (/\\htmlitemmark/);
-    $item_len = length($`) if (/\\item$delimiter_rx/);
-	local($i);
-    last if ($item_len == $Maxlength && $mark_len == $Maxlength &&
-	$desc_len == $Maxlength);
-    if ($mark_len < $item_len && $mark_len < $desc_len) {
-#	s/\\htmlitemmark$any_next_pair_rx//;
-#	$mark = $2;	# Interpret as a URL if not in table
-	if (/\\htmlitemmark/) {
-	    $mark = &missing_braces
-		unless ((s/\\htmlitemmark$any_next_pair_rx/$mark=$2;''/eo)
-		    ||(s/\\htmlitemmark$any_next_pair_pr_rx/$mark=$2;''/eo));
-	$mark_size = $ImageSizeMarks{$mark};
-	$mark = "$ICONSERVER/$ImageMarks{$2}.gif" if ($ImageMarks{$2});
-	$imagemark = '<IMG ' . $mark_size . ' SRC="' . $mark . '" ALT="*">';
-	$imagemark =~ s/~/&#126;/g;	# Allow ~'s in $ICONSERVER
-	}
+sub set_htmllist_marker {
+    local($icon) = @_;
+    local($ICONSERVER) = ($LOCAL_ICONS ? '' : $ICONSERVER.$dd );
+    if (!($ImageMarks{$icon})) {
+	print "\nUnknown icon '$icon' for htmllist marker";
+	&write_warnings("Unknown icon '$icon' for htmllist marker");
+	return();
     }
-    elsif ($item_len < $desc_len) {
-	s/\\item$delimiter_rx/<DT>$imagemark\n<DD>$1/;
-	}
-    else  {
-#	s/$item_description_rx/<DT>$imagemark\n<B>$1<\/B>\n<DD>/;
-	s/$item_description_rx\s*($labels_rx8)?\s*/"<DT>$imagemark". 
-	    (($9)? "<A NAME=\"$9\">\n<B>$1<\/B><\/A>" : "\n<B>$1<\/B>" ) ."\n<DD>"/eg;
+    local($mark_size,$imagemark) = $ImageSizeMarks{$icon};
+    $icon = "$ICONSERVER$ImageMarks{$icon}.$IMAGE_TYPE" if ($ImageMarks{$icon});
+    $imagemark = '<IMG ' . $mark_size . ' SRC="' . $icon . '" ALT="*">';
+    $imagemark =~ s/~/&#126;/g;	# Allow ~'s in $ICONSERVER
+    # mark as used, in case $LOCAL_ICONS: thanks, Roman E. Pavlov
+    $used_icons{$icon} = 1; 
+    $imagemark;
+}
+
+sub do_env_htmllist{
+    local($_, $compact) = @_;
+    local($bullet,$pat) = &get_next_optional_argument;
+    #RRM - catch nested lists
+    $_ = &translate_environments($_);
+  
+    $compact = "" unless $compact;
+    local($imagemark,$mark,$item_len,$desc_len,$mark_len,$mark_size);
+    $imagemark = &set_htmllist_marker($bullet) if ($bullet);
+
+    $* = 1;
+    local($Maxlength) = 99999;
+    local($i,@items_done);
+    print "[";
+    while (1) {
+	print "*";
+	$item_len = $mark_len = $desc_len = $Maxlength;
+	$desc_len = length($`) if (/$item_description_rx/);
+	$mark_len = length($`) if (/\\htmlitemmark/);
+	$item_len = length($`) if (/\\item$delimiter_rx/);
+	# exit when none of them match
+	last if ($item_len == $Maxlength && $mark_len == $Maxlength
+	    && $desc_len == $Maxlength);
+	if ($mark_len < $item_len && $mark_len < $desc_len) {
+	    if (/\\htmlitemmark/) {
+		$_ = $&.$';
+		push(@items_done,&translate_commands($`));
+		$mark = &missing_braces unless (
+		    (s/\\htmlitemmark$any_next_pair_pr_rx/$mark=$2;''/eo)
+		    ||(s/\\htmlitemmark$any_next_pair_rx/$mark=$2;''/eo));
+		$imagemark = &set_htmllist_marker($mark) if ($mark);
+#		$mark_size = $ImageSizeMarks{$mark};
+#		$mark = "$ICONSERVER/$ImageMarks{$2}.gif" if ($ImageMarks{$2});
+#		$imagemark = '<IMG ' . $mark_size . ' SRC="' . $mark . '" ALT="*">';
+#		$imagemark =~ s/~/&#126;/g;	# Allow ~'s in $ICONSERVER
+	    }
+	} elsif ($item_len < $desc_len) {
+	    /\\item$delimiter_rx/;
+	    push(@items_done,&translate_commands($`),
+		    "<DT>$imagemark\n<DD>$1");
+		$_=$';
+	} else  {
+	    /$item_description_rx\s*($labels_rx8)?\s*/;
+	    push(@items_done,&translate_commands($`),
+		"<DT>$imagemark" 
+		. (($9)? "<A NAME=\"$9\">\n<B>$1<\/B><\/A>" : "\n<B>$1<\/B>" ) 
+		."\n<DD>");
+		$_=$';
 	}
     }
     $* = 0;
-#  $_ = &translate_environments($_);
-    $_ = &translate_commands($_);
+    $_ = join('',@items_done, $_); undef @items_done;
+
+    #RRM: cannot have anything before the first <LI>
+    local($savedRS) = $/; $/='';
+    $_ =~ /<D(T|D)>/s;
+    local($preitems);
+    if ($`) {
+	local($preitems) = $`; $_ = $&.$';
+	$preitems =~ s/<P( [^>]*)?>//g;
+	$preitems = "\n".$preitems if $preitems;
+    }
+    $/ = $savedRS; $* = 0;	# Multiline matching OFF
+
     $_ = '<DT>'.$_ unless (/^\s*<D(D|T)/);
-    "<DL$compact>$_</DL>";
+    print "]";
+    join('',$preitems,"<DL$compact>", $_, '</DL>');
 }
 
 1;                              # This must be the last line

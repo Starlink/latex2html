@@ -1,11 +1,11 @@
 %\scrollmode
 %\documentclass[dvips,a4paper,twoside]{article}
 \documentclass[dvips,a4paper]{article}
-\usepackage{html,htmllist,makeidx,enumerate}
-\usepackage[dvips]{graphicx}
-\usepackage[dvips]{color}
-%\usepackage{frames}
+\usepackage[dvips]{graphicx,color}
 % \usepackage{times}
+
+\usepackage{html,htmllist,makeidx,enumerate}
+%\usepackage{frames}
 
 %
 % use the url.sty package, by  Donald Arseneau <asnd@triumf.ca>
@@ -17,15 +17,23 @@
  \usepackage{url}
  \usepackage{longtable}
  \def\email{\begingroup \urlstyle{tt}\Url}
- \def\Email#1{\email{<#1>}}
- \urldef\onlinedoc\url{http://www-dsed.llnl.gov/files/programs/unix/latex2html/manual/}
+ \def\Email#1{\email{#1}}
+% \urldef\onlinedoc\url{http://www-dsed.llnl.gov/files/programs/unix/latex2html/manual/}
+ \urldef\onlinedoc\url{http://www-texdev.mpce.mq.edu.au/l2h/docs/manual/}
  \urldef\onlinedocRM\url{http://www-texdev.mpce.mq.edu.au/l2h/docs/manual/}
  \urldef\EXcolors\url{http://www-texdev.mpce.mq.edu.au/l2h/crayola/}
- \urldef\CVSrepos\url{http://cdc-server.cdc.informatik.tu-darmstadt.de/~latex2html/user/}
- \urldef\CVSsite\url{http://cdc-server.cdc.informatik.tu-darmstadt.de/~latex2html/}
- \urldef\CVSlatest\url{http://cdc-server.cdc.informatik.tu-darmstadt.de/~latex2html/l2h-latest.tar.gz}
- \urldef\patches\url{http://www-dsed.llnl.gov/files/programs/unix/latex2html/}
- \urldef\sourceA\url{http://www-dsed.llnl.gov/files/programs/unix/latex2html/sources/}
+% \urldef\CVSrepos\url{http://cdc-server.cdc.informatik.tu-darmstadt.de/~latex2html/user/}
+% \urldef\CVSsite\url{http://cdc-server.cdc.informatik.tu-darmstadt.de/~latex2html/}
+% \urldef\CVSlatest\url{http://cdc-server.cdc.informatik.tu-darmstadt.de/~latex2html/l2h-latest.tar.gz}
+ \urldef\CVSrepos\url{http://www.latex2html.org/user/}
+% \urldef\CVSsite\url{http://www.latex2html.org/}
+ \urldef\CVSsite\url{http://saftsack.fs.uni-bayreuth.de/~latex2ht/}
+% \urldef\CVSlatest\url{http://saftsack.fs.uni-bayreuth.de/~latex2ht/l2h-latest.tar.gz}
+ \urldef\CVSlatest\url{http://www.latex2html.org/current/}
+% \urldef\patches\url{http://www-dsed.llnl.gov/files/programs/unix/latex2html/}
+ \urldef\patches\url{http://www.latex2html.org/current/}
+% \urldef\sourceA\url{http://www-dsed.llnl.gov/files/programs/unix/latex2html/sources/}
+ \urldef\sourceA\url{http://www.latex2html.org/current/}
 % \urldef\sourceB\url{ftp://ftp.mpn.com/pub/nikos/latex2html-98.1.tar.gz}
  \def\sourceB{\CTANtug\CTANA}
  \urldef\sourceC\url{http://ftp.rzg.mpg.de/pub/software/latex2html/sources/}
@@ -33,12 +41,13 @@
  \urldef\CTANA\path{tex-archive/support/latex2html}
  \urldef\tugURL\url{http://www.tug.org/}
  \urldef\danteURL\url{http://www.dante.de/}
- \urldef\ListURL\url{http://www.rosat.mpe-garching.mpg.de/mailing-lists/LaTeX2HTML/}
+% \urldef\ListURL\url{http://www.xray.mpe.mpg.de/mailing-lists/latex2html/}
+ \urldef\ListURL\url{http://www.tug.org/mailman/listinfo/latex2html/}
 
 %
 %  a little hack, needed since a footnote occurs in a figure-caption
 %
-\def\adjustfootnote{\setcounter{footnote}{6}\footnotetext{http://csep1.phy.ornl.gov/csep.html}}
+\def\adjustfootnote{\setcounter{footnote}{6}\footnotetext{\url{http://csep1.phy.ornl.gov/csep.html}}}
 
 %
 % These are needed for the Glossary and Index. 
@@ -70,9 +79,13 @@
 \setcounter{footnote}{0}
 %end{latexonly}
 
+\begin{imagesonly}
+ \usepackage{l2hman}
+\end{imagesonly}
 %
 \begin{htmlonly}
  \def\makeglossary{}
+ \pagecolor[named]{White}
 \end{htmlonly}
 
 \input manhtml.tex
@@ -164,7 +177,7 @@
 %
 \begin{center}{
 Documentation revised and updated for \textsc{v97.1} and \texttt{HTML}~3.2;\\
-and further revisions for \textsc{v98.1} and \texttt{HTML}~4.0 by:}
+and further revisions for \textsc{v98.1} and later, and for \texttt{HTML}~4.0 by:}
 \end{center}
 \medskip
 \begin{center}
@@ -187,23 +200,36 @@ Mathematics Department\\
 \begin{latexonly}
 \begin{center}
 {\large 
-This document accompanies \latextohtml{} version 98.1}%
-\footnote{{\bfseries This is a preliminary document for \latextohtml{} 98.1 with
-revisions in section \htmlref{``Getting \latextohtml''}{sec:sup},
-\htmlref{``Known Problems''}{sec:prb} and
-\htmlref{``Environments and Special Features''}{sec:fea}.
-A fully updated manual is underway and will be released soon.}
+This document accompanies \latextohtml{} version 99.1 (beta)%
+\footnote{\bfseries This is a preliminary document for \latextohtml{} 99.1.}}.
 
-The manuscript was updated to version \textsc{v96.1}\,,
-as indicated with thin change-bars, by Herbert W.\ Swan \Email{lanhws@expl.aai.arco.com} 
-and converted to \LaTeXe{} by \Goossens~\Email{goossens@cern.ch}.
-Extensive revisions of the manuscript were made by \RossMoore~\Email{ross@mpce.mq.edu.au}
-for \textsc{v96.1} \texttt{rev-f}, incorporating also suggestions from \Goossens.
+\paragraph{}
+This manual differs from earlier versions by updates to the section
+\htmlref{``Installation and Further Support''}{sec:sup},
+a few small changes in other sections,
+and a shortening of \htmlref{``Known Problems''}{sec:prb} 
+by removing references to old problems that no longer occur.
+Not all of the newer features of \latextohtml{} \textsc{v99.1} are described yet. 
+A fully updated manual is underway and will be released when completed.
+
+\paragraph{History}
+\NikosDrakos' original manuscript was updated for version \textsc{v96.1}\,%,
+by \HerbSwan\ and converted for \LaTeXe{} by \Goossens.
+Extensive revisions were made by \RossMoore\ for \textsc{v96.1} \texttt{rev-f}, 
+incorporating also suggestions from \Goossens.
 Another major revision was required to adequately describe the new features 
 made possible with \texttt{HTML} 3.2\,,
 and recent developments in image-generation and macro-handling.
-This work was done by \RossMoore, as were most of the revisions for \textsc{v98.1}.
-Wider change-bars indicate where newly added features are described.}%
+This work was done by \RossMoore, 
+as were most of the revisions for \textsc{v98.1}, \textsc{v98.2}
+and \textsc{v99.1}.
+
+Portability for non-Unix systems has been achieved due to work done mainly by
+\Rouchal, \Wortmann, \Popineau{} and \Taupin.
+
+Changes for the \textsc{v98.1} revision are indicated with narrow change-bars.
+Wider change-bars indicate where the most recent changes and features 
+added in \textsc{v99.1} are described.
 \Glossary{latex2e}{\LaTeXe}%
 \end{center}
 \end{latexonly}
@@ -213,28 +239,35 @@ Wider change-bars indicate where newly added features are described.}%
 %
 \begin{htmlonly}
 
-This document accompanies \latextohtml{}\Glossary{latex2html}{\LaTeX2HTML}{}, version 98.1.
+This document accompanies \latextohtml{}\Glossary{latex2html}{\LaTeX2HTML}{},
+version 99.1(beta).
 \Glossary{latex2e}{\LaTeXe}{}
 
-{\bf This is a preliminary document for \latextohtml{} 98.1 with
-revisions in section \htmlref{``Getting \latextohtml''}{sec:sup},
-\htmlref{``Known Problems''}{sec:prb} and
-\htmlref{``Environments and Special Features''}{sec:fea}.
-A fully updated manual is underway and will be released soon.}
+This manual differs from earlier versions by updates to the section
+\htmlref{``Installation and Further Support''}{sec:sup},
+a few small changes in other sections,
+and a shortening of \htmlref{``Known Problems''}{sec:prb} 
+by removing references to old problems that no longer occur.
+Not all of the newer features of \latextohtml{} \textsc{v99.1} are described yet. 
+A fully updated manual is underway and will be released when completed.
 
-The manuscript was updated to version 96.1, as indicated with change-bar icons, 
-by Herbert W\,Swan \Email{lanhws@expl.aai.arco.com} 
-and converted to \LaTeXe{} by \Goossens~\Email{goossens@cern.ch}.
+\textbf{History: }
+The manuscript was updated for version 96.1 by \HerbSwan{} 
+and converted for \LaTeXe{} by \Goossens.
 
-Updates and extensive revisions to the manuscript for version \textsc{v96.1} \texttt{rev-f},
-were made by \RossMoore~\Email{ross@mpce.mq.edu.au}, 
+Updates and extensive revisions to the manuscript for version \textsc{v96.1}
+\texttt{rev-f}, were made by \RossMoore,
 also incorporating suggestions from \Goossens. 
 
 \bigskip
 Another major revision was required to adequately describe the new features 
 made possible with \texttt{HTML} 3.2\,,
-and recent developments in image-generation and macro-handling.
-This work was done by \RossMoore, as were most of the revisions for \textsc{v98.1}. 
+and developments in image-generation and macro-handling.
+This work was done by \RossMoore, 
+as were most of the revisions for \textsc{v98.1}, \textsc{v98.2} and \textsc{v99.1}.
+Portability for non-Unix systems has been achieved due to work done mainly by
+\Rouchal, \Wortmann, \Popineau{} and \Taupin.
+
 Appropriate change-bar icons indicate where newly added features are described.
 
 \htmlrule
@@ -244,10 +277,10 @@ Appropriate change-bar icons indicate where newly added features are described.
 %
 \index{PostScript version}
 A \htmladdnormallink{PostScript version}%{manual.ps}
-{ftp://ftp.mpce.mq.edu.au/pub/maths/l2h/l2hmanual.ps.gz}
-is available; also with \htmladdnormallink{no included fonts}%{manual.ps.gz}
-{ftp://ftp.mpce.mq.edu.au/pub/maths/l2h/manual.nofonts.ps.gz},
-instead with references to PostSript fonts.
+{http://www-texdev.mpce.mq.edu.au/l2h/docs/manual.ps.gz}
+is available. %; also with \htmladdnormallink{no included fonts}%{manual.ps.gz}
+%{ftp://www-texdev.mpce.mq.edu.au/l2h/docs/manual.nofonts.ps.gz},
+%instead with references to PostSript fonts.
 
 \htmlrule
 
@@ -265,7 +298,7 @@ Browse the following links for information concerning:
 \htmlrule
 
 \textbf{Warning:} The contents of this document are likely to change.\\
-It is advisable not to use links to any pages other than the first page (this page).
+It is advisable not to use links to any pages other than the first page (i.e. this page).
 
 \end{htmlonly}
 
@@ -374,40 +407,52 @@ describes how to obtain and install it, and how to use it effectively.
 %\input{changes.tex}
 %\end{htmlonly}
 
+\endsegment[section]
 
 %%% START XTRACTFAQ
 %
 %  BIBLIOGRAPHY
 %
 \bibliographystyle{plain}
+\newcommand{\AWcsengURL}{http://www.awl.com/cseng}
+\newcommand{\AddWes}[1]{\htmladdnormallink{Addison--Wesley}{#1}}
+\newcommand{\awlogo}{\AWcsengURL/images/tri.gif}
+\newcommand{\AWlamport}{\AWcsengURL/titles/0-201-52983-1}
+\newcommand{\LAMPcover}{\AWlamport/coversm.gif}
+\newcommand{\AWtheTLC}{\AWcsengURL/titles/0-201-54199-8}
+\newcommand{\TLCcover}{\AWtheTLC/tlc.gif}
+\newcommand{\AWtheLGC}{\AWcsengURL/titles/0-201-85469-4}
+\newcommand{\LGCcover}{\AWtheLGC/coversm.gif}
+\newcommand{\AWtheLWC}{\AWcsengURL}
+\newcommand{\LWCcover}{}
 \begin{thebibliography}{1}\label{biblio}
 
 \index{LaTeX blue book@\LaTeX{} blue book!Leslie Lamport}%
-\htmladdimg[ALIGN=RIGHT]{http://www.aw.com/thumaw.gif}
+\htmladdimg[ALIGN=RIGHT width=80 height=100]{\LAMPcover}
 \bibitem{lamp:latex}
 Leslie Lamport,
-\newblock \LaTeX,\textit{A Document Preparation System}. User's Guide \& Reference Manual, 2nd edition.
-\newblock ISBN 0--201--52983--1, Paperback 256 pages, %
-\htmladdnormallink{Addison--Wesley}%
-{http://heg-school.aw.com/cseng/authors/lamport/latex/latex.html}, 1994.
+\newblock \LaTeX,\textit{A Document Preparation System}.
+ User's Guide \& Reference Manual, 2nd edition.
+\newblock ISBN 0-201-52983-1, Paperback 256 pages, 
+ \AddWes{\AWlamport}, 1994.
 \newblock Online information on {\TeX} and {\LaTeX} is available at \tugURL\ and~\danteURL~.
 
 %begin{latexonly}
 \index{Companion|see{The \LaTeX\hfil Companion}}%
 \index{LaTeX Companion@\LaTeX\ Companion|see{~The \LaTeX\\ Companion}}%
-\index{The LaTeX Companion@\emph{The \textup{\LaTeX} Companion}\label{IIIlatcomp}!Goossens--Mittelbach--Samarin}%
+\index{The LaTeX Companion@\emph{The {\upshape\LaTeX} Companion}\label{IIIlatcomp}!Goossens--Mittelbach--Samarin}%
 %end{latexonly}
 \begin{htmlonly}
 \index{Companion|see{\htmlref{~The \textup{\LaTeX} Companion}{IIIlatcomp}}}%
 \index{LaTeX Companion@\LaTeX\ Companion|see{\htmlref{The \textup{\LaTeX} Companion}{IIIlatcomp}}}%
-\index{The LaTeX Companion@\htmlref{The \textup{\LaTeX} Companion}\label{IIIlatcomp}!Goossens--Mittelbach--Samarin}%
+\index{The LaTeX Companion@The \textup{\LaTeX} Companion\label{IIIlatcomp}!Goossens--Mittelbach--Samarin}%
 \end{htmlonly}
-\htmladdimg[ALIGN=RIGHT]{http://www.aw.com/cp/tlc.small.gif}
+\htmladdimg[ALIGN=RIGHT,WIDTH=61,HEIGHT=76]{\TLCcover}
 \bibitem{goossens:latex}
 Michel Goossens, Frank Mittelbach, Alexander Samarin,
-\newblock \textit{The \textup{\LaTeX} Companion}
-\newblock ISBN 0--201--54199--8, Paperback 530 pages, %
-\htmladdnormallink{Addison--Wesley}{http://www.aw.com/cp/tlc.html}, 1994.\medskip
+\newblock \emph{The }\LaTeX\emph{ Companion}
+\newblock ISBN 0-201-54199-8, Paperback 530 pages, \AddWes{\AWtheTLC/}, 1994.
+\html{\bigskip\bigskip}
 
 %begin{latexonly}
 \index{Graphics Companion|see{~The~\textup{\LaTeX}\\ Graphics Companion}}%
@@ -419,22 +464,36 @@ Michel Goossens, Frank Mittelbach, Alexander Samarin,
 \index{LaTeX Graphics Companion@\LaTeX{} Graphics Companion|see{\htmlref{The \textup{\LaTeX}\latex{\hfil} Graphics Companion}{IIIlatgraph}}}%
 \index{The LaTeX Graphics Companion@The \textup{\LaTeX} Graphics Companion\label{IIIlatgraph}!Goossens--Rahtz--Mittelbach}%
 \end{htmlonly}
-\htmladdimg[ALIGN=RIGHT]{http://www.aw.com/cp/tlgc.small.gif}
+\htmladdimg[ALIGN=RIGHT]{\LGCcover}
 \bibitem{goossens:latexGraphics}
 Michel Goossens, Sebastian Rahtz and Frank Mittelbach,
-\newblock \textit{The \textup{\LaTeX} Graphics Companion}.
-\newblock ISBN 0--201--85469--4, Softcover 608 pages, %
-\htmladdnormallink{Addison--Wesley}{http://www.aw.com/cp/tlgc.html}, 1997.
+\newblock \emph{The }\LaTeX\emph{ Graphics Companion}.
+\newblock ISBN 0-201-85469-4, Softcover 608 pages, \AddWes{\AWtheLGC/}, 1997.
+
+%begin{latexonly}
+\index{Web Companion|see{~The~\textup{\LaTeX}\\ Web Companion}}%
+\index{LaTeX Web Companion@\LaTeX\ Web Companion|see{~The\\ \textup{\LaTeX} Web Companion}}%
+\index{The LaTeX Web Companion@\emph{The \textup{\LaTeX} Web Companion}\label{IIIlatweb}!Rahtz--Goossens et al.}%
+%end{latexonly}
+\begin{htmlonly}
+\index{Graphics Web|see{\htmlref{The \textup{\LaTeX}\latex{\hfil} Web Companion}{IIIlatweb}}}%
+\index{LaTeX Web Companion@\LaTeX{} Web Companion|see{\htmlref{The \textup{\LaTeX}\latex{\hfil} Web Companion}{IIIlatweb}}}%
+\index{The LaTeX Web Companion@The \textup{\LaTeX} Web Companion\label{IIIlatweb}!Rahtz--Goossens et al.}%
+\end{htmlonly}
+%\htmladdimg[ALIGN=RIGHT]{\LWCcover}
+\bibitem{rahtz:latexWeb}
+Sebastian Rahtz and Michel Goossens, with E. Gurari, R. Moore \& R. Sutor.
+\newblock \emph{The }\LaTeX\emph{ Web Companion}.
+\newblock to appear in 1999, \AddWes{\AWtheLWC/}.
 
 \bibitem{drakos:bask}
-Nikos Drakos,
+\NikosDrakos,
 \newblock Text to Hypertext conversion with \latextohtml.
 \newblock \textit{Baskerville}, December 1993, Vol.\,3, No.\,2, pp 12--15.
-\newblock May 1994, CERN, Geneva, Switzerland.
 \newblock \url{http://cbl.leeds.ac.uk/nikos/doc/www94/www94.html}
 
 \bibitem{drakos:www94}
-Nikos Drakos,
+\NikosDrakos,
 \newblock From Text to Hypertext: A Post-Hoc Rationalisation of \latextohtml.
 \newblock Published in ``Proceedings of the 1st World Wide Web Conference'',
 \newblock May 1994, CERN, Geneva, Switzerland.
@@ -443,6 +502,7 @@ Nikos Drakos,
 \end{thebibliography}
 %%% END XTRACTFAQ
 
+%\end{document}
 
 %
 %  GLOSSARY
@@ -459,7 +519,7 @@ Nikos Drakos,
 \begin{htmlonly}
 \section{Glossary of variables and file-names\label{Glossary}}
 \begin{htmllist}\htmlitemmark{OrangeBall}
-\input l2hfiles.dat     %%%%  <<<<<<<<<<  don't forget, in final version !!!
+\input l2hfiles.dat
 \end{htmllist}
 \end{htmlonly}
 
@@ -476,7 +536,7 @@ Nikos Drakos,
 % Index info stored in:  manual.ind ,  which was created using:
 %
 %       makeindex -s l2hidx.ist manual.idx
-%       
+%
 \printindex
 
 %
@@ -526,13 +586,13 @@ Nikos Drakos,
 %
 %% This is an alphabetical navigation panel.
 \index{@\label{AZ}\textbf{\LARGE
-\htmlref{\$}{doll} \htmlref{.}{dot} \htmlref{ A }{A} 
+\htmlref{\$}{doll} \htmlref{.}{dot} \htmlref{A}{A} 
  \htmlref{B}{B} \htmlref{C}{C} \htmlref{D}{D} \htmlref{E}{E} \htmlref{F}{F}
  \htmlref{G}{G} \htmlref{H}{H} \htmlref{I}{I} \htmlref{J}{K} \htmlref{K}{K}
  \htmlref{L}{L} \htmlref{M}{M} \htmlref{N}{N} \htmlref{O}{O} \htmlref{P}{P}
  \htmlref{Q}{R} \htmlref{R}{R} \htmlref{S}{S} \htmlref{T}{T} \htmlref{U}{U}
- \htmlref{V}{V} \htmlref{W}{W} \htmlref{X}{X} \htmlref{Y}{Z} \htmlref{Z}{Z}\\
-\htmlrule[all]| }}
+ \htmlref{V}{V} \htmlref{W}{W} \htmlref{X}{X} \htmlref{Y}{Z} \htmlref{Z}{Z}}\\
+\htmlrule[all]| }
 
 \end{htmlonly}
 

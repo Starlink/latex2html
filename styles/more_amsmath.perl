@@ -72,16 +72,16 @@ sub get_eqn_number {
     # an explicit \tag overrides \notag , \nonumber or *-variant
     local($labels,$tag);
     ($scan,$labels) = &extract_labels($scan); # extract labels
-    $scan =~ s/\n//g;
+    $scan =~ s/\n/ /g;
     if ($scan =~ s/\\tag(\*|star\b)?\s*(($O|$OP)\d+($C|$CP))(.*)\2//) {
 	local($star) = $1; $tag = $5;
 	$tag = &translate_environments($tag) if ($tag =~ /\\begin/);
 	$tag = &translate_commands($tag) if ($tag =~ /\\/);
 	$tag = (($star)? $tag : $EQNO_START.$tag.$EQNO_END );
     } elsif (($outer_num)&&(!($scan)||!($scan =~ s/\\no(tag|number)//))
-	&&(!($scan =~ /^\s*\\begin(<(<|#)\d+(>|#)>)($outer_math_rx)/))
-      ) { 
-        $global{'eqn_number'}++ ;
+	&&(!($scan =~ /^\s*\\begin(<(<|#)\d+(>|#)>)($outer_math_rx)\b/))
+    ){ 
+	$global{'eqn_number'}++ ;
 	if ($subequation_level) {
 	    local($sub_tag) =  &get_counter_value('equation');
 	    $tag = join('', $EQNO_START
@@ -90,7 +90,7 @@ sub get_eqn_number {
 		, $EQNO_END);
 	} else {
 	    $tag = join('', $EQNO_START
-		, &simplify(&translate_commands("\\theequation"))
+		, &simplify(&translate_commands('\theequation'))
 		, $EQNO_END);
 	}
     } else { $tag = ';SPMnbsp;;SPMnbsp;;SPMnbsp;' }
@@ -101,7 +101,7 @@ sub get_eqn_number {
     } else { ($tag , $scan) }
 }
 
-$outer_math_rx = "(fl|x|xx)?align|multline|gather|(sub)?equation";
+$outer_math_rx = "(fl|x|xx)?align(at)?|multline|gather|(sub)?equation";
 
 sub get_mult_eqn_number {
     local($num_rows,$valign, $scan) = @_;
@@ -115,7 +115,7 @@ sub get_mult_eqn_number {
 sub start_math_display {
     join(''
 #	, (($border||($attribs)||!($outer_math))? '': "<P></P>")
-	, ((($doimage)||!($outer_math))? '': "\n<DIV ALIGN=\"CENTER\">")
+	, ((($doimage)||!($outer_math))? '': "\n<DIV$math_class>")
 	, (($labels)? $labels : '') , $comment
 	, @_ );
 }
@@ -133,18 +133,19 @@ sub embed_display {
     return(@_[0]) if $outer_math;
 
     # at the outermost level
-    if (($border)||($attribs)) { 
-	join('',"<BR>\n<DIV ALIGN=\"CENTER\">\n"
-            , &make_table( $border, $attribs, '', '', '', @_ )
+    if (($border)||($attribs)) {
+	join('',"<BR>\n<DIV$math_class>\n"
+	    , &make_table( $border, $attribs, '', '', '', @_ )
 	    , "\n<BR CLEAR=\"ALL\">");
     } else { join('', "<P></P>", @_ , "<P></P>") }
 }
 
 $smdiv_rx = "<(BR|DIV)";
-$spdisplay = "<P ALIGN=\"CENTER\">";
-$epdisplay = "<BR CLEAR=\"ALL\">\n<P>";
+$spdisplay = (($HTML_VERSION > 3.1)? "<DIV ":"<P "). "ALIGN=\"CENTER\">";
+$epdisplay = (($HTML_VERSION > 3.1)? "</DIV>\n":'')."<BR CLEAR=\"ALL\">\n<P>";
 $mdisp_width = " WIDTH=\"100%\"";
-$smarray = "<TABLE CELLPADDING=\"0\"";
+$smarray = "<TABLE";
+$smarrayB = " CELLPADDING=\"0\"";
 $emarray = "\n</TABLE>";
 $smrow = "\n<TR"; # must be followed by alignment or ">"
 $emrow = "</TR>";
@@ -155,6 +156,7 @@ $emcell = "</TD>";
 $mcalign = " ALIGN=\"CENTER\">";
 $mlalign = " ALIGN=\"LEFT\">";
 $mralign = " ALIGN=\"RIGHT\">";
+$mvalign = " VALIGN=\"MIDDLE\"";
 $smlcell = $smncell.$mlalign;
 $smccell = $smncell.$mcalign;
 $smrcell = $smncell.$mralign;
@@ -162,8 +164,8 @@ $mnocell = "\n<TD>";
 $mspace = "\&nbsp;";
 $mdlim = $html_specials{'&'};
 
-$lseqno = " WIDTH=\"10\" ALIGN=\"LEFT\">\n";
-$rseqno = " WIDTH=\"10\" ALIGN=\"RIGHT\">\n";
+$lseqno = "$eqno_class WIDTH=\"10\" ALIGN=\"LEFT\">\n";
+$rseqno = "$eqno_class WIDTH=\"10\" ALIGN=\"RIGHT\">\n";
 
 
 # do these indirectly, so that they only over-ride the existing
@@ -173,14 +175,16 @@ eval "sub do_env_equation { \&process_env_equation(1,\@_); }";
 eval "sub do_env_equationstar { \&process_env_equation(0,\@_); }";
 
 sub do_env_subequations {
-    local($prev_eqn_number) = ++$global{'eqn_number'};
-    local($eqno_prefix) = &do_cmd_theequation();
+    local($contents) = @_[0];
+    local($prev_eqn_number) = $global{'eqn_number'}++;
+    local($eqno_prefix) = &translate_commands('\theequation');
     $eqno_prefix =~ s/\s+$//;
-    $subequation_level++;
+    ++$subequation_level;
+    local($outer_math) = 'subequations' unless $outer_math;
     $global{'eqn_number'} = 0;
-    local($contents) = &process_env_equation(1, @_[0]);
-#    $subequation_level--;
-    $global{'eqn_number'} = $prev_eqn_number;
+    $contents = &process_env_equation(1, $contents);
+    --$subequation_level;
+    $global{'eqn_number'} = ++$prev_eqn_number;
     $contents;
 }
 
@@ -188,39 +192,69 @@ sub process_env_equation {
     local($numbered, $_) = @_;
     local($math_mode, $failed, $labels, $comment, $doimage) = ("equation",'','','','');
     local($attribs, $border);
-    local($outer_math) = $env unless ($outer_math);
     if (s/$htmlborder_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
     elsif (s/$htmlborder_pr_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
-    local($saved) = $_;
+    local($saved) = &revert_array_envs($_);
+    local($falign) = 'CENTER';
     local($sbig,$ebig)= &set_math_size($math_mode);
     $failed = 1 if ($NO_SIMPLE_MATH); # simplifies the next call
     ($labels, $comment, $_) = &process_math_env($math_mode,$_);
+    $failed = 0;
 
-    if (($failed)&&!($NO_SIMPLE_MATH)) {
-        $_ = join ('', $labels, $comment
-	    , &process_undefined_environment(
-	        "equation".(($numbered) ? '':"*")
-	        , $id, $saved));
-	$_ = join('', $spdisplay, $labels, $comment, $_, $epdisplay);
+    $failed = (/$htmlimage_rx|$htmlimage_pr_rx/); # force an image
+    local($outer_math) = $env unless ($outer_math);
+
+    if ($USING_STYLES) {
+	$env_id =~ s/(CLASS=\")(\w+)/$1$outer_math/;
+	$env_style{$outer_math} = "" unless ($env_style{$outer_math});
+	$env_id = ' CLASS="'.$outer_math.'"' unless $env_id;
+    }
+
+    if ($failed) {
+	local($this_env) = $outer_math;
+	if (!($this_env =~ s/(star|\*)$/\*/)) { $global{'eqn_number'}++ };
+	$_ = &process_undefined_environment($this_env, $id, $saved);
+	$falign = (($EQN_TAGS =~ /L/)? 'LEFT' : 'RIGHT') if $numbered;
+	local($fsdisplay,$fedisplay) = ($spdisplay,$epdisplay);
+	if (!($fsdisplay =~ s/(ALIGN\s*=\s*\")[^\"]*\"/$1$falign\"/)) {
+	    $fsdisplay .= "<DIV$env_id ALIGN=\"$falign\">";
+	    $fedisplay = '</DIV>'.$epdisplay;
+	}
+	$_ = join('', $fsdisplay, $labels, $comment, $_, $fedisplay);
 
     } elsif ($NO_SIMPLE_MATH) {
-        $failed = 0;
+#    if ($NO_SIMPLE_MATH) {
+	$failed = 0;
 	s/$htmlimage_rx/$doimage = $&;''/eo ; # force an image
 	s/$htmlimage_pr_rx/$doimage .= $&;''/eo ; # force an image
-        local($valign) = &set_math_valign();
-        local($sarray, $srow, $scell, $calign, $ecell, $erow, $earray);
+	local($valign) = &set_math_valign();
+	local($sarray, $srow, $scell, $calign, $ecell, $erow, $earray);
+
+#	local($env_id) = $env_id;
+#	if ($USING_STYLES) {
+#	    $env_id =~ s/(CLASS=\")(\w+)/$1$outer_math/;
+#	    $env_style{$env} = "" unless ($env_style{$env});
+#	}
 
 	($sarray, $erow, $earray, $sempty, $calign) = ( 
-	    $smarray.$mdisp_width.$mcalign
+	    $smarray.$env_id.$smarrayB.$mdisp_width.$mcalign
 	    , $emrow , $emarray, $emcell.$mnocell, $mcalign );
+	$env_id = '';
 
 	local($return) = &start_math_display ( $sarray );
 
-	local($eqno);
+	local($eqno, $inner_numbered);
 	($eqno, $_) = &get_eqn_number($numbered,$_);
-        local($valign) = &set_math_valign($eqno);
+	local($valign) = &set_math_valign($eqno);
 
-	if ($EQN_TAGS =~ /L/) {
+	$_ = &protect_array_envs($_);
+	if ($_ =~ /\s*\\begin\s*$O\d+$C\s*align/) {
+	    # no equation numbering --- handled by the inner-alignment
+	    $inner_numbered = 1;
+	    ($srow, $scell, $ecell) = (
+		$smrow.$valign.$emtag, $smncell , $emcell);
+	    $return .= $srow . $scell;	    
+	} elsif ($EQN_TAGS =~ /L/) {
 	    # equation number on left
 	    ($srow, $scell, $ecell) = (
 #		$smrow.$valign.$emtag.$smcell.$mcalign, $smncell , $emcell);
@@ -256,20 +290,26 @@ sub process_env_equation {
 	        $thismath = &process_math_in_latex("indisplay",'',''
 		    , $doimage.$thismath ) unless ($thismath eq '' );
 	    } else {
-	        $thismath = &make_math('displaymath','',''
-		    , $thismath) unless ( $thismath eq '' );
+		if ($thismath =~ /$subAMS_array_env_rx/) {
+		    $outer_math =~ s/(equation)(star)?$/$1star/;
+		    $thismath = &make_math($outer_math,'','', $thismath);
+		} else {
+		    $thismath = &make_math('display','','', $thismath)
+			unless ( $thismath eq '' );
+		}
 	    }
 	    if ($thismath ne '') {
 	        $return .= join('', $calign
 		    , (($thismath =~ /^$smarray/)? $thismath
-			: $sbig . $thismath . $ebig ) , $ecell);
+			: $sbig . $thismath . $ebig )
+		    , $ecell);
 	    } else {
 		$return .= join('', $sempty, "\&nbsp;", $ecell);
 	    }
 	}
 #	$return .= $smncell.$mcalign.$eqno.$ecell
 	$return .= $smncell.$rseqno.$eqno.$ecell
-	    unless ($EQN_TAGS =~ /L/); # eqn-num on right
+	    unless (($EQN_TAGS =~ /L/)||$inner_numbered); # eqn-num on right
 	$return .= $erow;
 
         $_ = &end_math_display($return , $earray );
@@ -278,7 +318,6 @@ sub process_env_equation {
     }
 
     undef $outer_math unless ($subequation_level);
-    $subequation_level-- if ($subequation_level);
     &embed_display($_);
 }
 
@@ -305,51 +344,64 @@ sub process_env_multline {
     $failed = 1 if ($NO_SIMPLE_MATH); # simplifies the next call
     ($labels, $comment, $_) = &process_math_env($math_mode,$_);
 
-    if (($failed)&&!($NO_SIMPLE_MATH)) {
-        $_ = join ('', $labels, $comment
-	    , &process_undefined_environment(
-	        "multline".(($numbered) ? '' : "*" )
-	        , $id, $saved));
-	$_ = join('', $spdisplay, $labels, $comment, $_, $epdisplay);
+    local($falign) = 'CENTER';
+    $failed = (/$htmlimage_rx|$htmlimage_pr_rx/) unless ($outer_math); # force an image
+    local($outer_math) = $env unless ($outer_math);
+
+    if ($failed) {
+	$_ = &process_undefined_environment(
+		'multline'.(($numbered) ? '':"*"), $id, $saved);
+	$falign = (($EQN_TAGS =~ /L/)? 'LEFT' : 'RIGHT') if $numbered;
+	local($fsdisplay,$fedisplay) = ($spdisplay,$epdisplay);
+	if (!($fsdisplay =~ s/(ALIGN\s*=\s*\")[^\"]*\"/$1$falign\"/)) {
+	    $fsdisplay .= "<DIV ALIGN=\"$falign\">";
+	    $fedisplay = '</DIV>'.$epdisplay;
+	}
+	$_ = join('', $fsdisplay, $labels, $comment, $_, $fedisplay);
 
     } elsif ($NO_SIMPLE_MATH) {
-        $failed = 0;
+	$failed = 0;
 	s/$htmlimage_rx/$doimage = $&;''/eo ; # force an image
 	s/$htmlimage_pr_rx/$doimage .= $&;''/eo ; # force an image
-        local($valign) = &set_math_valign();
-        local($sarray, $srow, $scell, $calign, $ecell, $erow, $earray);
+	local($valign) = &set_math_valign();
+	local($sarray, $srow, $scell, $calign, $ecell, $erow, $earray);
 
+	local($env_id) = $env_id;
+	if ($USING_STYLES) {
+	    $env_style{$env} = "" unless ($env_style{$env});
+	}
 	($sarray, $erow, $earray, $sempty, $calign) = ( 
-	    $smarray.$mdisp_width.$mcalign
+	    $smarray.$env_id.$smarrayB.$mdisp_width.$mcalign
 	    , $emrow , $emarray, $emcell.$mnocell, $mlalign );
+	$env_id = '';
 
 	local($return) = &start_math_display ( $sarray );
 
 	local($eqno);
 	($eqno, $_) = &get_eqn_number($numbered,$_);
-        local($valign) = &set_math_valign($eqno);
+	local($valign) = &set_math_valign($eqno);
 
 	$_ = &protect_array_envs($_);
 
 	if ($EQN_TAGS =~ /L/) {
 	    # equation number on left
-            ($srow, $scell, $ecell) = (
+	    ($srow, $scell, $ecell) = (
 #		$smrow.$valign.$emtag.$smcell.$mcalign , $smncell , $emcell);
 		$smrow.$valign.$emtag.$smcell.$lseqno , $smncell , $emcell);
 	    $return .= $srow . $eqno . $ecell . $scell;
 	} else { # equation number on right
-            ($srow, $scell, $ecell) = (
+	    ($srow, $scell, $ecell) = (
 		$smrow.$valign.$emtag , $smncell, $emcell);
 	    $return .= $srow . $scell ;
 	}
 
 	local(@rows,$thismath);
-        s/\\\\[ \t]*(\*|\[[^\]]*])/\\\\/g; # remove forced line-heights
+	s/\\\\[ \t]*(\*|\[[^\]]*])/\\\\/g; # remove forced line-heights
 	@rows = split(/\\\\/);
 	$#rows-- if ( $rows[$#rows] =~ /^\s*$/ );
 	local($row_cnt);
 	foreach (@rows) { # displaymath
-            if ($row_cnt) {
+	    if ($row_cnt) {
 		$eqno = '' if ($EQN_TAGS =~ /L/);
 		$calign = $mcalign;
 		$calign = $mralign if ($row_cnt == $#rows );
@@ -359,15 +411,15 @@ sub process_env_multline {
 
 	    if (s/\\shove(righ|lef)t//) {
 		local($whichway) = $1;
-	        $return .= (($1 =~/lef/)? $mlalign : $mralign );
+		$return .= (($1 =~/lef/)? $mlalign : $mralign );
 		if (($doimage)||($failed)) {
 		    $_ = &process_math_in_latex("indisplay",'',''
 		        , $doimage.$_ ) unless ($_ eq '');
-	        } else { 
+		} else { 
 		    $_ = &make_math('display','','',$_) unless ($_ eq '')
 		}
-	        if (!($_ eq '')) {
-	            $return .= join(''
+		if (!($_ eq '')) {
+		    $return .= join(''
 			, (($whichway =~ /lef/)? $mspace.$mspace : '')
 			, ((/^$smarray/)? $_ : $sbig.$_.$ebig )
 			, (($whichway =~ /lef/)? '' : $mspace.$mspace )
@@ -389,7 +441,7 @@ sub process_env_multline {
 	    if ($thismath ne '') {
 	        $return .= join('', $calign
 		    , (($row_cnt == 1)? $mspace.$mspace : '')
-                    , (($thismath=~/^$smarray/)? $thismath
+		    , (($thismath=~/^$smarray/)? $thismath
 			    : $sbig.$thismath.$ebig )
 		    , (($row_cnt == 1+$#rows )?  $mspace.$mspace : '')
 		    , $ecell);
@@ -403,9 +455,9 @@ sub process_env_multline {
 		unless ($EQN_TAGS =~ /L/); # eqn-num on right
 	$return .= $erow;
 
-        $_ = &end_math_display($return , $earray );
+	$_ = &end_math_display($return , $earray );
     } else {
-        $_ = &do_htmlmath_array('c');
+	$_ = &do_htmlmath_array('c');
     }
     undef $outer_math unless ($subequation_level);
     &embed_display($_);
@@ -419,10 +471,10 @@ sub process_intertext {
     local($pre) = $`; $pre =~ s/(^\s*|\s*$)//go;
     local($span) = (/$mdlim/) + $eq_nums + 1;
     $text = &missing_braces unless (
-        (s/$next_pair_pr_rx/$text = $2;''/e)
-        ||(s/$next_pair_rx/$text = $2;''/e));
+	(s/$next_pair_pr_rx/$text = $2;''/e)
+	||(s/$next_pair_rx/$text = $2;''/e));
     $post = $_; $post =~ s/(^\s*|\s*$)//go;
-    $text = &translate_environments(&translate_commands($text))
+    $text = &translate_commands(&translate_environments($text))
 	if ($text =~ /\\/);
     $text = join('', $smrow, $emtag
 	, (($span > 1) ? $smcell." COLSPAN=$span".$mlalign : $smlcell)
@@ -453,7 +505,7 @@ sub do_env_alignat {
     local($aligns);
     $aligns = &missing_braces unless (
 	(s/$next_pair_pr_rx/$aligns = $2;''/e)
-        ||(s/$next_pair_rx/$aligns = $2;''/e ));
+	||(s/$next_pair_rx/$aligns = $2;''/e ));
     local($math_mode, $attribs, $border) = ("equation",'','');
     if (s/$htmlborder_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
     elsif (s/$htmlborder_pr_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
@@ -466,7 +518,7 @@ sub do_env_alignatstar {
     local($aligns);
     $aligns = &missing_braces unless (
 	(s/$next_pair_pr_rx/$aligns = $2;''/e)
-        ||(s/$next_pair_rx/$aligns = $2;''/e ));
+	||(s/$next_pair_rx/$aligns = $2;''/e ));
     local($math_mode, $attribs, $border) = ("equation",'','');
     if (s/$htmlborder_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
     elsif (s/$htmlborder_pr_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
@@ -479,7 +531,7 @@ sub do_env_xalignat {
     local($aligns);
     $aligns = &missing_braces unless (
 	(s/$next_pair_pr_rx/$aligns = $2;''/e)
-        ||(s/$next_pair_rx/$aligns = $2;''/e ));
+	||(s/$next_pair_rx/$aligns = $2;''/e ));
     local($math_mode, $attribs, $border) = ("equation",'','');
     if (s/$htmlborder_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
     elsif (s/$htmlborder_pr_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
@@ -492,7 +544,7 @@ sub do_env_xalignatstar {
     local($aligns);
     $aligns = &missing_braces unless (
 	(s/$next_pair_pr_rx/$aligns = $2;''/e)
-        ||(s/$next_pair_rx/$aligns = $2;''/e ));
+	||(s/$next_pair_rx/$aligns = $2;''/e ));
     local($math_mode, $attribs, $border) = ("equation",'','');
     if (s/$htmlborder_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
     elsif (s/$htmlborder_pr_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
@@ -505,7 +557,7 @@ sub do_env_xxalignat {
     local($aligns);
     $aligns = &missing_braces unless (
 	(s/$next_pair_pr_rx/$aligns = $2;''/e)
-        ||(s/$next_pair_rx/$aligns = $2;''/e ));
+	||(s/$next_pair_rx/$aligns = $2;''/e ));
     local($math_mode, $attribs, $border) = ("equation",'','');
     if (s/$htmlborder_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
     elsif (s/$htmlborder_pr_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
@@ -518,7 +570,7 @@ sub do_env_xxalignatstar {
     local($aligns);
     $aligns = &missing_braces unless (
 	(s/$next_pair_pr_rx/$aligns = $2;''/e)
-        ||(s/$next_pair_rx/$aligns = $2;''/e ));
+	||(s/$next_pair_rx/$aligns = $2;''/e ));
     local($math_mode, $attribs, $border) = ("equation",'','');
     if (s/$htmlborder_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
     elsif (s/$htmlborder_pr_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
@@ -578,42 +630,61 @@ sub process_env_align{
     local($numbered, $outer_math, $num_aligns, $align_spec, $_) = @_;
     local($failed, $labels, $comment, $def_align) = ('','','','');
     local($saved)= $_;
+    local($falign)= 'CENTER';
     $saved = join('',"\\begin\{$env\}$num_aligns"
 		, $_, "\\end\{$env\}\n") if ($outer_math);
-    $numaligns = 2*$numaligns - 1 if ($num_aligns);
+    $num_aligns = 2*$num_aligns - 1 if ($num_aligns);
     if ($align_spec =~ /(l|r)/) {
 	$def_align = (($1 eq 'l')? $smlcell : $smrcell ) }
     elsif ($align_spec eq 'c') { $def_align = $smccell }
-    elsif (!$num_aligns) { $def_align = $smlcell }
+#    elsif (!$num_aligns) { $def_align = $smlcell }
+    elsif (!$num_aligns) { $def_align = $smccell }
 
     local($sbig,$ebig)= &set_math_size($math_mode);
     $failed = 1 if ($NO_SIMPLE_MATH); # simplifies the next call
     ($labels, $comment, $_) = &process_math_env($math_mode,$_)
 	unless ($outer_math);
 
-    if (($failed)&&!($NO_SIMPLE_MATH)) {
-	if ($outer_math) {
-	    $_ = &process_undefined_environment( $outer_math , $id, $saved);
-	} else {
-	    $_ = &process_undefined_environment( $env , $id, $saved);
+    $failed = (/$htmlimage_rx|$htmlimage_pr_rx/); # force an image
+    if ($failed) {
+	local($this_env) = ($outer_math ? $outer_math : $env );
+	if ($saved =~ s/^\s*\\begin((($O|$OP)\d+($C|$CP|))|\{)\Q$this_env\E(\2|\})//){
+	    $saved =~ s/\\end((($O|$OP)\d+($C|$CP))|\{)\Q$this_env\E(\2|\})\s*$//s;
 	}
+	$_ = &process_undefined_environment($this_env,$id,$saved);
+
+	$falign = (($EQN_TAGS =~ /L/)? 'LEFT' : 'RIGHT') if $numbered;
+	local($fsdisplay,$fedisplay) = ($spdisplay,$epdisplay);
+	if (!($fsdisplay =~ s/(ALIGN\s*=\s*\")[^\"]*\"/$1$falign\"/)) {
+	    $fsdisplay .= "<DIV ALIGN=\"$falign\">";
+	    $fedisplay = '</DIV>'.$epdisplay;
+	}
+	$_ = join('', $fsdisplay, $labels, $comment, $_, $fedisplay);
+
     } elsif ($NO_SIMPLE_MATH) {
-        $failed = 0;  
-        s/$htmlimage_rx/$doimage = $&;''/eo ; # force images of parts
+	$failed = 0;  
+	s/$htmlimage_rx/$doimage = $&;''/eo ; # force images of parts
 	s/$htmlimage_pr_rx/$doimage .= $&;''/eo ; # force an image
 
-        local($sarray, $erow, $earray, $sempty, $calign) = (
-            $smarray.$mdisp_width.$mcalign, $emrow
-            , $emarray, $mnocell.$mspace, $mcalign );
+	local($env_id) = $env_id;
+	if ($USING_STYLES) {
+	    $env_id =~ s/(CLASS=\")(\w+)/$1$outer_math/;
+	    $env_style{$env} = "" unless ($env_style{$env});
+	}
+	local($sarray, $erow, $earray, $sempty, $calign) = (
+	    $smarray.$env_id.$smarrayB.$mdisp_width.$mcalign, $emrow
+	    , $emarray, $mnocell.$mspace, $mcalign );
+	$env_id = '';
 
-        local($srow, $ecell, $slcell, $srcell) = (
-            $smrow.$valign.$emtag , $emcell
-            , $smncell.$mlalign, $smncell.$mralign );
+	local($valign, $scell, $eqno) = ($mvalign,'','');
+	local($srow, $ecell, $slcell, $srcell) = (
+	    $smrow.$valign.$emtag , $emcell
+	    , $smncell.$mlalign, $smncell.$mralign );
 
-        local($valign, $scell, $eqno);
+	local($return) = &start_math_display ( $sarray );
 
-        local($return) = &start_math_display ( $sarray );
-
+	# revert all protection, before protecting alignment in sub-envs
+	$_ = &revert_array_envs($_);
 	$_ = &protect_array_envs($_);
 
 	if ($EQN_TAGS =~ /L/) {
@@ -628,16 +699,19 @@ sub process_env_align{
 
 	local($xcols) = '0';
 
-        local(@rows, @cols, $eqno, $thismath);
-        s/\\\\[ \t]*(\*|\[[^\]]*])/\\\\/g; # remove forced line-heights
-        @rows = split(/\\\\/);
-        $#rows-- if ( $rows[$#rows] =~ /^\s*$/ );
-        foreach (@rows) { # displaymath
-            next if (/^\s*$/); # ignore last row, if empty
+	local(@rows, @cols, $eqno, $thismath);
+	s/\\\\[ \t]*(\*|\[[^\]]*])/\\\\/g; # remove forced line-heights
+	@rows = split(/\\\\/);
+	$#rows-- if ( $rows[$#rows] =~ /^\s*$/ );
+	foreach (@rows) { # displaymath
+	    next if (/^\s*$/); # ignore last row, if empty
 
 	    if (/\\intertext/) {
 		local($extra_row);
-		($extra_row,$_) = &process_intertext($numbered,$_);
+		#der -- David Rourke
+		#there is an equation-number cell, even if empty
+		#($extra_row,$_) = &process_intertext($numbered,$_);
+		($extra_row,$_) = &process_intertext(1,$_);
 		$return .= $extra_row;
 	    }
 	    ($eqno, $_) = &get_eqn_number($numbered,$_);
@@ -661,39 +735,39 @@ sub process_env_align{
 	    # ... unless there is no explicit alignment
 	    } elsif ($xcols == 0) { $scell = $def_align }
 
-            if (s/\\shove(righ|lef)t//) {
-                local($whichway) = $1;
-                $return .= (($1 =~/lef/)? $slcell : $srcell );
-                if (($doimage)||($failed)) {
-                    $_ = &process_math_in_latex("indisplay",'',''
-                        , $doimage.$_ ) unless ($_ eq '');
-                } else {
+	    if (s/\\shove(righ|lef)t//) {
+		local($whichway) = $1;
+		$return .= (($1 =~/lef/)? $slcell : $srcell );
+		if (($doimage)||($failed)) {
+		    $_ = &process_math_in_latex("indisplay",'',''
+			, $doimage.$_ ) unless ($_ eq '');
+		} else {
 		    $_ = &revert_array_envs($_);
-                    $_ = &make_math('display','','',$_) unless ($_ eq '')
-                }
-                if (!($_ eq '')) {
-                    $return .= join(''
-                        , (($whichway =~ /lef/)? $mspace.$mspace : '')
-                        , ((/^$smarray/)? $_ : $sbig.$_.$ebig )
-                        , (($whichway =~ /lef/)? '' : $mspace.$mspace )
-                        , $ecell);
-                } else { $return .= join('', $mspace , $ecell); }
+		    $_ = &make_math('display','','',$_) unless ($_ eq '')
+		}
+		if (!($_ eq '')) {
+		    $return .= join(''
+			, (($whichway =~ /lef/)? $mspace.$mspace : '')
+			, ((/^$smarray/)? $_ : $sbig.$_.$ebig )
+			, (($whichway =~ /lef/)? '' : $mspace.$mspace )
+			, $ecell);
+		} else { $return .= join('', $mspace , $ecell); }
 
 #		$return .= $smncell.$mcalign.$eqno.$ecell
 		$return .= $smncell.$rseqno.$eqno.$ecell
 		    unless ($EQN_TAGS =~ /L/); # eqn-num on right
 		$return .= $erow;
-                next;
-            }
+		next;
+	    }
 
-            # columns to be set using \displaystyle
-            @cols = split(/$mdlim/o);
+	    # columns to be set using \displaystyle
+	    @cols = split(/$mdlim/o);
 	    local($col_cnt);
 	    foreach (@cols) { # set in displaymath
 		# alternating right/left aligned
 		$scell =  (($scell eq $slcell)? $srcell : $slcell) if ($col_cnt);
-                $thismath = $_; $col_cnt++;
-                $* =1; $thismath =~ s/(^\s*|\s*$)//g; $*=0;
+		$thismath = $_; $col_cnt++;
+		$* =1; $thismath =~ s/(^\s*|\s*$)//g; $*=0;
 		if (($doimage)||($failed)) {
 		    $thismath = &process_math_in_latex("indisplay",'',''
 	 		, $doimage.$thismath ) unless ($thismath eq '' );
@@ -712,13 +786,61 @@ sub process_env_align{
 #	    $return .= $smncell.$mcalign.$eqno.$ecell
 	    $return .= $smncell.$rseqno.$eqno.$ecell
 		unless ($EQN_TAGS =~ /L/); # eqn-num on right
-            $return .= $erow;
-        }
-        $_ = &end_math_display($return , $earray );
+	    $return .= $erow;
+	}
+	$_ = &end_math_display($return , $earray );
     } else {
-        $_ = &do_htmlmath_array('');
+	$_ = &do_htmlmath_array('');
     }
     $_;
+}
+
+sub do_env_aligned {
+    local($_) = @_;
+    local($saved) = join(''
+	, "\\begin\{aligned\}"
+	, &revert_array_envs($_)
+	, "\\end\{aligned\}\n"
+	);
+    local($inner_math) = 'aligned';
+    &process_undefined_environment(
+	'displaymath' , ++$global{'max_id'}, $saved);
+}
+sub do_env_alignedat {
+    local($_) = @_;
+    $_ = &revert_array_envs($_);
+    local($saved) = join(''
+	, "\\begin\{alignedat\}"
+	, &revert_array_envs($_)
+	, "\\end\{alignedat\}\n"
+	);
+    local($inner_math) = 'alignedat';
+    &process_undefined_environment(
+	'displaymath' , ++$global{'max_id'}, $saved);
+}
+sub do_env_gathered {
+    local($_) = @_;
+    $_ = &revert_array_envs($_);
+    local($saved) = join(''
+	, "\\begin\{gathered\}\n"
+	, &revert_array_envs($_)
+	, "\\end\{gathered\}\n"
+	);
+    local($inner_math) = 'gathered';
+    &process_undefined_environment(
+	'displaymath' , ++$global{'max_id'}, $saved);
+}
+sub do_env_cases {
+    local($_) = @_;
+    $_ = &revert_array_envs($_);
+    local($saved) = join(''
+	,"\\begin\{cases\}\n"
+	, &revert_array_envs($_)
+	, "\\end\{cases\}\n"
+	);
+    local($inner_math) = 'cases';
+    &process_undefined_environment(
+	'displaymath' , ++$global{'max_id'}, $saved);
 }
 
 sub do_env_split {
@@ -728,22 +850,40 @@ sub do_env_split {
     local($sbig,$ebig)= &set_math_size($math_mode);
     $failed = 1 if ($NO_SIMPLE_MATH); # simplifies the next call
 
-    if (($failed)&&!($NO_SIMPLE_MATH)) {
-        $_ = &process_undefined_environment( $outer_math , $id, $saved);
+    local($falign) = 'CENTER';
+    $failed = (/$htmlimage_rx|$htmlimage_pr_rx/) unless ($outer_math); # force an image
+    local($outer_math) = $env unless ($outer_math);
+
+    if ($failed) {
+	$_ = &process_undefined_environment(
+		$outer_math.(($numbered) ? '':"*"), $id, $saved);
+	$falign = (($EQN_TAGS =~ /L/)? 'LEFT' : 'RIGHT') if $numbered;
+	local($fsdisplay,$fedisplay) = ($spdisplay,$epdisplay);
+	if (!($fsdisplay =~ s/(ALIGN\s*=\s*\")[^\"]*\"/$1$falign\"/)) {
+	    $fsdisplay .= "<DIV ALIGN=\"$falign\">";
+	    $fedisplay = '</DIV>'.$epdisplay;
+	}
+	$_ = join('', $fsdisplay, $labels, $comment, $_, $fedisplay);
+
     } elsif ($NO_SIMPLE_MATH) {
-        $failed = 0;
+	$failed = 0;
 	local($outer_math) = 0; #  not an "outer" environment
 
 	s/$htmlimage_rx/$doimage = $&;''/eo ; # forces images of cells
 	s/$htmlimage_pr_rx/$doimage .= $&;''/eo ; # force an image
-        local($valign) = &set_math_valign;
-        local($sarray, $srow, $scell, $calign, $ecell, $erow, $earray);
+	local($valign) = &set_math_valign();
+	local($sarray, $srow, $scell, $calign, $ecell, $erow, $earray);
 
+	local($env_id) = $env_id;
+	if ($USING_STYLES) {
+	    $env_style{$env} = "" unless ($env_style{$env});
+	}
 	($sarray, $erow, $earray, $sempty, $calign) = ( 
-	    $smarray.$emtag, $emrow 
+	    $smarray.$env_id.$smarrayB.$emtag, $emrow 
 	    , $emarray, $mnocell.$mspace, $mcalign );
+	$env_id = '';
 
-        ($srow, $scell, $ecell, $slcell, $srcell) = (
+	($srow, $scell, $ecell, $slcell, $srcell) = (
 	    $smrow.$valign.$emtag , $smncell, $emcell
 	    , $smcell.$mralign, $smncell.$mlalign );
 
@@ -752,7 +892,7 @@ sub do_env_split {
 	$_ = &protect_array_envs($_);
 
 	local(@rows,$eqno,$thismath);
-        s/\\\\[ \t]*(\*|\[[^\]]*])/\\\\/g; # remove forced line-heights
+	s/\\\\[ \t]*(\*|\[[^\]]*])/\\\\/g; # remove forced line-heights
 	@rows = split(/\\\\/);
 	$#rows-- if ( $rows[$#rows] =~ /^\s*$/ );
 	foreach (@rows) { # displaymath
@@ -764,13 +904,13 @@ sub do_env_split {
 		if (($doimage)||($failed)) {
 		    $_ = &process_math_in_latex("indisplay",'',''
 		        , $doimage.$_ ) unless ($_ eq '');
-	        } else { 
+		} else { 
 		    $_ = &make_math('display','','',$_) unless ($_ eq '')
 		}
-	        if (!($_ eq '')) {
-	            $return .= join(''
+		if (!($_ eq '')) {
+		    $return .= join(''
 			, (($whichway =~ /lef/)? $mspace.$mspace : '')
-                        , ((/^$smarray/)? $_ : $sbig.$_.$ebig )
+			, ((/^$smarray/)? $_ : $sbig.$_.$ebig )
 			, (($whichway =~ /lef/)? '' : $mspace.$mspace )
 			, $ecell , $erow);
 		} else { $return .= join('', $mspace , $ecell, $erow); } 
@@ -799,27 +939,27 @@ sub do_env_split {
 	    } else { $return .= $sempty.$ecell; }
 
 	    # right column, set using \displaystyle
-            $thismath = shift(@cols);
-            $* =1; $thismath =~ s/(^\s*|\s*$)//g; $*=0;
-            if (($doimage)||($failed)) {
-                $thismath = &process_math_in_latex("indisplay",'',''
-                    , $doimage.$thismath ) unless ($thismath eq '' );
-            } else {
-                $thismath = &make_math('display','',''
-                    , $thismath) unless ( $thismath eq '' );
-            }
-            if (!($thismath eq '')) {
-                $return .= join('', $srcell
-                        , (($thismath=~/^$smarray/)? $thismath
-			    : $sbig.$thismath.$ebig )
-			, $ecell);
-            } else { $return .= $sempty . $ecell}
+	    $thismath = shift(@cols);
+	    $* =1; $thismath =~ s/(^\s*|\s*$)//g; $*=0;
+	    if (($doimage)||($failed)) {
+		$thismath = &process_math_in_latex("indisplay",'',''
+		    , $doimage.$thismath ) unless ($thismath eq '' );
+	    } else {
+		$thismath = &make_math('display','',''
+		    , $thismath) unless ( $thismath eq '' );
+	    }
+	    if (!($thismath eq '')) {
+		$return .= join('', $srcell
+		    , (($thismath=~/^$smarray/)? $thismath
+			: $sbig.$thismath.$ebig )
+		    , $ecell);
+	    } else { $return .= $sempty . $ecell}
 
 	    $return .= $erow;
 	}
-        $_ = &end_math_display($return , $earray );
+	$_ = &end_math_display($return , $earray );
     } else {
-        $_ = &do_htmlmath_array('rl');
+	$_ = &do_htmlmath_array('rl');
     }
     $_;
 }

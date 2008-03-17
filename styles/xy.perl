@@ -107,6 +107,7 @@ sub do_xy_dvitops {
 
 
 &ignore_commands( <<_IGNORED_CMDS_);
+arraycolsep # &ignore_numeric_argument
 xyoption # {}
 xyrequire # {}
 xywithoption # {} # {}
@@ -209,9 +210,10 @@ knotSTYLE # {}
 knottips # {}
 labelmargin # {}
 turnradius # {}
-objectmargin # {}
-objectwidth # {}
-objectheight # {}
+objectmargin # <<>> {}
+objectwidth # <<>> {}
+objectheight # <<>> {}
+#objectstyle # <<>> {}
 spreaddiagramcolumns # {}
 spreaddiagramrows # {}
 xymatrixrowsep # {}
