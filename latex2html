@@ -5,7 +5,7 @@
 'di';
 'ig00';
 
-# $Id: latex2html 17100 2005-03-31 13:33:46Z pwd $
+# $Id$
 #
 # This variable can be set manually or by the installation script
 # to point to the DIRECTORY where the latex2html files can be found.
@@ -1352,7 +1352,7 @@ sub deal_with_texinputs {
     };
     if ($ROOTED) {$TEXINPUTS .= "$envkey$FIXEDDIR"}
     $TEXINPUTS = &absolutize_path($TEXINPUTS);
-    $ENV{'TEXINPUTS'} = join($envkey,".",@_,$TEXINPUTS,$ENV{'TEXINPUTS'});
+    $TEXINPUTS = join($envkey,".",@_,$TEXINPUTS,$ENV{'TEXINPUTS'});
 }
 
 # provided by Fred Drake
