@@ -1,3 +1,4 @@
+# $Id: french.perl,v 1.2 1996/12/23 01:39:54 JCL Exp $
 # FRENCH.PERL by Nikos Drakos <nikos@cbl.leeds.ac.uk> 25-11-93
 # Computer Based Learning Unit, University of Leeds.
 #
@@ -8,6 +9,12 @@
 #
 # Change Log:
 # ===========
+# $Log: french.perl,v $
+# Revision 1.2  1996/12/23 01:39:54  JCL
+# o added informative comments and CVS log history
+# o changed usage of <date> to an OS independent construction, the
+#   patch is from Piet van Oostrum.
+#
 #
 # 11-MAR-94 Nikos Drakos - Added support for \inferieura and \superrieura
 
@@ -62,10 +69,10 @@ sub french_titles {
 
 #AYS(JKR): Replace do_cmd_today (\today) with a nicer one, which is more
 # similar to the original. 
+#JCL introduced &get_date.
 sub do_cmd_today {
-    local($today) = (`date "+%m:%d, 20%y"`);
-    $today =~ s/(\d{1,2}):0?(\d{1,2}),/$2 $Month[$1]/o;
-    $today =~ s/20([7|8|9]\d{1})/19$1/o;
+    local($today) = &get_date;
+    $today =~ s|(\d+)/0?(\d+)/|$2 $Month[$1] |;
     join('',$today,$_[0]);
 }
 

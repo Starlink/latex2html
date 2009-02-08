@@ -19,21 +19,28 @@
 
 ### Extend declarations
 %declarations = (
-     'tiny', '<SMALL CLASS=TINY></SMALL>',
-     'scriptsize', '<SMALL CLASS=SCRIPT></SMALL>',
-     'footnotesize', '<SMALL CLASS=FOOTNOTE></SMALL>',
-     'small', '<SMALL CLASS=SMALL></SMALL>',
-     'large', '<BIG CLASS=LARGE></BIG>',
-     'Large', '<BIG CLASS=XLARGE></BIG>',
-     'LARGE', '<BIG CLASS=XXLARGE></BIG>',
-     'huge', '<BIG CLASS=HUGE></BIG>',
-     'Huge', '<BIG CLASS=XHUGE></BIG>',
+#     'tiny', '<SMALL CLASS="TINY"></SMALL>',
+#     'scriptsize', '<SMALL CLASS="SCRIPT"></SMALL>',
+#     'footnotesize', '<SMALL CLASS="FOOTNOTE"></SMALL>',
+#     'small', '<SMALL CLASS="SMALL"></SMALL>',
+#     'large', '<BIG CLASS="LARGE"></BIG>',
+#     'Large', '<BIG CLASS="XLARGE"></BIG>',
+#     'LARGE', '<BIG CLASS="XXLARGE"></BIG>',
+#     'huge', '<BIG CLASS="HUGE"></BIG>',
+#     'Huge', '<BIG CLASS="XHUGE"></BIG>',
+     'centering', '<DIV ALIGN="CENTER"></DIV>',
+     'center', '<DIV ALIGN="CENTER"></DIV>',
+     'flushleft', '<DIV ALIGN="LEFT"></DIV>',
+     'raggedright', '<DIV ALIGN="LEFT"></DIV>',
+     'flushright', '<DIV ALIGN="RIGHT"></DIV>',
+     'raggedleft', '<DIV ALIGN="RIGHT"></DIV>',
      %declarations
 );
 
 sub do_cmd_underline {
     local($_) = @_;
     s/$next_pair_pr_rx//o;
+    &lost_argument("underline") unless ($&);
     join('',"<U>$2</U>",$_); 
 }
 
@@ -41,19 +48,35 @@ sub do_cmd_underline {
 
 sub do_env_center {
     local($_) = @_;
-    "<DIV ALIGN=CENTER><P ALIGN=CENTER>$_</P></DIV>";
+    "<DIV ALIGN=\"CENTER\">\n<P ALIGN=\"CENTER\">$_</P>\n</DIV>";
 }
 sub do_env_flushright {
     local($_) = @_;
-    "<DIV ALIGN=RIGHT><P ALIGN=RIGHT>$_</P></DIV>";
+    "<DIV ALIGN=\"RIGHT\">\n<P ALIGN=\"RIGHT\">$_</P>\n</DIV>";
 }
 sub do_env_flushleft {
     local($_) = @_;
-    "<DIV ALIGN=LEFT><P ALIGN=LEFT>$_</P></DIV>";
+    "<DIV ALIGN=\"LEFT\">\n<P ALIGN=\"LEFT\">$_</P>\n</DIV>";
 }
 
 sub do_cmd_centerline {
     local($_) = @_;
     s/$next_pair_pr_rx//o;
-    "<DIV ALIGN=CENTER>$&<BR></DIV>$_";
+    &lost_argument("centerline") unless ($&);
+    "<DIV ALIGN=\"CENTER\">$&<BR>\n</DIV>$_";
 }
+
+sub do_cmd_leftline {
+    local($_) = @_;
+    s/$next_pair_pr_rx//o;
+    &lost_argument("leftline") unless ($&);
+    "<DIV ALIGN=\"LEFT\">$&<BR>\n</DIV>$_";
+}
+
+sub do_cmd_rightline {
+    local($_) = @_;
+    s/$next_pair_pr_rx//o;
+    &lost_argument("rightline") unless ($&);
+    "<DIV ALIGN=\"RIGHT\">$&<BR>\n</DIV>$_";
+}
+

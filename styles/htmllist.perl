@@ -41,14 +41,14 @@ package main;
 	);
 
 %ImageSizeMarks = (
-	'BlueBall',		'WIDTH=14 HEIGHT=14',
-	'RedBall',		'WIDTH=14 HEIGHT=14',
-	'OrangeBall',		'WIDTH=14 HEIGHT=14',
-	'GreenBall',		'WIDTH=14 HEIGHT=14',
-	'PinkBall',		'WIDTH=14 HEIGHT=14',
-	'PurpleBall',		'WIDTH=14 HEIGHT=14',
-	'WhiteBall',		'WIDTH=14 HEIGHT=14',
-	'YellowBall',		'WIDTH=14 HEIGHT=14',
+	'BlueBall',		'WIDTH="14" HEIGHT="14"',
+	'RedBall',		'WIDTH="14" HEIGHT="14"',
+	'OrangeBall',		'WIDTH="14" HEIGHT="14"',
+	'GreenBall',		'WIDTH="14" HEIGHT="14"',
+	'PinkBall',		'WIDTH="14" HEIGHT="14"',
+	'PurpleBall',		'WIDTH="14" HEIGHT="14"',
+	'WhiteBall',		'WIDTH="14" HEIGHT="14"',
+	'YellowBall',		'WIDTH="14" HEIGHT="14"',
 	);
 
 #
@@ -66,37 +66,66 @@ package main;
 #	\item[Item 3:] This will have a red ball
 #	\end{htmllist}
 #
+sub do_env_htmlliststar{
+  &do_env_htmllist(@_," COMPACT");
+}
+
 sub do_env_htmllist{
   local($_, $compact) = @_;
-  local($imagemark,$mark,$item_len,$desc_len,$mark_len,$mark_size);
-  local($Maxlength) = 99999;
+    #RRM - catch nested lists
+  $_ = &translate_environments($_);
+
   $compact = "" unless $compact;
+  local($imagemark,$mark,$item_len,$desc_len,$mark_len,$mark_size);
   $imagemark = "";
   $* = 1;
+  local($Maxlength) = 99999;
+local($i);
   while (1) {
     $item_len = $mark_len = $desc_len = $Maxlength;
     $desc_len = length($`) if (/$item_description_rx/);
     $mark_len = length($`) if (/\\htmlitemmark/);
     $item_len = length($`) if (/\\item$delimiter_rx/);
+	local($i);
     last if ($item_len == $Maxlength && $mark_len == $Maxlength &&
 	$desc_len == $Maxlength);
     if ($mark_len < $item_len && $mark_len < $desc_len) {
-	s/\\htmlitemmark$any_next_pair_rx//;
-	$mark = $2;	# Interpret as a URL if not in table
+#	s/\\htmlitemmark$any_next_pair_rx//;
+#	$mark = $2;	# Interpret as a URL if not in table
+	if (/\\htmlitemmark/) {
+	    $mark = &missing_braces
+		unless ((s/\\htmlitemmark$any_next_pair_rx/$mark=$2;''/eo)
+		    ||(s/\\htmlitemmark$any_next_pair_pr_rx/$mark=$2;''/eo));
 	$mark_size = $ImageSizeMarks{$mark};
 	$mark = "$ICONSERVER/$ImageMarks{$2}.gif" if ($ImageMarks{$2});
 	$imagemark = '<IMG ' . $mark_size . ' SRC="' . $mark . '" ALT="*">';
-	$imagemark =~ s/~/&#126 /g;	# Allow ~'s in $ICONSERVER
+	$imagemark =~ s/~/&#126;/g;	# Allow ~'s in $ICONSERVER
 	}
+    }
     elsif ($item_len < $desc_len) {
-	s/\\item$delimiter_rx/<DT>$imagemark<DD>$1/;
+	s/\\item$delimiter_rx/<DT>$imagemark\n<DD>$1/;
 	}
     else  {
-	s/$item_description_rx/<DT>$imagemark<B>$1<\/B>\n<DD>/;
+#	s/$item_description_rx/<DT>$imagemark\n<B>$1<\/B>\n<DD>/;
+	s/$item_description_rx\s*($labels_rx8)?\s*/"<DT>$imagemark". 
+	    (($9)? "<A NAME=\"$9\">\n<B>$1<\/B><\/A>" : "\n<B>$1<\/B>" ) ."\n<DD>"/eg;
 	}
     }
   $* = 0;
-  "<DL $compact>$_ \n </DL>";
+#  $_ = &translate_environments($_);
+  $_ = &translate_commands($_);
+  "<DL$compact>$_</DL>";
 }
 
 1;                              # This must be the last line
+
+
+
+
+
+
+
+
+
+
+

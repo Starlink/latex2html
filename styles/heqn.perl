@@ -34,8 +34,8 @@ package main;
 #
 
 &process_commands_in_tex (<<_RAW_ARG_CMDS_);
-equation
-eqnarray
+equation # <<\\endequation>>
+eqnarray # <<\\endeqnarray>>
 _RAW_ARG_CMDS_
 
 $global{'eqn_number'} = 0;
@@ -43,6 +43,8 @@ $global{'eqn_number'} = 0;
 sub do_env_equation {
    local ($_) = @_;
    local ($eqn_number, $equation_id, $image_id, $step_id, $eqnstr);
+   local($attribs, $border);
+   if (s/$htmlborder_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
    $equation_id = $global{'max_id'}++;
    $image_id = $equation_id + 1;
    $step_id = ++$global{'max_id'};
@@ -54,8 +56,13 @@ sub do_env_equation {
 	&make_end_cmd_rx($step_id);
    &do_cmd_refstepcounter($eqnstr);
    $contents = "\\htmlimage$O$image_id${C}align=middle$O$image_id$C".$contents;
-   &process_environment('displaymath',$equation_id);
-   $contents =~ s/<P>(.*)/<P>($eqn_number)$1/;
+   $contents = &process_undefined_environment('displaymath',$equation_id,$contents);
+   if (($border)&&($HTML_VERSION > 2.1 )) { 
+	$contents = &make_table( $border, $attribs, '', '', '', $contents ) 
+   } else { 
+	$contents =~ s/<P>([\w\W]*)/<P>($eqn_number)$1/;
+	$contents .= "<BR" . (($HTML_VERSION ge 3.2)? ' CLEAR="ALL"' : ''). ">";
+   }
    $contents;
    }
 
@@ -63,16 +70,18 @@ sub do_env_eqnarray {
    local ($cntnts) = @_;
    local ($nlines) = 1;
    local ($eqn_number, $image_id1, $image_id2, $pre);
+   local($attribs, $border);
+   if (s/$htmlborder_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
 #
 #  First, put leqno into the preamble, if it's not already there.
 #
    $_ = $preamble;
    if (! /leqno/) {
-	s/(\\document)(class|style)\[(.*)\]\{/$1$2\[$3,leqno\]\{/;
+	s/(\\document)(class|style)\[([^]]*)]\{/$1$2\[$3,leqno\]\{/;
 	s/(\\document)(class|style)\{/$1$2\[leqno\]\{/;
 	$preamble = $_;
 	}
-   $order_sensitive_rx =~ s/eqnarray\|//;
+   $order_sensitive_rx =~ s/eqnarray\[\^\*\]\|//;
 #
 #  Count the number of \\'s and \nonumber's there are:
 #  (If there are more than one \nonumber's on a single line:  Tough luck!)
@@ -94,8 +103,19 @@ sub do_env_eqnarray {
    $contents = "\\html$O$html_id2${C}eqn$eqn_number$O$html_id2$C".$contents;
    $contents = "\\htmlimage$O$html_id1${C}align=nojustify$O$html_id1$C".$contents;
    $contents = &process_undefined_environment('eqnarray', $image_id, $contents);
-   $contents = "<P>" . $contents . "</P>";
+   if (($border)&&($HTML_VERSION > 2.1 )) { 
+	$contents = &make_table( $border, $attribs, '', '', '', $contents ) 
+   } else {
+	$contents = "<P>" . $contents . "</P>";
+	$contents .= "<BR" . (($HTML_VERSION ge 3.2)? ' CLEAR="ALL"' : ''). ">";
    }
+   $contents;
+}
 
 
 1;                              # This must be the last line
+
+
+
+
+

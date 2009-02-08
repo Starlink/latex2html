@@ -8,6 +8,16 @@
 
 package main;
 
+
+# Suppress option-warning messages:
+
+sub do_graphics_dvips {
+}
+sub do_graphicx_dvips {
+}
+
+
+
 &process_commands_in_tex (<<_RAW_ARG_CMDS_);
 rotatebox # [] # {} # {}
 scalebox # {} # [] # {}

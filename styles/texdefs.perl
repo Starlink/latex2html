@@ -2,7 +2,8 @@
 
 package main;
 
-$meta_cmd_rx =~ s/\)/|def\)/ unless ($meta_cmd_rx =~ /\|def\)/);
+$meta_cmd_rx =~ s/([\|\(])newcommand/$1def\|newcommand/
+    unless $meta_cmd_rx =~ /[\|\)]def/;
 
 sub get_body_def {
     local(*_) = @_;
@@ -35,11 +36,52 @@ sub do_cmd_newbox {
     &add_to_preamble("def", "\\newbox$pat");
     $_;
 }
-sub do_cmd_char {		#JKR: implementation of \char
+
+# JCL
+# Convert decimal, octal, hexadecimal, one letter and
+# one letter macro into char specification.
+#
+sub do_cmd_char {
     local($_) = @_;
-    s/^\s*(\d*)\s*/&#\1;/;
+# some special characters are already turned into l2h internal
+# representation.
+# Get its represention from the table and use it like as regexp form.
+    local($spmquot) = &escape_rx_chars($html_specials{'"'});
+# Get all internal special char representations as implied during
+# preprocessing.
+    local($spmrx) = join("\000",values %html_specials);
+# escape regexp special chars (not really necessary yet, but why not)
+    $spmrx =~ s:([\\(){}[\]\^\$*+?.|]):\\$1:g;
+    $spmrx =~ s/\000/|/g;
+    $spmrx = "(.)" unless $spmrx =~ s/(.+)/($1|.)/;
+
+    s/^[ \t]*(\d{1,3})[ \t]*/&#$1;/ &&
+	return($_);
+
+    s/^[ \t]*\'(\d{1,3})[ \t]*/"&#".oct($1).";"/e &&
+	return($_);
+
+    s/^[ \t]*$spmquot(\d{1,2})[ \t]*/"&#".hex($1).";"/e &&
+	return($_);
+
+# This is a kludge to work together with german.perl. Brrr.
+    s/^[ \t]*\'\'(\d{1,2})[ \t]*/"&#".hex($1).";"/e &&
+	return($_);
+
+# If l2h's special char marker represents more than one character,
+# it's already in the &#xxx; form. Else convert the single character
+# into &#xxx; with the ord() command.
+    s/^[ \t]*\`\\?$spmrx[ \t]*/
+	(length($html_specials_inv{$1}) > 1 ?
+	 $html_specials_inv{$1} : "&#".ord($html_specials_inv{$1}||$1).";")/e &&
+	     return($_);
+
+    &write_warnings(join('',
+			 "Could not find character number in \\char",
+			 (/\n/ ? $` : $_), " etc.\n"));
     $_;
 }
+
 
 &ignore_commands( <<_IGNORED_CMDS_);
 vskip # &ignore_numeric_argument

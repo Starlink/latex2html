@@ -12,7 +12,8 @@ $EXTERNAL_IMAGES = 0;   # 1 = leave the images outside the document
 
 $ASCII_MODE = 0;        # 1 = do not use any icons or internal images
 
-# 1 =  use links to external postscript images rather than inlined GIF's.
+# 1 =  use links to external postscript images rather than inlined bitmap
+# images.
 $PS_IMAGES = 0;
 
 $TITLE = $default_title;      # The default is "No Title" 
@@ -147,14 +148,11 @@ $TITLES_LANGUAGE = "english";
 # which contain the titles of their corresponding sections. 
 # Each title is empty if there is no corresponding section.
 #
-# The subroutine below constructs the navigation panel in each page.
+# The subroutine below constructs the navigation panels in each page.
 # Feel free to mix and match buttons, titles, your own text, your logos,
 # and arbitrary HTML (the "." is the Perl concatenation operator).
-sub navigation_panel {
+sub top_navigation_panel {
 
-    #  Start with a horizontal rule (3-d dividing line)
-    "<BR> <HR>".			
-    
     # Now add a few buttons with a space between them
     "$NEXT $UP $PREVIOUS $CONTENTS $INDEX $CUSTOM_BUTTONS" .
     
@@ -170,7 +168,28 @@ sub navigation_panel {
     ($PREVIOUS_TITLE ? "<B> Previous:</B> $PREVIOUS_TITLE\n" : undef) .
    
     #  Line Break, horizontal rule (3-d dividing line) and new paragraph  
-    "<BR> <HR> <P>\n"		
+    "<BR> <P>\n"		
+}
+
+sub bot_navigation_panel {
+
+    #  Start with a horizontal rule (3-d dividing line)
+    "<HR>".			
+    
+    # Now add a few buttons with a space between them
+    "$NEXT $UP $PREVIOUS $CONTENTS $INDEX $CUSTOM_BUTTONS" .
+    
+    "<BR>\n" .		# Line break
+	
+    # If ``next'' section exists, add its title to the navigation panel
+    ($NEXT_TITLE ? "<B> Next:</B> $NEXT_TITLE\n" : undef) . 
+    
+    # Similarly with the ``up'' title ...
+    ($UP_TITLE ? "<B>Up:</B> $UP_TITLE\n" : undef) . 
+ 
+    # ... and the ``previous'' title
+    ($PREVIOUS_TITLE ? "<B> Previous:</B> $PREVIOUS_TITLE\n" : undef) 
+   
 }
 
 1;	# This must be the last line

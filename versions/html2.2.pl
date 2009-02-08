@@ -20,23 +20,30 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+if ($HTML_OPTIONS =~ /table/) {
+    $DOCTYPE = '';
+    $STRICT_HTML = 0;
+}
+
 ### The following routines do tables
 
 $content_mark = "<cellcontents>";
 
-# Since the do_env_tabular subroutine does all the work, there is
-# nothing left to do.
-sub do_env_table {
-    local($_) = @_;
-    &get_next_optional_argument;
-    $_;
-}
+## Since the do_env_tabular subroutine does all the work, there is
+## nothing left to do.
+#sub do_env_table {
+#    local($_) = @_;
+#    &get_next_optional_argument;
+#    $_ = &translate_commands(&translate_environments($_));
+#    $_;
+#}
 
-sub do_env_tablestar {
-    local($_) = @_;
-    &get_next_optional_argument;
-    $_;
-}
+#sub do_env_tablestar {
+#    local($_) = @_;
+#    &get_next_optional_argument;
+#    $_ = &translate_commands(&translate_environments($_));
+#    $_;
+#}
 
 ### Define the multicolumn command
 # Modifies the $colspec and $colspan variables of the tabular subroutine
@@ -193,7 +200,7 @@ sub do_env_tabular {
 	$rule = " RULES=GROUPS" if ($rules);
     };
 
-    @rows = split(/\\\\|\\newline/);
+    @rows = split(/\\\\/);
     $#rows-- if ( $rows[$#rows] =~ /^\s*$/ );
     local($return) = "<TABLE COLS=$cols$border$frame$rule$_[1]>\n";
     $return .= "$htmlcolspec\n";
@@ -207,7 +214,8 @@ sub do_env_tabular {
 	for ( $i = 0; $i <= $#colspec; $i++ ) {
 	    $colspec = $colspec[$i];
 	    $colspan = 0;
-	    $cell = &translate_commands(shift(@cols)); # May modify $colspec
+	    # May modify $colspec
+	    $cell = &translate_commands(&translate_environments(shift(@cols)));
 	    if ( $colspan ) {
 		for ( $cellcount = 0; $colspan > 0; $colspan-- ) {
 		    $colspec[$i++] =~ s/<TD/$cellcount++;"<TD"/ge;
