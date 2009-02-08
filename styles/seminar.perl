@@ -20,13 +20,37 @@ sub do_seminar_a4{}
 # and processed into HTML.  Anything inside a note environment
 # 
 sub do_env_slide {
-   local($optional1,$dummy)=&get_next_optional_argument;
-  "@_";
+    local($_) = @_;
+    local($optional1,$dummy)=&get_next_optional_argument;
+    local($failed, $labels, $comment, $halign) = ('','','','CENTER');
+    $failed = (/$htmlimage_rx|$htmlimage_pr_rx/); # force an image
+    local($attribs, $border);
+    if (s/$htmlborder_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
+    elsif (s/$htmlborder_pr_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
+    local($saved) = $_;
+    
+    if ($failed) {
+        $_ = &process_undefined_environment("slide", $br_id, $saved);
+        $_ = (($comment.$labels)? "$comment$labels\n":''). $_;
+    } else {
+	$_ = &translate_environments($_);
+	$_ = &translate_commands($_);
+    }
+    $halign = " ALIGN=\"$halign\"" if $halign;
+    if ($border||($attribs)) {
+        $_ = join('',"<BR>\n<DIV$halign>\n"
+            , &make_table( $border, $attribs, '', '', '', $_ )
+            , "</DIV>\n<BR CLEAR=\"ALL\">");
+    } elsif ($HTML_VERSION > 2.2) {
+        $_ = join('',"<BR><P></P>\n<DIV$halign>",$_
+            ,"</DIV><BR CLEAR=\"ALL\">\n<P></P>");
+    } else {
+        $_ = join('',"<BR><P></P><P>\n",$_,"\n</P><P></P>");
+    }
 }
 
 sub do_env_slidestar {
-   local($optional1,$dummy)=&get_next_optional_argument;
-   "@_";  
+    &do_env_slide(@_);
 }
 
 sub do_env_note {

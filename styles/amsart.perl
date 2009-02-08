@@ -9,6 +9,7 @@
 package main;
 
 &do_require_package('amstex');
+
 &do_require_package('amsfonts');
 
 # Suppress option-warning messages:
@@ -41,14 +42,19 @@ sub do_amsart_openbib{}
 
 sub do_amsart_nomath{}
 
-sub do_amsart_noamsfonts{&do_amsfonts_noamsfonts}
-sub do_amsart_psamsfonts{&do_amsfonts_psamsfonts}
+sub do_amsart_noamsfonts{
+    &do_amsfonts_noamsfonts() if (defined &do_amsfonts_noamsfonts);
+    $styles_loaded{'noamsfonts'} = 1; };
 
-sub do_amsart_centertags{&do_amstex_centertags}
-sub do_amsart_tbtags{&do_amstex_tbtags}
-sub do_amsart_leqno{&do_amstex_leqno}
-sub do_amsart_reqno{&do_amstex_reqno}
-sub do_amsart_fleqno{&do_amstex_fleqno}
+sub do_amsart_psamsfonts{
+    &do_amsfonts_psamsfonts() if (defined &do_amsfonts_psamsfonts);
+    $styles_loaded{'psamsfonts'} = 1; };
+
+sub do_amsart_centertags{&do_amstex_centertags()}
+sub do_amsart_tbtags{&do_amstex_tbtags()}
+sub do_amsart_leqno{&do_amstex_leqno()}
+sub do_amsart_reqno{&do_amstex_reqno()}
+sub do_amsart_fleqno{&do_amstex_fleqno()}
 
 sub do_amsart_makeidx{ &do_require_package('makeidx') }
 

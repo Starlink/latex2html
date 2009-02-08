@@ -1,15 +1,36 @@
+# -*- perl -*-
 #
-# $Id: verbatim.perl,v 1.4 1998/02/19 22:24:33 latex2html Exp $
+# $Id: verbatim.perl,v 1.10 2001/11/29 21:44:13 RRM Exp $
 # verbatim.perl
-#   Jens Lippmann <lippmann@cdc.informatik.tu-darmstadt.de> 17-DEC-96
+#   Jens Lippmann <lippmann@rbg.informatik.tu-darmstadt.de> 17-DEC-96
 #
 # Extension to LaTeX2HTML to support the verbatim.sty LaTeX2e package.
 #
 # Change Log:
 # ===========
-#  jcl = Jens Lippmann <http://www-jb.cs.uni-sb.de/~www/people/lippmann>
+#  jcl = Jens Lippmann
 #
 # $Log: verbatim.perl,v $
+# Revision 1.10  2001/11/29 21:44:13  RRM
+#  --  update to use  &replace_all_html_special_chars  if defined
+#
+# Revision 1.9  1999/10/15 09:17:16  RRM
+#  --  enable link to stylesheet "verbatim" class
+#
+# Revision 1.8  1999/09/14 22:02:02  MRO
+#
+# -- numerous cleanups, no new features
+#
+# Revision 1.7  1999/04/09 18:15:17  JCL
+# changed my e-Mail address
+#
+# Revision 1.6  1998/12/02 01:25:19  RRM
+#  --  preserve styles around the use of  \verbatiminput
+#  --  wrap the \verbatiminput command; i.e. treat as an environment
+#
+# Revision 1.5  1998/03/22 20:52:49  latex2html
+# reviewed for 98.1, works & is testable via devel/tests/regr/verbatim/run
+#
 # Revision 1.4  1998/02/19 22:24:33  latex2html
 # th-darmstadt -> tu-darmstadt
 #
@@ -51,24 +72,51 @@ package main;
 
 sub do_cmd_verbatiminput {
     local($outer) = @_;
-    local($_);
+    local($_,$found,$file,$file2);
 
-    $outer =~ s/$next_pair_pr_rx//o;
-    local($file) = $2;
-    $file .= ".tex" unless $file =~ /\.tex$/;
+    $file = &missing_braces unless (
+        ($outer =~ s/$next_pair_pr_rx/$file=$2;''/eo)
+        ||($outer =~ s/$next_pair_rx/$file=$2;''/eo));
 
+    $file2 = "$file.tex";
+    if ($file !~ /\.tex$/) {
+	# 2nd choice is better than 1st - TeXnical quirk
+	($file,$file2) = ($file2,$file);
+    }
     foreach $dir ("$texfilepath", split(/:/,$ENV{'TEXINPUTS'})) { 
-	if (-f ($_ = "$dir/$file")) {
+	if (-f ($_ = "$dir/$file") || -f ($_ = "$dir/$file2")) {
+	    $found=1;
 	    #overread $_ with file contents
 	    &slurp_input($_);
 	    last;
 	}
     }
-    # pre_process file contents
-    &replace_html_special_chars;
+    &write_warnings("No file <$file> for verbatim input.")
+	unless $found;
 
+    local($closures,$reopens) = &preserve_open_tags;
+    # pre_process file contents
+    if (defined &replace_all_html_special_chars) {
+	&replace_all_html_special_chars;
+    } else {
+	&replace_html_special_chars;
+    }
+    s/\n$//;		# vertical space is contributed by </PRE> already.
+    # %verbatim not coupled to a dbm => will not work in subprocesses, but don't mind
     $verbatim{++$global{'verbatim_counter'}} = $_;
-    join('',"<BR>\n",$verbatim_mark,'verbatim',$global{'verbatim_counter'},$outer);
+
+    my ($verb_pre, $verb_post) = ('<PRE>','</PRE>');
+    if ($USING_STYLES) {
+	$env_id .= ' CLASS="verbatim"' unless ($env_id =~ /(^|\s)CLASS\s*\=/i);
+	$verb_pre =~ s/>/ $env_id>/;
+    }
+    join('', $closures, "<BR>\n", $verb_pre
+	, $verbatim_mark, 'verbatim', $global{'verbatim_counter'}
+	, '#', $verb_post, $reopens, $outer);
 }
 
-1; 		# Must be last line
+&process_commands_wrap_deferred (<<_RAW_ARG_DEFERRED_CMDS_);
+verbatiminput # {}
+_RAW_ARG_DEFERRED_CMDS_
+
+1;			# Must be last line

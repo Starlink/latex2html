@@ -30,9 +30,9 @@ sub do_book_notitlepage{}
 sub do_book_titlepage{}
 sub do_book_openbib{}
 
-sub do_book_10pt{ $LATEX_FONT_SIZE = '10pt'; }
-sub do_book_11pt{ $LATEX_FONT_SIZE = '11pt'; }
-sub do_book_12pt{ $LATEX_FONT_SIZE = '12pt'; }
+sub do_book_10pt{ $LATEX_FONT_SIZE = '10pt' unless $LATEX_FONT_SIZE; }
+sub do_book_11pt{ $LATEX_FONT_SIZE = '11pt' unless $LATEX_FONT_SIZE; }
+sub do_book_12pt{ $LATEX_FONT_SIZE = '12pt' unless $LATEX_FONT_SIZE; }
 
 sub do_book_leqno{ $EQN_TAGS = 'L'; }
 sub do_book_reqno{ $EQN_TAGS = 'R'; }

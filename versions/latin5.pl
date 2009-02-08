@@ -14,7 +14,7 @@
 ### Version 0.3,  March 6, 1996
 ### Version 0.2,  February 2, 1996
 
-## Copyright (C) 1995 by Marcus E. Hennecke
+## Copyright (C) 1997 by Ross Moore
 ## This program is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
 ## the Free Software Foundation; either version 2 of the License, or
@@ -30,6 +30,7 @@
 
 
 $CHARSET = 'iso-8859-9';
+$INPUTENC = 'latin5';
 
 
 #Character ranges for lower --> upper-case conversion
@@ -88,13 +89,13 @@ sub do_cmd_i { join('', &iso_map("i", "nodot"), $_[0]);}
 
 sub do_cmd_textonequarter { join('', &iso_map("frac14", ""), $_[0]);}
 sub do_cmd_textonehalf { join('', &iso_map("frac12", ""), $_[0]);}
-sub do_cmd_textthreeequarters { join('', &iso_map("frac14", ""), $_[0]);}
+sub do_cmd_textthreequarters { join('', &iso_map("frac34", ""), $_[0]);}
 sub do_cmd_textcent { join('', &iso_map("cent", ""), $_[0]);}
 sub do_cmd_textyen { join('', &iso_map("yen", ""), $_[0]);}
 sub do_cmd_textcurrency { join('', &iso_map("curren", ""), $_[0]);}
 sub do_cmd_textbrokenbar { join('', &iso_map("brvbar", ""), $_[0]);}
 sub do_cmd_textregistered { join('', &iso_map("reg", ""), $_[0]);}
-sub do_cmd_textexclamdown { join('', &iso_map("iexclam", ""), $_[0]);}
+sub do_cmd_textexclamdown { join('', &iso_map("iexcl", ""), $_[0]);}
 sub do_cmd_textquestiondown { join('', &iso_map("iquest", ""), $_[0]);}
 sub do_cmd_textperiodcentered { join('', &iso_map("middot", ""), $_[0]);}
 sub do_cmd_guillemotleft { join('', &iso_map("laquo", ""), $_[0]);}
@@ -198,7 +199,7 @@ sub do_cmd_micron { join('', &iso_map("micro", ""), $_[0]);}
 
 # These have HTML mnemonic names for HTML 4.0 ...
        'nbsp', '&#160;',       # non-breaking space
-       'iexclam', '&#161;',    # exclamation mark - upside down
+       'iexcl', '&#161;',    # exclamation mark - upside down
        'cent', '&#162;',       # cents sign
        'pound', '&#163;',      # pound sign
        'curren', '&#164;',     # currency sign
@@ -267,14 +268,14 @@ sub do_cmd_micron { join('', &iso_map("micro", ""), $_[0]);}
 	 '&#174;' , '\\ensuremath{\\circledR}',
      '&#175;' , '\\={}',
 #	'&#176;' , '\\mathdegree{}',
-     '&#176;' , '\\ensuremath{^{\circ}}',
+     '&#176;' , '\\ensuremath{^{\\circ}}',
 	'&#177;' , '\\ensuremath{\\pm}',
 #	'&#178;' , '\\mathtwosuperior{}',
 	'&#178;' , '\\ensuremath{^{2}}',
 #	'&#179;' , '\\maththreesuperior{}',
 	'&#179;' , '\\ensuremath{^{3}}',
      '&#180;' , '\\\'{}',
-	'&#181;' , '\ensuremath{\\mu}',
+	'&#181;' , '\\ensuremath{\\mu}',
      '&#182;' , '\\P{}',
 #	'&#183;' , '\\textperiodcentered{}',
      '&#183;' , '\\ensuremath{\\cdot{}}',

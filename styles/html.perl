@@ -1,5 +1,6 @@
+# -*- perl -*-
 #
-# $Id: html.perl,v 1.25 1998/01/22 08:24:47 RRM Exp $
+# $Id: html.perl,v 1.38 1999/11/05 11:44:47 RRM Exp $
 #
 # HTML.PERL by Nikos Drakos <nikos@cbl.leeds.ac.uk> 2-DEC-93
 # Computer Based Learning Unit, University of Leeds.
@@ -12,6 +13,57 @@
 # Modifications (Initials see Changes):
 #
 # $Log: html.perl,v $
+# Revision 1.38  1999/11/05 11:44:47  RRM
+#  --  missing e-modifier in regexps for  \bodytext
+#
+# Revision 1.37  1999/10/12 12:53:34  RRM
+#  --  wrap the \bodytext command, so it evaluates in order with \pagecolor
+#      and similar color-commands
+#
+# Revision 1.36  1999/09/22 10:14:23  RRM
+#  --  added vertical alignment values for ALIGN= , with \htmladdimg
+#
+# Revision 1.35  1999/09/14 22:02:02  MRO
+#
+# -- numerous cleanups, no new features
+#
+# Revision 1.34  1999/03/12 06:57:09  RRM
+#  --  implemented \htmladdTOClink[<labels>]{<level>}{<title>}{<URL>}
+#  	optional argument allows external cross-references, as with
+#  	\externallabels ,  from a local copy of the  labels.pl  file
+#  --  cosmetic edits
+#
+# Revision 1.33  1999/03/08 10:21:16  RRM
+#  --  implemented command \htmlclear  for <BR CLEAR=...> tag.
+#  --  made some argument reading code more robust:
+#  	some uses of \htmladdnormallink weren't working
+#
+# Revision 1.32  1999/02/24 10:37:01  RRM
+#  --  add some loading messages for segment data
+#
+# Revision 1.31  1998/09/01 12:08:50  RRM
+# --  allow \hyperref[hyper] to catch the 'hyperref' package usage
+# 	recognising *both* variants
+#
+# Revision 1.30  1998/06/30 13:22:01  RRM
+#  --  protect $dd  for Win32 etc. platforms
+#
+# Revision 1.29  1998/06/18 11:55:12  RRM
+#  --  only put the short image-name into ALT text with \htmladdimg
+#
+# Revision 1.28  1998/05/04 12:02:46  latex2html
+#  --  removed the &translate_commands from \htmlref etc.
+# 	It is now done by &process_ref in the main script.
+#
+# Revision 1.27  1998/04/28 13:27:57  latex2html
+#  --  small fix to \HTMLset and \HTMLsetenv
+#  --  cleaned up the parameter reading of some macros
+#  --  {rawhtml} sets a flag, so that entities are preserved
+#
+# Revision 1.26  1998/02/26 10:21:29  latex2html
+#  --  fixed missing $TITLE in \segment
+#  --  made the argument-reading more robust
+#
 # Revision 1.25  1998/01/22 08:24:47  RRM
 #  --  put in cosmetic \n
 #  --  \htmlmeta defined, for inserting <META...> tags
@@ -138,6 +190,23 @@ sub do_cmd_htmlrule {
 #    join('',"<BR$BRattribs>\n<HR$HRattribs>",$_);
 }
 
+sub do_cmd_htmlclear {
+    local($_) = @_;
+    local($attribs,$dum)=&get_next_optional_argument;
+    local($BRattribs) = ('');
+    if ($dum) {
+        if ($attribs) {
+            if (!($attribs =~ /=/)) {
+                $BRattribs = &parse_valuesonly($attribs,"BR");
+            } else {
+                $BRattribs = &parse_keyvalues($attribs,"BR");
+            }
+        }
+    } else { $BRattribs = " CLEAR=\"ALL\"" }    # default if no [...]
+    local($pre,$post) = &minimize_open_tags("<BR$BRattribs>\n");
+    join('',$pre,$_);
+}
+
 
 # insert rule but omit the <BR> tag.
 sub do_cmd_htmlrulestar {
@@ -161,8 +230,12 @@ sub do_cmd_htmladdnormallink{
     local($_) = @_;
     local($text, $url, $href);
     local($name, $dummy) = &get_next_optional_argument;
-    s/$next_pair_pr_rx/$text = $2; ''/eo;
-    s/$next_pair_pr_rx/$url = $2; ''/eo;
+    $text = &missing_braces unless
+	((s/$next_pair_pr_rx/$text = $2; ''/eo)
+	||(s/$next_pair_rx/$text = $2; ''/eo));
+    $url = &missing_braces unless
+	((s/$next_pair_pr_rx/$url = $2; ''/eo)
+	||(s/$next_pair_rx/$url = $2; ''/eo));
     $*=1; s/^\s+/\n/; $*=0;
     if ($name) { $href = &make_named_href($name,$url,$text) }
     else { $href = &make_href($url,$text) }
@@ -171,21 +244,29 @@ sub do_cmd_htmladdnormallink{
 }
 
 sub do_cmd_htmladdnormallinkfoot{
-    &do_cmd_htmladdnormallink;
+    &do_cmd_htmladdnormallink(@_);
 }
 
 sub do_cmd_htmladdimg{
     local($_) = @_;
-    local($name,$url,$align,$alt,$map)=("external",'','','','');
+    local($name,$url,$align,$alt,$map)=("external image",'','','','');
     local($opts, $dummy) = &get_next_optional_argument;
     $opts = &revert_to_raw_tex($opts);
-    $opts =~ s/(^\s*|\s+)(left|right|center)(\s+|\s*$)/$align=$1;''/ioe if ($opts);
+    $opts =~ s/(^\s*|\s+)(left|right|center|top|middle|bottom)(\s+|\s*$)/$align=$1;''/ioe
+		   if ($opts);
     $opts =~ s/\s*ALIGN=\"([^\"]+)\"\s*/$align=$1;''/ioe if ($opts);
     $opts =~ s/\s*NAME=\"([^\"]+)\"\s*/$name=$1;''/ioe if ($opts);
     $opts =~ s/\s*ALT=\"([^\"]+)\"\s*/$alt=$1;''/ioe if ($opts);
     $opts =~ s/\s*ISMAP\s*/$map=$1;''/ioe if ($opts);
-    s/$next_pair_pr_rx/$url = $2; ''/eo;
-    $alt = $url unless $alt;
+    $url = &missing_braces unless
+	((s/$next_pair_pr_rx/$url = $2; ''/eo)
+	||(s/$next_pair_rx/$url = $2; ''/eo));
+    if (!$alt) {
+#    	$url=~ /$dd([^$dd$dd]+)$/;
+	$url =~ m@/([^/]+)$@;
+	$alt = $1;
+    	$alt = $url unless $alt;
+    }
     $url = &revert_to_raw_tex($url);
     join('',&embed_image($url,$name,'',$alt,'',$map,$align
 		,'','',$opts),$_);
@@ -193,15 +274,38 @@ sub do_cmd_htmladdimg{
 
 sub do_cmd_externallabels{
     local($_) = @_;
+    local($pretag) = &get_next_optional_argument;
+    $pretag = &translate_commands($pretag) if ($pretag =~ /\\/);
     local($URL,$labelfile);
-    s/$next_pair_pr_rx/$URL = $2; ''/eo;
-    s/$next_pair_pr_rx/$labelfile = $2; ''/eo;
+    $URL = &missing_braces unless
+	((s/$next_pair_pr_rx/$URL = $2; ''/eo)
+	||(s/$next_pair_rx/$URL = $2; ''/eo));
+    $labelfile = &missing_braces unless
+	((s/$next_pair_pr_rx/$labelfile = $2; ''/eo)
+	||(s/$next_pair_rx/$labelfile = $2; ''/eo));
+##    s/$next_pair_pr_rx/$URL = $2; ''/eo;
+##    s/$next_pair_pr_rx/$labelfile = $2; ''/eo;
 #
     local($dir,$nosave) = ('','');
 #
     if (-f "$labelfile") {
 	print "\nLoading label data from file: $labelfile\n";
-	require($labelfile);
+	if ($pretag) {
+	# code due to Alan Williams <alanw@cs.man.ac.uk>
+	    open(LABELS, "<$labelfile");
+    print "\nLoading external labels from $labelfile, with prefix $pretag"
+	if ($VERBOSITY > 1);
+	    local($translated_stream, $instream);
+	    while ($instream = <LABELS>) {
+		$instream =~ s|(\$key = q/)|$1$pretag|s;
+		$translated_stream .= $instream;
+	    }
+	    close (LABELS);
+	    eval $translated_stream;
+	    undef $translated_stream;
+	} else {
+	    require($labelfile);
+	}	
     } else {
 	&write_warnings(
 	    "Could not find the external label file: $labelfile\n");
@@ -236,6 +340,7 @@ sub do_cmd_htmlhead {
 
     # record it in encoded form, when it starts a segment
     if (($SEGMENT)&&($PREAMBLE)) {
+	$TITLE = $title;
 	$encoded_section_number{$hash} = join($;, @tmp);
 	@tmp = @curr_sec_id;
 #	$tmp[$current_depth] = 0;
@@ -254,13 +359,79 @@ sub do_cmd_htmlnohead {
     $_;
 }
 
+sub do_cmd_htmladdTOClink {
+    local($_) = @_;
+    local(@tmp, $hash, $labelfile, $dummy);
+    ($labelfile, $dummy) = &get_next_optional_argument;
+    local($curr_sec, $title, $hlink);
+    $curr_sec = &missing_braces unless (
+	(s/$next_pair_pr_rx/$curr_sec = $2;''/e)
+	||(s/$next_pair_rx/$curr_sec = $2;''/e));
+    $curr_sec =~ s/\*$/star/;
+    local($depth) = $section_commands{$curr_sec};
+    $title = &missing_braces unless (
+	(s/$next_pair_pr_rx/$title = $2;''/e)
+	||(s/$next_pair_rx/$title = $2;''/e));
+
+    $hlink = &missing_braces unless (
+	(s/$next_pair_pr_rx/$hlink = $2;''/e)
+	||(s/$next_pair_rx/$hlink = $2;''/e));
+
+    $hash = &sanitize($title);
+    # record it in encoded form
+    $encoded_section_number{$hash} = join($;, @tmp);
+    @tmp = @curr_sec_id;
+    $tmp[$depth] += 1;
+    local($cnt) = $depth;
+    while ($cnt < 9) { $cnt++; $tmp[$cnt] = 0;}
+    $toc_section_info{join(' ', @tmp)} = "$depth$delim$hlink$delim$title";
+
+    # Cannot just give the $hlink, since we cannot edit this file
+    # Need something else to have the link in a mini-TOC
+    $section_info{join(' ', @tmp)} =
+	"$depth$delim$hlink$delim$title$delim".'external';
+
+    return ($_) unless ($labelfile);
+
+    $labelfile .= 'labels.pl' unless ($labelfile =~ /\.pl$/);
+    if (-f "$labelfile") {
+	local($pretag) = '';
+	print "\nLoading label data from file: $labelfile\n";
+	if ($pretag) {
+	# code due to Alan Williams <alanw@cs.man.ac.uk>
+	    open(LABELS, "<$labelfile");
+    print "\nLoading external labels from $labelfile, with prefix $pretag"
+	if ($VERBOSITY > 1);
+	    local($translated_stream, $instream);
+	    while ($instream = <LABELS>) {
+		$instream =~ s|(\$key = q/)|$1$pretag|s;
+		$translated_stream .= $instream;
+	    }
+	    close (LABELS);
+	    eval $translated_stream;
+	    undef $translated_stream;
+	} else {
+	    require($labelfile);
+	}	
+    } else {
+	&write_warnings(
+	    "Could not find the external label file: $labelfile\n");
+    }
+    $_;
+}
+
 sub do_cmd_segment {
     local($_) = @_;
-    local($ctr, $index);
+    local($ctr, $index, $ditch);
     &get_next_optional_argument;# heading alignment, ignored
-    s/$next_pair_pr_rx//o;	# Ditch file
-    s/$next_pair_pr_rx//o; $ctr = $2;
-    s/$next_pair_pr_rx//o;	# Ditch heading
+    $ditch = &missing_braces unless (# Ditch filename
+	(s/$next_pair_pr_rx//o)||(s/$next_pair_rx//o));
+    $ctr = &missing_braces unless (
+	(s/$next_pair_pr_rx/$ctr = $2;''/eo)
+	||(s/$next_pair_rx/$ctr = $2;''/eo));
+    $ditch = &missing_braces unless (# Ditch title
+	(s/$next_pair_pr_rx//o)||(s/$next_pair_rx//o));
+#    s/$next_pair_pr_rx//o;
     $segment_sec_id[$index] += 1 if ($index = $section_commands{$ctr});
     $SEGMENTED = 1;
     $_;
@@ -286,7 +457,11 @@ sub do_cmd_htmlmeta {
 
 sub do_cmd_bodytext {
     local($_) = @_;
-    s/$next_pair_pr_rx//o; $BODYTEXT = &revert_to_raw_tex($2);
+    my $attrs;
+    &missing_braces unless (
+        (s/$next_pair_pr_rx/$attrs=$2;''/eo)
+	||(s/$next_pair_rx/$attrs=$2;''/eo));
+    $BODYTEXT = &revert_to_raw_tex($attrs);
     $_;
 }
 
@@ -312,7 +487,10 @@ sub do_cmd_internal{
     local($type, $prefix, $file, $var, $buf);
     $type = "internals";
     s/$optional_arg_rx/$type = $1; ''/eo;
-    s/$next_pair_pr_rx/$prefix = $2; ''/eo;
+    $prefix = &missing_braces unless
+	((s/$next_pair_pr_rx/$prefix = $2; ''/eo)
+	||(s/$next_pair_rx/$prefix = $2; ''/eo));
+##    s/$next_pair_pr_rx/$prefix = $2; ''/eo;
     $file = "${prefix}$type.pl";
     unless (-f $file) {
 	print "\nCould not find file: $file \n";
@@ -320,15 +498,20 @@ sub do_cmd_internal{
     }
     local($dir,$nosave) = ('',1); 
     local($tmpdir,$rest) = ('',''); 
-    ($tmpdir, $rest) = split("/", $file, 2); 
-    while ($rest) { $dir .= $tmpdir . "/";
-	($tmpdir, $rest) =  split("/", $rest, 2);
+    if ($MULTIPLE_FILES && $ROOTED) {
+	$nosave = '';
+    } else {
+	($tmpdir, $rest) = split(/\Q$dd\E/, $file, 2); 
+	while ($rest) {
+	    $dir .= $tmpdir . $dd;
+	    ($tmpdir, $rest) =  split(/\Q$dd\E/, $rest, 2);
+	}
     }
     if (!($type =~ /(figure|table)/)) {
-	print "Loading segment data from $file \n" if ($DEBUG);
+	print "Loading segment data from $file \n" if ($DEBUG||$VERBOSITY);
 	require ($file);
 	return ($_);
-	}
+    }
 
     # figure/table captions
     local($after,$this) = ($_,'');
@@ -343,6 +526,7 @@ sub do_cmd_internal{
     }
 #    $buf = join('', <CAPTIONS>);
     if ($type =~ /figure/ ) {
+	print "Loading segment data from $file \n" if ($DEBUG||$VERBOSITY);
 	if (defined $segment_figure_captions) { 
 	    $segment_figure_captions .= (($segment_figure_captions)? "\n" : '') . $buf
 	} else {
@@ -350,6 +534,7 @@ sub do_cmd_internal{
 		. (($figure_captions)? "\n" : '') . $buf
 	}
     } else {
+	print "Loading segment data from $file \n" if ($DEBUG||$VERBOSITY);
 	if (defined $segment_table_captions) {
 	    $segment_table_captions .= (($segment_table_captions)? "\n" : '') . $buf
 	} else { 
@@ -373,12 +558,40 @@ sub do_cmd_externalcite {
 
 sub do_cmd_hyperref {
     local($_) = @_;
-    local($text);
+    local($text,$url,$hypopt);
     local($opt, $dummy) = &get_next_optional_argument;
-    s/$next_pair_pr_rx/$text = $2; ''/eo;
+    if ($opt =~ /hyper/) {
+	# emulate the \hyperref command of the hyperref package
+	($hypopt, $dummy) = &get_next_optional_argument;
+	if ($hypopt) {
+	    $text = &missing_braces unless
+		((s/$next_pair_pr_rx/$text = $2; ''/eo)
+		||(s/$next_pair_rx/$text = $2; ''/eo));
+##	    s/$next_pair_pr_rx/$text = $2; ''/es;
+	    local($br_id) = ++$global{'max_id'};
+	    $_ = join('', $OP.$br_id.$CP
+			, $hypopt 
+			, $OP.$br_id.$CP , $_ );
+	    return ( 
+	        &process_ref($cross_ref_mark,$cross_ref_mark,$text));
+	}
+	$url = &missing_braces unless
+	    ((s/$next_pair_pr_rx/$url = $2; ''/eo)
+	    ||(s/$next_pair_rx/$url = $2; ''/eo));
+##	s/$next_pair_pr_rx/$url=$2;''/eo;
+	s/$next_pair_pr_rx/$url.="\#$2.";''/eo;
+	s/$next_pair_pr_rx/$url.= (($url=~ m|\.$|)? '':'#').$2;''/e;
+    }
+    $text = &missing_braces unless
+	((s/$next_pair_pr_rx/$text = $2; ''/eo)
+	||(s/$next_pair_rx/$text = $2; ''/eo));
+##    s/$next_pair_pr_rx/$text = $2; ''/es;
+    if ($opt =~ /hyper/) {
+	return( &make_href($url,$text) );
+    }
     s/$next_pair_pr_rx//o; # Throw this away ...
     s/$next_pair_pr_rx//o unless ($opt =~ /no/);
-    &process_ref($cross_ref_mark,$cross_ref_mark,&translate_commands($text));
+    &process_ref($cross_ref_mark,$cross_ref_mark,$text);
 }
 
 sub do_cmd_hypercite {
@@ -386,17 +599,23 @@ sub do_cmd_hypercite {
     local($text);
     local($opt, $dummy) = &get_next_optional_argument;
     $opt = (($opt =~ /ext|no/) ? "external" : '' );
-    s/$next_pair_pr_rx/$text = $2; ''/eo;
+    $text = &missing_braces unless
+	((s/$next_pair_pr_rx/$text = $2; ''/eo)
+	||(s/$next_pair_rx/$text = $2; ''/eo));
+##    s/$next_pair_pr_rx/$text = $2; ''/eo;
     s/$next_pair_pr_rx//o;                # Throw this away ...
     s/$next_pair_pr_rx//o unless ($opt);  # ... and this too.
-    &process_cite($opt, &translate_commands($text));
+    &process_cite($opt, $text);
 }
 
 sub do_cmd_htmlref {
     local($_) = @_;
     local($text);
     local($opt, $dummy) = &get_next_optional_argument;
-    s/$next_pair_pr_rx/$text = $2; ''/eo;
+    $text = &missing_braces unless
+	((s/$next_pair_pr_rx/$text = $2; ''/eo)
+	||(s/$next_pair_rx/$text = $2; ''/eo));
+##    s/$next_pair_pr_rx/$text = $2; ''/eo;
     &process_ref($cross_ref_mark,$cross_ref_mark,$text);
 }
 
@@ -405,8 +624,10 @@ sub do_cmd_htmlcite {
     local($text);
     local($opt, $dummy) = &get_next_optional_argument;
     $opt = (($opt =~ /ext/) ? "external" : '' );
-    s/$next_pair_pr_rx/$text = $2; ''/eo;
-    $text = &translate_commands($text);
+    $text = &missing_braces unless
+	((s/$next_pair_pr_rx/$text = $2; ''/eo)
+	||(s/$next_pair_rx/$text = $2; ''/eo));
+##    s/$next_pair_pr_rx/$text = $2; ''/eo;
     &process_cite($opt,$text);
 }
 
@@ -434,7 +655,10 @@ sub do_env_imagesonly {
 sub do_cmd_htmlimage {
     local($_) = @_;
     local($attribs);
-    s/$next_pair_pr_rx/$attribs=$2;''/eo;
+    $attribs = &missing_braces unless
+	((s/$next_pair_pr_rx/$attribs = $2; ''/eo)
+	||(s/$next_pair_rx/$attribs = $2; ''/eo));
+##    s/$next_pair_pr_rx/$attribs=$2;''/eo;
     &write_warnings(
 	"\nThe command \"\\htmlimage\" is only effective inside an environment\n"
 	. "which may generate an image (eg \"{figure}\", \"{equation}\")\n"
@@ -472,16 +696,23 @@ sub do_cmd_HTMLset {
     local($_) = @_;
     local($which,$value,$hash,$dummy);
     local($hash, $dummy) = &get_next_optional_argument;
-    $which = &missing_braces
-	unless ((s/$next_pair_rx/$which = $2;''/eo)
-	    ||(s/$next_pair_pr_rx/$which = $2;''/eo));
-    $value = &missing_braces
-	unless ((s/$next_pair_rx/$value = $2;''/eo)
-	    ||(s/$next_pair_pr_rx/$value = $2;''/eo));
+    $which = &missing_braces unless (
+	(s/$next_pair_pr_rx/$which = $2;''/eo)
+	||(s/$next_pair_rx/$which = $2;''/eo));
+    $value = &missing_braces unless (
+	(s/$next_pair_pr_rx/$value = $2;''/eo)
+	||(s/$next_pair_rx/$value = $2;''/eo));
     if ($hash) {
-	local($tmp) = "\$hash";
-	if (defined ${$tmp}) { eval "\$$tmp{$which} = \"$value\";" }
-    } elsif ($which) { eval "\$$which = \"$value\";" }
+	local($tmp) = "\%$hash";
+	if (eval "defined \%{$hash}") { $! = '';
+#	    eval "\$$hash{'$which'} = \"$value\";";
+	    ${$hash}{'$which'} = $value;
+	    print "\nHTMLset failed: $! " if ($!);
+	} else { print "\nhash: \%$hash not defined" }
+    } elsif ($which) { $! = '';
+	eval "\${$which} = \"$value\";";
+	print "\nHTMLset failed: $! " if ($!);
+    }
     $_;
 }
 
@@ -491,6 +722,7 @@ sub do_cmd_HTMLsetenv { &do_cmd_HTMLset;}
 
 
 &process_commands_wrap_deferred (<<_RAW_ARG_DEFERRED_CMDS_);
+bodytext # {}
 comment # <<\\endcomment>>
 htmlonly # <<\\endhtmlonly>>
 latexonly # <<\\endlatexonly>>
@@ -510,7 +742,7 @@ htmlonly
 endhtmlonly
 latexonly # <<\\endlatexonly>>
 imagesonly # <<\\endimagesonly>>  &do_env_imagesonly(\$args)
-rawhtml # <<\\endrawhtml>> \$_ = join('',&revert_to_raw_tex(\$args),\$_)
+rawhtml # <<\\endrawhtml>> local(\$env)='rawhtml';\$_ = join('',&revert_to_raw_tex(\$args),\$_)
 _IGNORED_CMDS_
 
 1;				# This must be the last line

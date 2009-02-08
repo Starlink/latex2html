@@ -20,6 +20,19 @@ sub do_env_supertabular {
     &do_env_tabular(@_);
     }
 
+sub do_cmd_tablecaption {
+    local($_) = @_;
+    local($contents);
+    local($cap_env, $captions, $cap_anchors) = ('table','','');
+    $contents = &missing_braces unless (
+        (s/$next_pair_pr_rx/$contents = $&;''/e)
+        ||(s/$next_pair_rx/$contents = $&;''/e));
+    $contents = "\\caption". $contents;
+    &extract_captions;
+    $TABLE_CAPTION = $cap_anchors.$captions;
+    $_;
+}
+
 sub do_cmd_tablehead {
     local($_) = @_;
     local($text);
@@ -62,6 +75,7 @@ sub do_cmd_tablelasttail {
 
 
 &process_commands_wrap_deferred( <<_RAW_ARG_CMDS_);
+tablecaption # {}
 tablehead # {}
 tabletail # {}
 tablefirsthead # {}

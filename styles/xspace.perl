@@ -1,7 +1,7 @@
 #
-# $Id: xspace.perl,v 1.2 1998/02/19 22:24:35 latex2html Exp $
+# $Id: xspace.perl,v 1.3 1999/04/09 18:17:41 JCL Exp $
 # xspace.perl
-#   Jens Lippmann <lippmann@cdc.informatik.tu-darmstadt.de> 26-JAN-97
+#   Jens Lippmann <lippmann@rbg.informatik.tu-darmstadt.de> 26-JAN-97
 #
 # Extension to LaTeX2HTML to support xspace.sty.
 #
@@ -10,6 +10,9 @@
 #  jcl = Jens Lippmann
 #
 # $Log: xspace.perl,v $
+# Revision 1.3  1999/04/09 18:17:41  JCL
+# changed my e-Mail address
+#
 # Revision 1.2  1998/02/19 22:24:35  latex2html
 # th-darmstadt -> tu-darmstadt
 #

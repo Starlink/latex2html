@@ -21,6 +21,7 @@
 
 
 $CHARSET = "iso-8859-4";
+$INPUTENC='latin4';  # empty implies 'latin1'
 
 
 #Character ranges for lower --> upper-case conversion
@@ -254,7 +255,7 @@ sub do_cmd_times { join('', &iso_map("times", ""), $_[0]);}
      '&#184;' , '\\c{ }',
      '&#185;' , '\\v{s}',
      '&#186;' , '\\={e}',
-     '&#187;' , '\\'{g}',
+     '&#187;' , '\\\'{g}',
      '&#188;' , '\\tl{}', # tstrok
      '&#189;' , '\\NG{}',
      '&#190;' , '\\v{z}',

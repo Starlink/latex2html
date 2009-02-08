@@ -1,3 +1,4 @@
+# -*- perl -*-
 # longtable.perl by Denis Koelewijn
 #
 # Extension to LaTeX2HTML supply support for the "longtable"
@@ -6,29 +7,46 @@
 #
 # Change Log:
 # ===========
+# MRO: added changes proposed by Keith Refson
 
 package main;
 #
 #  Translate the longtable environment as
 #  an ordinary table.
-#
-#
 
 sub do_env_longtable {
     local($_) = @_;
-    local($border,$this,$cols);
-    s/$next_pair_rx/$cols=$&;''/eo;
-    &extract_captions;
-    while ($contents =~ /\\end((first)?head|(last)?foot)/ ) {
-	$contents = $';
-	$this = $`;
+    my $cols;
+    $cols = &missing_braces unless (
+	(s/$next_pair_pr_rx/$cols=$&;''/eo)
+	||(s/$next_pair_rx/$cols=$&;''/eo));
+
+    local($cap_env,$captions) = ('table', $captions);
+    if (/\\caption\s*(\*?)/) {
+	my $star = $1;
+	do { local($contents) = $_;
+	    &extract_captions($cap_env);
+	    $_ = $contents; undef $contents;
+	    # remove the artificial prefix, if it's a  \caption*
+	    $captions =~ s!^<(STRONG>).*?</\1\s*!!s if ($star);
+	}
+    };
+    my ($this, $head, $foot, $which);
+    local($border);
+    while (/\\end(((first)?head)|(last)?foot)\b/s ) {
+	if ($3) { $head = $`}
+	elsif ($2) { $head = $` unless ($head) }
+	elsif ($4) { $foot = $` }
+	else { $foot = $` unless ($foot) }
+	$_ = $'; $this = $`;
 	if ($this =~ /(\\[hv]line)\b/) { $border = $1 }
     }
-    $contents = join('', $cols, (($border)? "\n" : ''), $contents);
-    $contents = &process_environment("tabular", $global{'max_id'}++, $contents);
+    if ($head) { $head =~ s/\\\\\s*$//s; $head .= '\\\\'."\n"; }
+    if ($foot) { $_ =~ s/\\\\\s*$//s; $_ .= '\\\\'."\n"; }
+    # Keith Refson: replace \\tabularnewline
+    s/\\tabularnewline/\\\\/gs;
+    &do_env_tabular("$cols$head$_$foot")
 }
-
-sub do_env_longtable { &do_env_tabular(@_) }
 
 &ignore_commands( <<_IGNORED_CMDS_);
 LTleft
@@ -40,7 +58,5 @@ LTchunksize
 setlongtables
 _IGNORED_CMDS_
 
-&process_commands_in_tex (<<_RAW_ARG_CMDS_);
-_RAW_ARG_CMDS_
+1;
 
-1;                              # This must be the last line

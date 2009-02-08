@@ -44,11 +44,9 @@ to the other parts of the generated document.
 %
 \index{file suffix!optional}%
 \index{file suffix!.tex@\texttt{.tex} or\texttt{.doc}}%
-\cbversion{96.1}\begin{changebar}%
 The \texttt{.tex} suffix is optional and will be supplied
 by the program if it is omitted by the user.
 Other suffixes are acceptable also, such as \texttt{.doc}\,.
-\end{changebar}
 
 \medskip
 \index{options!command-line options}\html{\\}\noindent
@@ -234,7 +232,6 @@ Name the document using this title.
 
 \index{filenames!.htm@\texttt{.htm} extension}%
 
-\cbversion{97.1}\begin{changebar}\cbversion{97.1}
 \item [ -short\_extn\label{cs_shortextn}]
 \sameas{\fn{\$SHORTEXTN}\texttt{ = 1;}}\\
 Use a filename prefix of \texttt{.htm } for the produced
@@ -271,7 +268,6 @@ within a \fn{.latex2html-init} file say,
 to override the default (which uses the standard names).
 This subroutine takes the section-heading as a parameter 
 and must return the required name, or the empty string (default).
-\end{changebar}
 
 \index{output!redirect to directory}
 
@@ -292,7 +288,6 @@ This overrides any \fn{\$DESTDIR} setting.
 \index{filenames!prefix}%
 \index{temporary files}%
 
-\cbversion{96.1}\begin{changebar}
 \item [ -prefix \Meta{filename-prefix}\label{cs_prefix}]%
 \sameas{\fn{\$PREFIX}\texttt{ = \char34}\Meta{filename-prefix}\texttt{\char34;}}\\
 The \Meta{filename-prefix} will be prepended to all 
@@ -304,11 +299,9 @@ peacefully coexist in the same directory.
 However, do \emph{not} attempt to \emph{simultaneously} run multiple 
 instances of \latextohtml{} using the same output directory, 
 else various temporary files will overwrite each other.
-\end{changebar}%
 
 \index{filenames!auto-prefix}%
 
-\cbversion{96.1h}\begin{changebar}\cbversion{96.1h}
 \item [ -auto\_prefix\label{cs_autoprefix}]
 \sameas{\fn{\$AUTO\_PREFIX}\texttt{ = 1;}}\\
 Constructs the prefix as `\Meta{title}--'
@@ -316,18 +309,17 @@ to be prepended to all the files produced,
 where \Meta{title} is the name of the \LaTeX{} file being processed.
 (Note the `--' in this prefix.)\\
 This overrides any \fn{\$PREFIX} setting.
-\end{changebar}%
 
 \index{filenames!automatic link to directory name}%
 \index{filenames!index.html@\fn{index.html}}%
 
-\cbversion{97.1}\begin{changebar}\cbversion{97.1}
 \item [ -no\_auto\_link\label{cs_noautolink}]
-\sameas{\fn{\$AUTO\_LINK}\texttt{ = 0;}}\\
-If \fn{\$AUTO\_LINK} is set, along with variables \fn{\$LINKPOINT} 
-and \fn{\$LINKNAME} (e.g. within the \fn{latex2html.config} file) 
+\sameas{\fn{\$NO\_AUTO\_LINK}\texttt{ = 1;}}\\
+If \fn{\$NO\_AUTO\_LINK} is empty and variables \fn{\$LINKPOINT} 
+and \fn{\$LINKNAME} are defined appropriately
+(as is the default in the \fn{latex2html.config} file),
 then a hard link to the main \texttt{HTML} page is produced,
-using the name in \fn{\$LINKNAME}. Typically this is \fn{index.html}; 
+using the name supplied in \fn{\$LINKNAME}. Typically this is \fn{index.html}; 
 on many systems a file of this name will be used, if it exists,
 when a browser tries to view a URL which points to a directory.
 On other systems a different value for \fn{\$LINKNAME} may be appropriate.
@@ -337,7 +329,6 @@ is to become the target of the automatic link.\\
 Use of the \Cs{no\_auto\_link} switch \emph{cancels} 
 this automatic linking facility, 
 when not required for a particular document.
-\end{changebar}%
 
 \index{sections!in separate files}%
 
@@ -381,7 +372,6 @@ for the tree structure rooted at that node.%
 
 \index{child-links table!at bottom of page}%
 
-\cbversion{97.1}\begin{changebar}
 When the page has a sectioning-level less than the \Cs{split} depth,
 so that the a mini table-of-contents has links to other \texttt{HTML} pages, 
 this table is located at the bottom of the page, 
@@ -395,11 +385,9 @@ the mini table-of-contents contains links to subsections etc.
 occurring on the \emph{same} \texttt{HTML} page. 
 Now the table is located at the \emph{top} of this page, 
 unless placed elsewhere using the \Lc{tableofchildlinks} command.
-\end{changebar}
 
 \index{table of contents!depth}%
 
-\cbversion{97.1}\begin{changebar}
 \item [ -toc\_depth  \Meta{num}\label{cs_tocdepth}]
 \sameas{\fn{\$TOC\_DEPTH}\texttt{ = }\Meta{num}\texttt{;}}
  (default is \texttt{4})\\
@@ -415,7 +403,6 @@ Sections created using the starred-form of sectioning commands
 are included within the Table-of-Contents.
 As with \LaTeX, normally such sections are \emph{not} listed.
 %
-\end{changebar}%
 
 \index{sections!show section numbers}%
 \index{sections!numbers not shown}
@@ -426,8 +413,7 @@ Show section numbers. By default section numbers are \emph{not} shown,
 so as to encourage the use of particular sections as stand-alone documents. 
 \strikeout{In order to be shown, 
 section titles must be unique and must not contain inlined graphics.}
-%
-\cbversion{97.2}\begin{changebar}
+
 \index{segmentation!unsegment}
 
 \item [ -unsegment\label{cs_unsegment}]
@@ -438,7 +424,6 @@ This will cause the translator to concatenate all segments and process
 them as a whole.
 You might find this useful to check a segmented document for
 consistency.
-\end{changebar}%
 %
 \end{htmllist}
 
@@ -480,9 +465,7 @@ when there are alternative strategies for implementing portions of \LaTeX{} code
 \item [ -html\_version \texttt{(2.0|3.0|3.2)[,(math|i18n|table)]*}\label{cs_htmlversion}]
 ~\\\sameas{\fn{\$HTML\_VERSION}\texttt{ = \char34 ... \char34;}}\\
 This specifies both the \texttt{HTML}~\htmlref{version}{version} to generate, 
-and\html{ \dots}%
-\cbversion{97.1}\begin{changebar}
-any extra (non-standard) \texttt{HTML} features that may be required.\html{\\}
+and any extra (non-standard) \texttt{HTML} features that may be required.\html{\\}
 The version number corresponds to a published DTD for an \texttt{HTML} standard
 (although 3.0 was never accepted and subsequently withdrawn).
 A corresponding \Perl{} file in the \fn{versions/} subdirectory is loaded;
@@ -495,19 +478,19 @@ When such a file is loaded the resulting \texttt{HTML} code
 can no longer be expected to validate with the specified DTD. 
 An exception is \Ve{math} when the \htmlref{\Cs{no\_math}}{nomath} 
 switch is also used, which should still validate.
-\end{changebar}
-\strikeout{Currently, versions 2.0, 2.1, 2.2, 3.0 and 3.1 are available.}\\  
+
+Currently, versions 2.0, 3.2 and 4.0 are available.
+(and also 2.1, 2.2, 3.0 and 3.1, for hoistorical reasons). 
 The extensions \Ve{i18n}, \Ve{tables}, \Ve{math}
 correspond roughly to what used to be called versions `2.1', `2.2', `3.1'
-respectively, in previous releases of \latextohtml.
-Now these extensions can be loaded with any of `2.0', `3.0' or `3.2' 
+respectively, in releases of \latextohtml{} up to 1996.
+Now these extensions can be loaded with any of `2.0', `3.2' or `4.0' 
 as the specified standard.\\  
 The default version is usually set to be `3.2', within \fn{latex2html.config}\,.%
 
 \index{extensions!disabled}%
 \index{extensions!TeX defs@\TeX definitions}%
 
-\cbversion{96.1}\begin{changebar}%
 \item [ -no\_tex\_defs\label{cs_notexdefs}]
 \sameas{\fn{\$TEXDEFS}\texttt{ = 0;}} (default is 1)\\
 When \fn{\$TEXDEFS} is set (default) the file \fn{texdefs.perl} will be read.
@@ -522,13 +505,11 @@ This feature is intended to enable sophisticated authors the ability to insert
 arbitrary \TeX{} commands in environments that are destined 
 to be processed by \LaTeX{} anyway; 
 e.g. \env{figure}s, \strikeout{\env{theorem}s}, \env{picture}s, etc.
-\cbversion{97.1}\begin{changebar}%
 However this should rarely be needed, as now there is better support for these
 types of environment. There are now other methods to specify which chunks of code 
 are to be passed to \LaTeX{} for explicit image-generation; 
 see the discussion of the \env{makeimage} 
 \hyperref[page]{environment}{environment on page~}{}{makeimage}.
-\end{changebar}
 
 
 \index{auxiliary file!which to read}%
@@ -565,11 +546,9 @@ and \fn{\$DISP\_SCALE\_FACTOR} as appropriate.
 on the \texttt{HTML} pages. 
 Such control is subject entirely to the user's choices
 of settings for the browser windows.
-\end{changebar}%
 
 \index{font size!scalable}%
 
-\cbversion{97.1}\begin{changebar}
 \item [ -scalable\_fonts\label{cs_scalefonts}]
 \sameas{\fn{\$SCALABLE\_FONTS}\texttt{ = 1;}}\\
 This is used when scalable fonts, such as \PS\ versions
@@ -595,7 +574,7 @@ then specifying \Cs{no\_math} produces a quite different effect.
 Now it is the special \HTMLtag{MATH} tags and entities which are cancelled. 
 In their place a sophisticated scheme for parsing mathematical expressions 
 is used. Images are made of those sub-parts of a formula which cannot be 
-adequately expressed using (italiced) text characters and \HTML{SUB} and
+adequately expressed using (italiced) text characters and \HTMLtag{SUB} and
 \HTMLtag{SUP} tags.
 See \hyperref{the subsection on mathematics}{Section~}{}{maths} for more details.
 
@@ -607,15 +586,12 @@ A copy of each of the icons actually used within the document is placed in the
 directory along with the \texttt{HTML} files and generated images.
 This allows the whole document to be fully self-contained, within this directory;
 otherwise the icons must be retrieved from a (perhaps remote) server.
-\end{changebar}
 
 \index{icons!alternative set}\index{icons!customised images}%
-\cbversion{97.2}\begin{changebar}
 The icons are normally copied from a subdirectory of the \fn{\$LATEX2HTMLDIR},
 set within \fn{latex2html.config}. An alternative set of icons can be used
 by specifying a (relative) directory path in \fn{\$ALTERNATIVE\_ICONS}
 to where the customised images can be found.
-\end{changebar}
 
 
 \index{initialisation!init file@\texttt{-init\_file}}%
@@ -650,12 +626,10 @@ This enables you to specify a different language type than
 document, e.g. \texttt{'EN.US'}.
 \end{changebar}%
 
-\cbversion{96.1f}\begin{changebar}\cbversion{96.1f}\noindent
 \item [ -short\_index\label{cs_shortindex}]
 \sameas{\fn{\$SHORT\_INDEX}\texttt{ = 1;}}\\
 Creates shorter Index listings, using codified links; 
 this is fully compatible with the \env{makeidx} \htmlref{package}{makeidx}.
-\end{changebar}
 
 \index{footnotes!on separate page}%
 \index{footnotes!on same page}%
@@ -693,7 +667,6 @@ Sign each page with this address.\html{\\}
 See \fn{latex2html.config} for an example using \Perl{} code
 to automatically include the date.
 
-\cbversion{97.1}\begin{changebar}
 A user-defined \Perl{} subroutine called \texttt{\&custom\_address} 
 can be used instead, if defined; it takes the value of \fn{\$ADDRESS} 
 as a parameter, which may be used or ignored as desired.
@@ -702,7 +675,6 @@ variables named \fn{\$depth}, \fn{\$title}, \fn{\$file}
 hold the sectioning-level, title and filename of the \texttt{HTML} page
 being produced; \fn{\$FILE} holds the name of the filename for the title-page
 of the whole document.
-\end{changebar}
 
 \index{About this@\emph{About this document...}}
 
@@ -726,7 +698,7 @@ These switches affect whether images are created at all, whether
 old images are reused on subsequent runs or new ones created afresh,
 and whether anti-aliasing effects are used within the images themselves.
 
-\begin{htmllist}\htmlitemmark{MagentaBall}%
+\begin{htmllist}\htmlitemmark{PinkBall}%
 %
 \index{ascii-mode}% 
 \index{browser!character-based}%
@@ -764,12 +736,10 @@ Use links to external \PS\ files rather than inlined images
 in the chosen graphics format.
 
 \index{images!discard PostScript files@discard \PS\ files}%
-\cbversion{97.1}\begin{changebar}
 \item [ -discard\label{cs_discard}]
 \sameas{\fn{\$DISCARD\_PS}\texttt{ = 1;}}\\
 The temporary \PS\ files are discarded immediately after they
 have been used to create the image in the desired graphics format.
-\end{changebar}
 
 \index{images!disabled}%
 \item [ -no\_images\label{cs_noimages}]
@@ -786,7 +756,6 @@ runs of \latextohtml.
 
 
 \index{image files!reuse option}%
-\cbversion{96.1}\begin{changebar} 
 \item [ -reuse \Meta{reuse\_option}\label{cs_reuseoptions}]
 \sameas{\fn{\$REUSE}\texttt{ = }\Meta{reuse\_option}\texttt{;}}\\
 This switch specifies the extent to which image files are to be shared
@@ -823,11 +792,9 @@ Do \emph{not} share or recycle images generated during previous translations.
 This is equivalent to \Cs{reuse 0}.
 (This will enable the initial interactive session during which the user is
 asked whether to reuse the old directory, delete its contents or quit.)%
-\end{changebar}
 
 
 \index{images!anti-aliasing}\index{anti-aliasing!in figures}%
-\cbversion{97.1}\begin{changebar}
 \item [ -antialias\label{cs_aalias}]
 \sameas{\fn{\$ANTI\_ALIAS}\texttt{ = 1;}} (Default is 0.)\\
 Generated images of \env{figure} environments and external \PS\ files
@@ -861,10 +828,18 @@ Generated images of typeset material should \emph{not} use anti-aliasing effects
 Although on-screen images of text are definitely improved using anti-aliasing,
 printed images can be badly blurred, even at 300dpi. 
 Higher resolution printers do a much better job with the resulting grey-scale images.
-\end{changebar}
-%
 
 \cbversion{98.1}\begin{changebar}
+\index{images!white background}%
+\item [ -white\label{cs_white}]
+\sameas{\fn{\$WHITE\_BACKGROUND}\texttt{ = 1;}} (Default is 1.)\\
+Ensures that images of \env{figure} environments have a white
+background. Otherwise transparency effects may not work correctly.
+
+\item [ -no\_white\label{cs_nowhite}]
+\sameas{\fn{\$WHITE\_BACKGROUND}\texttt{ = '';}} (Default is 1.)\\
+Cancels the requirement that \env{figure} environments have a white background.
+
 \index{images!latex dump}%
 \item [ -ldump\label{cs_ldump}]
 \sameas{\fn{\$LATEX\_DUMP}\texttt{ = 1;}} (Default is 0.)\\
@@ -965,7 +940,6 @@ to avoid tedious typing of long command-lines having many switches.
 \begin{htmllist}\htmlitemmark{PinkBall}%
 %
 \index{URL!universal resource locator}\index{URL!for UP@for \textsl{UP} button}%
-\cbversion{96.1}\begin{changebar}
 \item [ -up\_url \Meta{URL}\label{cs_upURL}] 
 \sameas{\fn{\$EXTERNAL\_UP\_LINK}\texttt{ = \char34}\Meta{URL}\texttt{\char34;}}\\
 Specifies a universal resource locator (URL) to associate
@@ -1012,15 +986,12 @@ for document segments that would not otherwise have one.%
 \sameas{\fn{\$EXTERNAL\_INDEX}\texttt{ = \char34}\Meta{URL}\texttt{\char34;}}\\
 Specifies a URL for the \textsl{``INDEX''} button, 
 for document segments that otherwise would not have an index.
-%
-\end{changebar}
-\cbversion{97.1}\begin{changebar}
+
 \index{URL!for external Bibliography}%
 \item [ -biblio \Meta{URL}\label{cs_biblioURL}] 
 \sameas{\fn{\$EXTERNAL\_BIBLIO}\texttt{ = \char34}\Meta{URL}\texttt{\char34;}}\\
 Specifies the URL for the bibliography page to be used,
 when not explicitly part of the document itself.
-\end{changebar}
 %
 \end{htmllist}
 \smallskip
@@ -1043,25 +1014,20 @@ These extra messages should help to locate the cause of the problem.
 \begin{htmllist}\htmlitemmark{PinkBall}%
 %
 \index{options!defining temp directory}%
-\cbversion{97.1}\begin{changebar}
 \item [ -tmp \Meta{path}\label{cs_tmpdir}]
 Define a temporary directory to use for image generation.
 If \Meta{path} is $0$, the standard temporary directory \texttt{/tmp}
 is used.
-\end{changebar}
 %
 \index{options!print option listing}%
 \item [ -h(elp)\label{cs_optionlist}]
 Print out the list of all command-line options.
 
 \index{current version@current version of \latextohtml}%
-\cbversion{96.1}\begin{changebar}
 \item [ -v\label{cs_showversion}] 
 Print the current version of \latextohtml.
-\end{changebar}%
 
 \index{debugging}\index{diagnostic information}%
-\cbversion{96.1f}\begin{changebar}\cbversion{96.1f}
 \item [ -debug\label{cs_debugmode}]
 \sameas{\fn{\$DEBUG}\texttt{ = 1;}}\\
 Run in debug-mode, displaying messages and/or diagnostic information 
@@ -1073,11 +1039,9 @@ Shows any messages produced by these calls.%
 More extensive diagnostics, from the \Perl{} debugger, 
 can be obtained by appending the string `\texttt{-w-}' 
 to the 1st line of the \fn{latex2html} (and other) \Perl{} script(s).
-\end{changebar}
 
 
 \index{verbosity level}%
-\cbversion{97.1}\begin{changebar}
 \item [ -verbosity \Meta{num}\label{cs_verbositylevel}] 
 \sameas{\fn{\$VERBOSITY}\texttt{ = \Meta{num};}}\\
 Display messages revealing certain aspects of the processing
@@ -1135,7 +1099,6 @@ dynamically using the \verb|\htmltracing{...}| command,
 whose argument is the desired value, 
 or by using the more general \Lc{HTMLset} command
 as follows: \verb|\HTMLset{VERBOSITY}{|\Meta{num}\texttt{\char125}\,.
-\end{changebar}
 %
 \end{htmllist}
 \index{options|)}%
@@ -1300,9 +1263,8 @@ A value of `\texttt{0}' is common, to maintain strict
 alignment of inactive and active buttons in the control panels.
 
 
-\cbversion{97.1}\begin{changebar}
 \item [\fn{\$LINKNAME}\texttt{ = '\char34index.\$EXTN\char34';}]
-This is used with the \fn{\$AUTO\_LINK} \htmlref{variable}{noautolink}, 
+This is used when the \fn{\$NO\_AUTO\_LINK} \htmlref{variable}{noautolink} is empty, 
 to allow a URL to the working directory to be sufficient to reach the main page 
 of the completed document. 
 It specifies the name of the \texttt{HTML} file which will be automatically
@@ -1333,7 +1295,6 @@ This variable contains a (comma-separated) list of \LaTeX{} commands
 for setting the style to be used when these images are made. 
 If the value of this variable is empty then the accent is simply
 ignored, using an un-accented font character (not an image) instead.
-\end{changebar}
 %
 \end{htmllist}
 
@@ -1471,7 +1432,6 @@ to be right- or center-justified. (No longer used.)
 
 \bigskip
 
-\cbversion{97.1}\begin{changebar}%
 \noindent
 The following variables are used to access the utilities required during image-generation. 
 File and program locations on the local system are established by the \fn{configure-pstoimg} 
@@ -1482,6 +1442,7 @@ After running the \fn{configure-pstoimg} \Perl{} script it should not be necessa
 to alter the values obtained. Those shown below are what happens on the author's system;
 they are for illustration only and do \emph{not} represent default values.
 %
+
 \begin{itemize}\label{graphicsutils}%
 \item  \fn{\$GS\_LIB}\texttt{ = '/usr/local/share/ghostscript/4.02';}
 \item  \fn{\$PNMCAT}\texttt{ = '/usr/local/bin/pnmcat';}
@@ -1504,7 +1465,7 @@ more specific information obtained using the \Perl{} script \fn{configure-pstoim
 \begin{itemize}
 \item [] \fn{\$USENETPBM}\texttt{ = 1;}
 \item [] \fn{\$PBMPLUSDIR}\texttt{ = '/usr/local/bin';}
-\end{itemize}\end{changebar}%
+\end{itemize}
 
 
 %\filbreak
@@ -1654,7 +1615,6 @@ _RAW_ARG_CMDS_
 \index{new commands!order-sensitive}%
 \index{new commands!order-sensitive!processed in LaTeX@processed in \LaTeX}%
 \index{new commands!processed in LaTeX@processed in \LaTeX!order-sensitive}%
-\cbversion{97.1}\begin{changebar}
 Some commands need to be passed to \LaTeX, but using the 
 \verb|&process_commands_in_tex| subroutine gives incorrect results. 
 This may occur when the command is ``order-sensitive'',
@@ -1688,7 +1648,6 @@ subroutine. This also ``wraps'' the command within a dummy environment,
 but when that environment is processed the contents are not sent to \LaTeX,
 as in the previous case. All of the standard \LaTeX{} commands to change, 
 set or read the values of counters are handled in this way.
-\end{changebar}
 
 
 
@@ -1728,7 +1687,6 @@ possible to specify completely what appears in the navigation panels
 and in what order. As each section is processed, \latextohtml{}
 assigns relevant information to a number of global variables.
 These variables are used by the
-\cbversion{96.1}\begin{changebar}
 subroutines \texttt{top\_navigation\_panel} and
 \texttt{bottom\_navigation\_panel},
 where the navigation panel is constructed as a string consisting of
@@ -1739,8 +1697,7 @@ These subroutines can be redefined in a system-
 or user-configuration file (respectively, 
 \fn{\$LATEX2HTMLDIR/latex2html.config} and \fn{\$HOME/.latex2html-init}). 
 Any combination of text, \texttt{HTML} tags, 
-and the variables mentioned below is acceptable.%
-\end{changebar}\par
+and the variables mentioned below is acceptable.
 
 \medskip\noindent
 The control-panel variables are:\nobreak

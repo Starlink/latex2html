@@ -7,6 +7,9 @@
 # ===========
 #
 # $Log: article.perl,v $
+# Revision 1.6  1998/06/18 12:09:35  RRM
+#  --  do not override user's $LATEX_FONT_SIZE settings
+#
 # Revision 1.5  1998/02/20 22:08:30  latex2html
 # added log
 #
@@ -54,9 +57,9 @@ sub do_article_notitlepage{}
 sub do_article_titlepage{}
 sub do_article_openbib{}
 
-sub do_article_10pt{ $LATEX_FONT_SIZE = '10pt'; }
-sub do_article_11pt{ $LATEX_FONT_SIZE = '11pt'; }
-sub do_article_12pt{ $LATEX_FONT_SIZE = '12pt'; }
+sub do_article_10pt{ $LATEX_FONT_SIZE = '10pt' unless $LATEX_FONT_SIZE; }
+sub do_article_11pt{ $LATEX_FONT_SIZE = '11pt' unless $LATEX_FONT_SIZE; }
+sub do_article_12pt{ $LATEX_FONT_SIZE = '12pt' unless $LATEX_FONT_SIZE; }
 
 sub do_article_leqno{ $EQN_TAGS = 'L'; }
 sub do_article_reqno{ $EQN_TAGS = 'R'; }

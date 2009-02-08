@@ -2,25 +2,33 @@
 
 package main;
 
-$meta_cmd_rx =~ s/([\|\(])newcommand/$1def\|newcommand/
+$meta_cmd_rx =~ s/([\|\(])newcommand/$1\[egx\]?def\|newcommand/
     unless $meta_cmd_rx =~ /[\|\)]def/;
 
 sub get_body_def {
-    local(*_) = @_;
-    local($argn,$cmd,$body,$is_simple_def,$tmp);
-    $cmd = &get_next(2);
-    $cmd =~ s/^\s*\\//;
-    
-    $argn = &get_next(3);
+#    local(*_) = @_;
+    local($after_R) = @_;
+    local($_) = $$after_R;
+    my $argn,$cmd,$body,$is_simple_def,$tmp;
+    ($cmd,$tmp) = &get_next(2);
+    $cmd =~ s/^\s*\\//s;
+    if (/^\@/) { s/^(\@[\w\@]*)/$cmd.= $1;''/se } # @-letter
+
+    ($argn,$tmp) = &get_next(3);
     $argn = 0 unless $argn;
 
-    $body = &get_next(1);
+    ($body,$tmp) = &get_next(1);
     $tmp = "do_cmd_$cmd";
-    if ($is_simple_def && !defined (&$tmp))
-    { $new_command{$cmd} = join(':!:',$argn,$body,'}'); }
-    undef $body;
+#    if ($is_simple_def && !defined (&$tmp))
+    if ($is_simple_def )
+	{ $new_command{$cmd} = join(':!:',$argn,$body,'}'); }    
+    $$after_R = $_;
     ''; # $_;
 }
+
+sub get_body_gdef { &get_body_def(@_) }
+sub get_body_edef { &get_body_def(@_) }
+sub get_body_xdef { &get_body_def(@_) }
 
 ######################### Other Concessions to TeX #############################
 
@@ -87,8 +95,8 @@ sub do_cmd_char {
 vskip # &ignore_numeric_argument
 hskip # &ignore_numeric_argument
 kern # &ignore_numeric_argument
-bgroup
-egroup
+#bgroup
+#egroup
 _IGNORED_CMDS_
 
 

@@ -22,13 +22,8 @@
 
 package main; 
 
-sub do_cmd_chgbarbegin {
-    &do_cmd_cbstart;
-}
-
-sub do_cmd_chgbarend {
-    &do_cmd_cbend;
-}
+sub do_cmd_chgbarbegin { &do_cmd_cbstart(@_) }
+sub do_cmd_chgbarend { &do_cmd_cbend(@_) }
 
 #  Recognise options to \usepackage{changebar} .
 
@@ -82,19 +77,19 @@ sub do_cmd_cbversion{
 sub do_cmd_cbstart{
     local($cb_string)='';
     $cb_string = join('',"<$cbstyle>",$cbversion,"</$cbstyle>") if ($cb_version);
-    join ('', &put_cb_icon('begin',2, $cb_string), @_);
+    join ('', &put_cb_icon('begin',2, $cb_string), @_[0]);
 }
 
 sub do_cmd_cbend{
     local($cb_string)='';
     $cb_string = join('',"<$cbstyle> ",$cbversion,"</$cbstyle>") if ($cb_version);
-    join ('', &put_cb_icon('end',2, $cb_string), @_);
+    join ('', &put_cb_icon('end',2, $cb_string), @_[0]);
 }
 
 sub do_cmd_cbdelete{
     local($cb_string)='';
     $cb_string = join('',"<$cbstyle>",$cbversion,"</$cbstyle>") if ($cb_version);
-    join ('', &put_cb_icon('delete',2, $cb_string), @_);
+    join ('', &put_cb_icon('delete',2, $cb_string), @_[0]);
 }
 
 sub put_cb_icon{

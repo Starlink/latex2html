@@ -1,14 +1,17 @@
-# $Id: devnagri.perl,v 1.2 1998/02/03 05:35:03 RRM Exp $
+# $Id: devnagri.perl,v 1.5 2001/06/11 00:59:03 RRM Exp $
 # DEVNAGRI.PERL by Ross Moore <ross@mpce.mq.edu.au> 10-1-98
 # Mathematics Department, Macquarie University, Sydney, Australia.
 #
-# Style for LaTeX2HTML v98.1 to construct images of Devanagari script
+# Style for LaTeX2HTML v2K.1 to construct images of Devanagari script
 # using:
 #
 #  `devnag'  pre-processor and  dvng  fonts
 #       by Frans J. Velthuis' <velthuis@rc.rug.nl>
 #
-#   and its  dev2e.sty  LaTeX-2e interface 
+#   and the  dev.sty  LaTeX-2e interface 
+#       by Dominik Wujastyk <D.Wujastyk@ucl.ac.uk>
+#
+#   retaining support for the old  dev2e.sty  LaTeX-2e interface 
 #       by Dominik Wujastyk <D.Wujastyk@ucl.ac.uk>
 #
 #  Furthermore it can be used with the transcription scheme
@@ -28,15 +31,23 @@
 # Usage:
 #
 #  \usepackage[devnag]{devnagri}     %|  Velthuis' pre-processor only
-#
-#  \usepackage[patc]{devnagri}       %|  also uses Jeroen Hellingman's 
-#  \usepackage[hindi]{devnagri}      %|    patc -p <option>.pat
-#  \usepackage[marathi]{devnagri}    %|  with language options, and macros:
-#  \usepackage[nepali]{devnagri}     %|   dnmacs.tex  dntrmacs.tex
+#  \usepackage[hindi]{devnagri}      %|    
+#  \usepackage[marathi]{devnagri}    %|  
+#  \usepackage[nepali]{devnagri}     %|  
 #  \usepackage[sanskrit]{devnagri}   %|  
 #
-#  \usepackage[preprocess]{devnagri} %|  same as  \usepackage[patc]{devnagri}
 #  \usepackage{devnagri}             %|  source already pre-processed
+#  \usepackage[preprocess]{devnagri} %|  same as  \usepackage[patc]{devnagri}
+#
+#  \usepackage[dev209]{devnagri}       %|  old LaTeX-209 version
+#  \usepackage[olddevnag]{devnagri}    %|  old LaTeX-209 version
+#  \usepackage[old,...]{devnagri}      %|  uses LaTeX-209 version with others
+#
+#  \usepackage[patc]{devnagri}         %|  also uses Jeroen Hellingman's 
+#  \usepackage[patc,hindi]{devnagri}   %|    patc -p <option>.pat
+#  \usepackage[patc,marathi]{devnagri} %|  with language options, and macros:
+#  \usepackage[patc,nepali]{devnagri}  %|   dnmacs.tex  dntrmacs.tex
+#  \usepackage[patc,sanskrit]{devnagri}%|  
 #
 # ===================================================================
 # Warning 1.
@@ -57,6 +68,22 @@
 # Change Log:
 # ===========
 # $Log: devnagri.perl,v $
+# Revision 1.5  2001/06/11 00:59:03  RRM
+#  --  differentiate between \newline and \\
+#       \\ causes </P><P> to split paragraphs
+#       \newline causes <BR> assuming that an outer environment supplies
+#        the correct paragraph-level tagging.
+#  --  environments {verse}, {quote}, and {center} are recognised as being
+#      at paragraph-level. Currently no special HTML tags are used for these.
+#      That should be addressed with further development.
+#
+# Revision 1.4  2001/05/22 13:31:32  RRM
+#  --  leave $DN2 undefined by default. It's only needed for german
+#      extensions by Klaus-J. Wolf  <yanestra@t-online.de>
+#
+# Revision 1.3  2001/05/21 10:23:53  RRM
+#  --  update to support the version 2.0  revision of  devnag  and  dn2
+#
 # Revision 1.2  1998/02/03 05:35:03  RRM
 #  --  dev2e.sty was written by Wujastyk, not Fairbairns
 #
@@ -76,11 +103,17 @@ package main;
 ###  configuration variables  ###
 # these may be set in .latex2html-init files
 
-# command-name for the  devnag  pre-processor
+# command-name for the  devnag  and  dn2  pre-processors
 $DEVNAG = 'devnag' unless ($DEVNAG);
+#$DN2 = 'dn2' unless ($DN2); # uncomment this for the  dn2  german extension
 
 # command-name for the  patc  pre-processor
 $PATC = 'patc' unless ($PATC);
+
+####  IMPORTANT: move/rename  system command
+####  (un-)comment the following lines to get this right:
+$RENAME = 'mv';	# Unix
+#$RENAME = 'rename'; # DOS
 
 
 ####  IMPORTANT: this variable *must* be set correctly ####
@@ -99,6 +132,9 @@ $devnag_inline = 150 unless ($devnag_inline);
 
 # pre-processor: devnag
 sub do_devnagri_devnag { &pre_process_devnag('') }
+sub do_devnagri_old { $DVNG_OLD=1; }
+sub do_devnagri_dev209 { &do_devnagri_old; &pre_process_devnag('') }
+sub do_devnagri_olddevnag { &do_devnagri_209(); }
 
 # preprocessor: patc
 sub do_devnagri_preprocess { &pre_process_devnagri('') }
@@ -109,19 +145,52 @@ sub do_devnagri_nepali { &pre_process_devnagri('nepali') }
 sub do_devnagri_sanskrit { &pre_process_devnagri('sanskrit') }
 
 
+# pre-processor directives: pass these to images.pre
+#
+%other_environments = ( %other_environments
+	, '@hindi:', 'nowrap'
+	, '@sanskrit:', 'nowrap'
+	, '@dollars:', 'nowrap'
+	, '@nodollars:', 'nowrap'
+	, '@dolmode0:', 'nowrap'
+	, '@dolmode1:', 'nowrap'
+	, '@dolmode2:', 'nowrap'
+	, '@dolmode3:', 'nowrap'
+	, '@hyphen:', 'nowrap'
+	, '@nohyphen:', 'nowrap'
+	, '@lig:', 'nowrap'
+	, '@nolig:', 'nowrap'
+	, '@tabs:', 'nowrap'
+	, '@notabs:', 'nowrap'
+	, '@vconjuncts:', 'nowrap'
+);
 
 sub pre_process_devnagri {
     local($pattern) = @_; $pattern = 'dng'; # unless ($pattern);
-    $preprocessor_cmds .= 
+    if ($DVNG_OLD) {
+      $preprocessor_cmds .= 
 	"$PATC -p $PRE_FILTERS$dd$pattern.pat ${PREFIX}images.pre ${PREFIX}images.tex\n";
-    $preprocessor_cmds .= 
+      $preprocessor_cmds .= 
 	"$DEVNAG  ${PREFIX}images.pre ${PREFIX}images.tex\n"
 		unless ($pattern =~ /devnagri/);
+    } else {
+      $preprocessor_cmds .= 
+    	"$RENAME ${PREFIX}images.pre ${PREFIX}images.dn; ";
+    	if ($DN2) {
+    	    $preprocessor_cmds .=
+		"$DEVNAG  ${PREFIX}images.dn ${PREFIX}imagesdn2; "
+		. "$DN2  ${PREFIX}imagesdn2.tex ${PREFIX}images.tex\n";
+	} else {
+    	    $preprocessor_cmds .=
+		"$DEVNAG  ${PREFIX}images.dn ${PREFIX}images.tex\n";
+	}
+    }
 
     %other_environments = ( %other_environments
 		, "\$\$:\$\$", 'tr_devnagri'
 		, "\$:\$", 'devnagri'
-	) unless ($prelatex =~ /\@dollar/ );
+	) if ($prelatex =~ /^\@dollars/m );
+#	) unless ($prelatex =~ /\@dollar/ );
 
     %other_environments = ( %other_environments
 		, '<hindi>:</hindi>', 'devnagri'
@@ -138,27 +207,47 @@ sub pre_process_devnagri {
 
 sub pre_process_devnag {
     $PREPROCESS_IMAGES = 1;
-    $preprocessor_cmds .= 
+    if ($DVNG_OLD) {
+      $preprocessor_cmds .= 
 	"$DEVNAG  ${PREFIX}images.pre ${PREFIX}images.tex\n"
 	    unless ($preprocessor_cmds =~ /devnag/);
+    } elsif(!($preprocessor_cmds =~ /devnag/)) {
+      $preprocessor_cmds .= 
+    	"$RENAME ${PREFIX}images.pre ${PREFIX}images.dn; ";
+    	if ($DN2) {
+    	    $preprocessor_cmds .=
+		"$DEVNAG  ${PREFIX}images.dn ${PREFIX}imagesdn2; "
+		. "$DN2  ${PREFIX}imagesdn2.tex ${PREFIX}images.tex\n";
+	} else {
+    	    $preprocessor_cmds .=
+		"$DEVNAG  ${PREFIX}images.dn ${PREFIX}images.tex\n";
+	}
+    }
 	%other_environments = ( %other_environments
 		, "\$\$:\$\$", 'tr_devnag'
 		, "\$:\$", 'devnag'
 	) if ($prelatex =~ /\@dollar/ );
 }
 
+$verse_rx = "\\\\(?:begin|end)\\s*\\{\\s*(?:verse|quote|center)\\s*\\}\\s*";
 
 sub do_env_pre_devnagri {
     local($_) = @_; 
     $_ = &revert_to_raw_tex($_);
 
-    if (/\\par\b/m) {
+    #if (/\\par\b/m) {
+    if ($devn =~ /\\par\b|$verse_rx/s) {
 	local(@paragraphs, @dn_processed, $this_par);
 	local($par_start, $par_end) = ('<P', "</P>\n");
 	$par_start .= (($USING_STYLE)? " CLASS=\"DEV\"":''). '>';
-	@paragraphs = (split(/\\par\b/, $_ ));
+	#@paragraphs = (split(/\\par\b/, $_ ));
+	@paragraphs = (split(/\\par\b|($verse_rx)/, $_ ));
 	while (@paragraphs) {
 	    $this_par = shift @paragraphs;
+	    if ($this_par =~ /$verse_rx/) {
+		$this_par .= shift @paragraphs;
+		$this_par .= shift @paragraphs;
+	    }
 	    $this_par =~ s/\s$//;
 	    if ($this_par =~ /^\s*$/) {
 	        push(@dn_processed, "\n<P></P>\n");
@@ -193,18 +282,24 @@ sub do_env_pre_devnag {
     local($_) = @_; 
     $_ = &revert_to_raw_tex($_);
 
-    if (/\\par\b/m) {
+    #if (/\\par\b/m) {
+    if ($devn =~ /\\par\b|$verse_rx/s) {
 	local(@paragraphs, @dn_processed, $this_par);
 	local($par_start, $par_end) = ('<P', "</P>\n");
 	$par_start .= (($USING_STYLE)? " CLASS=\"DEV\"":''). '>';
-	@paragraphs = (split(/\\par\b/, $_ ));
+	#@paragraphs = (split(/\\par\b/, $_ ));
+	@paragraphs = (split(/\\par\b|($verse_rx)/, $_ ));
 	while (@paragraphs) {
 	    $this_par = shift @paragraphs;
+	    if ($this_par =~ /$verse_rx/) {
+		$this_par .= shift @paragraphs;
+		$this_par .= shift @paragraphs;
+	    }
 	    $this_par =~ s/\s$//;
 	    if ($this_par =~ /^\s*$/) {
 	        push(@dn_processed, "\n<P></P>\n");
 	    } else {
-	        $_ = &process_in_latex("\{$this_par\}");
+	        $_ = &process_in_latex("\\parbox\{\\textwidth\}\{$this_par\}");
 	        push(@dn_processed
 		    , &make_comment('DEVANAGARI', $this_par)
 		    , $par_start , $_ , $par_end);
@@ -213,9 +308,12 @@ sub do_env_pre_devnag {
 	join('', @dn_processed );
     } else  {
 	local($comment);
-	if (length($_) < $devnag_inline) {
+	if ((length($_) < $devnag_inline)||($_=~/\\\\/)) {
 	    $_ = &process_undefined_environment('tex2html_dng_inline'
 	    , ++$global{'max_id'}, "\{$_\}");
+	} elsif ($_=~/\\\\|\|/s) { 
+	    $devn = &process_undefined_environment('tex2html_dn_inpar'
+	    , ++$global{'max_id'}, '\vbox{\let\\\\\\newline'."\n".$devn.'}');
 	} else { 
 	    $comment = join('', &make_comment('DEVANAGARI', $_),"\n");
 	    $_ = &process_in_latex("\{$_\}")
@@ -262,19 +360,47 @@ sub process_dn {
     local($dnsize, $_) = @_;
     if (($dnsize eq 'dn')&&($DNCURMF)) { $dnsize = "$DNCURRM\\dn" }
     local($devn) = &revert_to_raw_tex($_);
+    my $is_dev_inline = '';
 
-    if ($devn =~ /\\par\b/m) {
+    if ($devn =~ /\\par\b|$verse_rx|\\(newline)/m) {
+	$is_dev_inline = $1;
 	local(@paragraphs, @dn_processed, $this_par);
 	local($par_start, $par_end) = ('<P', "</P>\n");
 	$par_start .= (($USING_STYLE)? " CLASS=\"DEV\"":''). '>';
-	@paragraphs = (split(/\\par\b/, $devn ));
+	@paragraphs = (split(/\\par\b|($verse_rx)|\\newline\s*/, $devn ));
 	while (@paragraphs) {
 	    $this_par = shift @paragraphs;
+	    if ($this_par =~ /$verse_rx/) {
+		$this_par .= shift @paragraphs;
+		$this_par .= shift @paragraphs;
+		$is_dev_inline = 0;
+	    } elsif ($this_par =~ /\\newline/) {
+		# this should not happen;
+		# It's not correct, as the first chunk gets <P> tags anyway
+		push(@dn_processed, "<BR>\n");
+		$this_par = shift @paragraphs;
+	        $devn = &process_in_latex(
+	        	"\\parbox\{\\textwidth\}\{\\$dnsize $this_par\}");
+	        push(@dn_processed
+		    , &make_comment('DEVANAGARI', $this_par)
+		    , $devn);
+		next;
+	    }
 	    $this_par =~ s/\s$//;
-	    if ($this_par =~ /^\s*$/) {
-	        push(@dn_processed, "\n<P></P>\n");
+	    if ($this_par =~ /^\s*(\{\s*\})?$/) {
+		if ($is_dev_inline) {
+		    push(@dn_processed, "<BR>\n");
+		} else {
+	            push(@dn_processed, "\n<P></P>\n");
+		}
+	    } elsif ($is_dev_inline) {
+		# assume text is inline, within some outer environment
+	        $devn = &process_in_latex(
+	        	"\\parbox\{\\textwidth\}\{\\$dnsize $this_par\}");
+	        push(@dn_processed, $devn);
 	    } else {
-	        $devn = &process_in_latex("\{\\$dnsize $this_par\}");
+	        $devn = &process_in_latex(
+	        	"\\parbox\{\\textwidth\}\{\\$dnsize $this_par\}");
 	        push(@dn_processed
 		    , &make_comment('DEVANAGARI', $this_par)
 		    , $par_start , $devn , $par_end);
@@ -285,11 +411,17 @@ sub process_dn {
 	local($devn) = join('',"\{\\$dnsize\\, ", $devn, "}\\,");
 	local($comment);
 	if (length($devn) < $dn_inline) {
+#print "\nprocess_dn_inline:\n$_\n";
 	    $devn = &process_undefined_environment('tex2html_dn_inline'
 	    , ++$global{'max_id'}, $devn);
+	} elsif ($_=~/\\\\|\|/s) { 
+#print "\nprocess_dn_inpar:\n$_\n";
+	    $devn = &process_undefined_environment('tex2html_dn_inpar'
+	    , ++$global{'max_id'}, '\vbox{\let\\\\\\newline'."\n".$devn.'}');
 	} else { 
+#print "\nprocess_dn latex:\n$_\n";
 	    $comment = join('', &make_comment('DEVANAGARI',$devn),"\n");
-	    $devn = &process_in_latex($devn)
+	    $devn = &process_in_latex("\{$devn\}")
 	}
 	if ($USING_STYLES) {
 	    $env_style{'DEV'} = " " unless ($env_style{'DEV'});

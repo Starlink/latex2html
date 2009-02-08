@@ -10,6 +10,7 @@
 package main;
 #
 
+print "\nLoading AMS-fonts...";
 #  Suppress the possible options to   \usepackage[....]{amsfonts}
 
 sub do_amsfonts_psamsfonts {

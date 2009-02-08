@@ -1,4 +1,4 @@
-# $Id: indica.perl,v 1.2 1998/02/03 05:28:47 RRM Exp $
+# $Id: indica.perl,v 1.4 1999/03/13 00:26:54 RRM Exp $
 # INDICA.PERL by Ross Moore <ross@mpce.mq.edu.au> 14-1-98
 # Mathematics Department, Macquarie University, Sydney, Australia.
 #
@@ -87,6 +87,15 @@
 # Change Log:
 # ===========
 # $Log: indica.perl,v $
+# Revision 1.4  1999/03/13 00:26:54  RRM
+#  --  implement <SPAN> and <DIV> tags for HTML4.0
+#  --  include LANG=  attribute with HTM4.0
+#  --  use \vbox with paragraphs
+#
+# Revision 1.3  1998/08/18 12:59:56  RRM
+#  --  allow for extra space after particular characters
+#  --  include the \diatop macro within images.tex in a better way
+#
 # Revision 1.2  1998/02/03 05:28:47  RRM
 #  --  changed file-names: gujrathi --> gujarati
 #
@@ -225,6 +234,22 @@ sub indica_environments {
     );
 }
 
+%ISO_indic = (
+	  'BENGALI'	, 'bn'
+	, 'GUJARATHI'	, 'gu'
+	, 'GURMUKHI'	, 'pa'
+	, 'HINDI'	, 'hi'
+	, 'KANNADA'	, 'kn'
+	, 'MALAYALAM'	, 'ml'
+	, 'ORIYA'	, 'or'
+	, 'SANSKRIT'	, 'sa'
+	, 'SINHALA'	, 'si'
+	, 'SINHALESE'	, 'si'
+	, 'TAMIL'	, 'ta'
+	, 'TELUGU'	, 'te'
+	, 'TIBETAN'	, 'bo'
+);
+
 sub do_env_pre_indica {
     local($_) = @_;
     local($inline_length) = $indica_inline;
@@ -235,13 +260,14 @@ sub do_env_pre_indica {
     elsif ($INDICA_MODE =~ /LATEX/ ) { $inline_length = $indica_latex; }
     else { $inline_length = $indica_inline; }
 
+    local($par_start, $par_end, $ilang) = ('<P', "</P>\n", '');
+    $ilang = join('', ' LANG="', $ISO_indic{$indic}, '"');
     if (/\\par/) {
 	local(@paragraphs, @indic_processed, $this_par);
-	local($par_start, $par_end) = ('<P', "</P>\n");
 	if ($USING_STYLES) {
 	    $indic =~ s/^([A-Z]{3})\w*$/$1/;
 	    $env_style{$indic} = " " unless ($env_style{$indic});
-	    $par_start .=  " CLASS=\"$indic\">";
+	    $par_start .=  "$ilang CLASS=\"$indic\">";
 	} else { $par_start .= '>' }
 
 	@paragraphs = (split(/$par_rx/, $_));
@@ -250,17 +276,29 @@ sub do_env_pre_indica {
 	    foreach (1..6) { shift @paragraphs; }
 	    next unless ($this_par);
 	    $this_par =~ s/\s$//;
-	    $_ = &process_in_latex("\#$indic\n$this_par\n\#NIL\n");
-	    push(@indic_processed
-		, &make_comment( 'INDICA '.$indic, $this_par)
-		, $par_start , $_ , $par_end);
+	    if (($HTML_VERSION >= 4)&&(defined &process_object_in_latex)) {
+		$_ = &process_object_in_latex(
+			"\#$indic\n" , $this_par , "\n\#NIL\n" );
+		push(@indic_processed , $par_start , $_ , $par_end);
+	    } else {
+		$_ = &process_in_latex("\\vbox{\#$indic\n$this_par\n\#NIL }\n");
+		push(@indic_processed
+		    , &make_comment( 'INDICA '.$indic, $this_par)
+		    , $par_start , $_ , $par_end);
+	    }
 	}
 	join('', @indic_processed );
     } else  {
 	local($comment);
 	if (length($_) < $inline_length ) {
-	    $_ = &process_undefined_environment('tex2html_ind_inline'
-		, ++$global{'max_id'}, "\#$indic$_\#NIL\n");
+	    if (($HTML_VERSION >= 4)&&(defined &process_object_in_latex)) {
+		$_ = &process_object_in_latex("\#$indic ", $_ , "\#NIL\n");
+	    } else {
+		$_ = &process_undefined_environment('tex2html_ind_inline'
+		    , ++$global{'max_id'}, "\#$indic$_\#NIL\n");
+	    }
+	} elsif (($HTML_VERSION >= 4)&&(defined &process_object_in_latex)) {
+	    $_ = &process_object_in_latex("\#$indic\n", $_ , "\n\#NIL\n");
 	} else { 
 	    $comment = join('', &make_comment( 'INDICA '.$indic, $_),"\n");
 	    $_ = &process_in_latex("\#$indic\n$_\n\#NIL\n")
@@ -268,7 +306,7 @@ sub do_env_pre_indica {
 	if ($USING_STYLES) {
 	    $indic =~ s/^([A-Z]{3})\w*$/$1/;
 	    $env_style{$indic} = " " unless ($env_style{$indic});
-	    join('', $comment, "<SPAN CLASS=\"$indic\">", $_, '</SPAN>');
+	    join('', $comment, "<SPAN$ilang CLASS=\"$indic\">", $_, '</SPAN>');
 	} else { $comment . $_ }
     }
 }
@@ -289,8 +327,14 @@ sub do_cmd_SHc { &process_indica_output('SHc', $font_size{'SHc'}, $snh_inline, @
 sub process_indica_output {
     local($snhfont, $snh_size, $brlength, $snhtxt) = @_;
 
+    local($afterspace) = '\\kern.05em';
+    if ($snhfont =~ /SHa/) {
+        $afterspace = '\\kern.1em' if ($snhtxt =~ /char7$/);
+    }
+    
     # size defaults to $LATEX_FONT_SIZE
-    $snhtxt = "\{\\$snhfont$snhtxt\}\%".($snh_size ? $snh_size : $LATEX_FONT_SIZE)."\%";
+    $snhtxt = "\{\\$snhfont$snhtxt$afterspace\}\%".
+    		($snh_size ? $snh_size : $LATEX_FONT_SIZE)."\%";
 
     if (length($snhtxt) < $brlength ) {
 	$global{'max_id'}++;
@@ -327,7 +371,8 @@ local($diatop) = "\n\\def\\diatop[#1|#2]{%\n"
  . " \\hbox{\\rlap{\\raise1\\dimen1\\box1}%\n"
  . " \\hbox to1\\dimen0{\\hss#2\\hss}}}}%\n"
  ."%e.g. of use: \\diatop[\\'|{\\=o}] gives o macron acute\n\n";
-&add_to_preamble('',$diatop); undef $diatop;
+
+$LaTeXmacros .= $diatop; undef $diatop;
 
 &process_commands_in_tex (<<_RAW_ARG_CMDS_);
 diatop # []

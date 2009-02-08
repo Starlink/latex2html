@@ -37,6 +37,13 @@ _____________________________________________________________________
 Several different transcription/transliteration schemes are supported;
 see the individual .sty or .perl files for documentation.
 
+The .perl files should be copied into the $LATEX2HTMLSTYLES directory
+to become available for use with LaTeX2HTML.
+Similarly, the .sty files should be copied into an appropriate place
+within the texmf/ tree (or texinputs on older installations) so as to
+be available for use with LaTeX. (Don't forget to rebuild the  ls-R
+file for the  kpathsea  database, using  texhash  or  mktexlsr .)
+
 
 Preprocessors:
 _____________________________________________________________________

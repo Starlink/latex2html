@@ -24,6 +24,7 @@
 
 
 $CHARSET = 'iso-8859-3';
+$INPUTENC = 'latin3';
 
 
 #Character ranges for lower --> upper-case conversion

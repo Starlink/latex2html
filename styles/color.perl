@@ -1,4 +1,6 @@
-# $Id: color.perl,v 1.11 1997/12/08 12:45:17 RRM Exp $
+# -*- perl -*-
+#
+# $Id: color.perl,v 1.24 2001/02/17 22:42:06 RRM Exp $
 # color.perl by Michel Goossens <goossens@cern.ch>  01-14-96
 #
 # Extension to LaTeX2HTML V 96.2 to support color.sty
@@ -14,6 +16,64 @@
 # Change Log:
 # ===========
 # $Log: color.perl,v $
+# Revision 1.24  2001/02/17 22:42:06  RRM
+#  --  defined RGB, CMYK, GRAY color models
+#      these are the same as rgb, cmyk, gray but using integer coords
+#      in the range 0 --> 255 with each component.
+#      Note that not all LaTeX drivers support all of these models.
+#
+# Revision 1.23  1999/10/12 13:15:39  RRM
+#  --  handle all color-changing commands via declarations
+#
+# Revision 1.22  1999/09/16 09:57:01  RRM
+#  --  fixed error merging the previous changes
+#
+# Revision 1.21  1999/09/16 09:30:41  RRM
+#  --  fixed errors in  do_cmd_fcolorbox
+#  	thanks to John McNaught for reporting the errors
+#
+# Revision 1.20  1999/09/14 22:02:02  MRO
+#
+# -- numerous cleanups, no new features
+#
+# Revision 1.19  1999/06/10 23:00:20  MRO
+#
+#
+# -- fixed an artifact in the *ball icons
+# -- cleanups
+# -- option documentation added
+# -- fixed bug in color perl (determining path to rgb/crayola)
+#
+# Revision 1.18  1999/06/04 07:36:28  RRM
+#  --  &read_rgb_colors  and  &read_cmyk_colors  failed with a full path
+#  	via the new scheme for $RGBCOLORFILE  and  $CRAYOLAFILE
+#      Now the filename argument may include the complete path, or just
+#      	the name of a file on a path in $LATEX2HTMLSTYLES
+#
+# Revision 1.17  1999/03/12 06:30:58  RRM
+#  --  made \DefineNamedColor more robust,
+#  	it now works sequentially in the preamble
+#
+# Revision 1.16  1999/03/03 10:34:17  RRM
+#  --  fixed error in  &find_color  that lost all but the 1st component
+#  	in rgb  and cmyk color-spaces.
+#
+# Revision 1.15  1998/06/26 07:16:37  RRM
+#  --  simplified reading of crayola.txt fro CMYK colors
+#
+# Revision 1.14  1998/05/19 11:35:43  latex2html
+#  --  \textcolor inside math needs to pass $color_env back outside.
+#
+# Revision 1.13  1998/05/15 12:46:40  latex2html
+#  --  color is used with more environments, so need $color_env to be
+#     a local variable
+#
+# Revision 1.12  1998/04/28 13:13:23  latex2html
+#  --  fixed \color and \textcolor so that the tags nest correctly when
+#      used in a non-trivial way
+#  --  sets $color_env variable, so that color can be included with the
+#      code used for images; hence colored math expressions work correctly
+#
 # Revision 1.11  1997/12/08 12:45:17  RRM
 #  --  updated the color macros for style-sheets
 #
@@ -83,55 +143,69 @@ $CRAYOLAFILE = "crayola.txt" unless ($CRAYOLAFILE);
 $BKGSTRING = "bgcolor";
 
 sub read_rgb_colors {
-    local($file) = @_;
+    local($base_file) = @_;
+    local($file) = $base_file;
     local($prev) = $*;
     local($r,$g,$b,$name,$dir);
-    foreach $dir (split(/:/,$LATEX2HTMLSTYLES)) {
-	if (-f "$dir/$file") {
-            if (open(COLORFILE,"<$dir/$file")) {
-		print STDERR "\n(reading colors from $file" if $DEBUG;
+    foreach $dir (split(/$envkey/,$LATEX2HTMLSTYLES)) {
+    	$file = "$dir$dd$base_file"
+          unless (L2hos->is_absolute_path($base_file));
+          # unless ($base_file =~/^\Q$dd\E/);
+	if (-f $file) {
+            if (open(COLORFILE,"<$file")) {
+		print STDOUT "\n(reading colors from $file" if $DEBUG;
 		$* = 0;	# Multiline matching OFF
 		while (<COLORFILE>) {
 	s/^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\w+(\s\w+)*)\s*/
 	    ($r,$g,$b,$name)=($1,$2,$3,$4);
 	    $named_color{$name} = &encode_rgbcolor($r,$g,$b);
-	    print STDERR "\n$name = $named_color{$name}" if ($VERBOSITY > 5);
+	    print STDOUT "\n$name = $named_color{$name}" if ($VERBOSITY > 5);
 		/e;
 		}
 		close(COLORFILE);
-		print STDERR ")\n" if $DEBUG;
+		print STDOUT ")\n" if $DEBUG;
 		last
 	    } else { 
 		print STDERR "$file could not be opened:$dir\n";
 	    }
-	} 
+	}
     }
     $* = $prev;		# Restore Multiline matching
     $_[0];
 }
 
 sub read_cmyk_colors {
-    local($file) = @_;
+    local($base_file) = @_;
+    local($file) = $base_file;
     local($prev) = $*;
-    local($c,$m,$y,$k,$name,$dir);
-    foreach $dir (split(/:/,$LATEX2HTMLSTYLES)) {
-	if (-f "$dir/$file") {
-            if (open(COLORFILE,"<$dir/$file")) {
-		print STDERR "\n(reading colors from $file";
+    local($c,$m,$y,$k,$name,$dir,@colors);
+    local($num_rx) = "(\\d|\\d\\.\\d*)";
+    foreach $dir (split(/$envkey/,$LATEX2HTMLSTYLES)) {
+    	$file = "$dir$dd$base_file"
+          unless (L2hos->is_absolute_path($base_file));
+          # unless ($base_file =~/^\Q$dd\E/);
+	if (-f $file) {
+	    if (open(COLORFILE,"<$file")) {
+		print STDOUT "\n(reading colors from $file";
 		$* = 0;			# Multiline matching OFF
-		while (<COLORFILE>) {
-		    s/\s*$//g;
-  s/^\s*(\w+)\s+(\d|\d\.\d*)\s+(\d|\d\.\d*)\s+(\d|\d\.\d*)\s+(\d|\d\.\d*)$/
-	    ($name,$c,$m,$y,$k)=($1,$2,$3,$4,$5);
-	    if ($named_color{$name}) {
-		print STDERR "***$name = \#$named_color{$name}\n"
-		    if ($VERBOSITY > 5);}
-	    $named_color{$name} = &get_cmyk_color($c,$m,$y,$k);
-	    print STDERR "$name = \#$named_color{$name}\n" if ($VERBOSITY > 5);
-			/oe; }
-		close(COLORFILE);
-		print STDERR ")\n";
-		last
+		@colors = (<COLORFILE>);
+		foreach (@colors) {
+		    next if (/^\s*$/);
+#  s/^\s*(\w+)\s+(\d|\d\.\d*)\s+(\d|\d\.\d*)\s+(\d|\d\.\d*)\s+(\d|\d\.\d*)\s*$/
+		    s/^\s*(\w+)\s+$num_rx\s+$num_rx\s+$num_rx\s+$num_rx\s*$/
+			($name,$c,$m,$y,$k)=($1,$2,$3,$4,$5);
+			if ($named_color{$name}) {
+			    print STDOUT "***$name = \#$named_color{$name}\n"
+		   		if ($VERBOSITY > 3);
+			}
+			$named_color{$name} = &get_cmyk_color($c,$m,$y,$k);
+			print STDOUT "$name = \#$named_color{$name}\n"
+			    if ($VERBOSITY > 3);
+		    /oe;
+		}
+		close(COLORFILE); undef @colors;
+		print STDOUT ")\n";
+		last;
 	    } else { 
 		print STDERR "$file could not be opened:$dir\n";
 	    }
@@ -196,6 +270,15 @@ sub get_rgb_color {
 #    "$r$g$b";
 }
 
+sub get_RGB_color {
+    local($r,$g,$b) = @_;
+    if (!("$g$b")) {($r,$g,$b) = split(',',$r)};
+    ($r,$g,$b) = (int($r+.5),int($g+.5),int($b+.5));
+    local($str)=sprintf("%2x%2x%2x",$r,$g,$b);
+    $str=~s/\s/0/g;
+    $str;
+}
+
 sub get_cmyk_color {
     local($c,$m,$y,$k) = @_;
     if (!("$m$y$k")) {($c,$m,$y,$k) = split(',',$c)};
@@ -203,6 +286,17 @@ sub get_cmyk_color {
 #    ($r,$g,$b) = map( 1-$_-$k, ($c,$m,$y));
     ($r,$g,$b) = (1-$c-$k,1-$m-$k,1-$y-$k);
 #    ($r,$g,$b) = map( abs($_)/2+$_/2, ($r,$g,$b));
+    $r = 0 unless ($r > 0);
+    $g = 0 unless ($g > 0);
+    $b = 0 unless ($b > 0);
+    &get_rgb_color($r,$g,$b);
+}
+
+sub get_CMYK_color {
+    local($c,$m,$y,$k) = @_;
+    if (!("$m$y$k")) {($c,$m,$y,$k) = split(',',$c)};
+    local($r,$g,$b);
+    ($r,$g,$b) = (1-$c/255-$k/255,1-$m/255-$k/255,1-$y/255-$k/255);
     $r = 0 unless ($r > 0);
     $g = 0 unless ($g > 0);
     $b = 0 unless ($b > 0);
@@ -219,10 +313,20 @@ sub get_gray_color {
 #    "$gray$gray$gray";
 }
 
+sub get_GRAY_color {
+    local($gray) = @_;
+    $gray = int($gray+.5);
+    local($str)=sprintf("%2x%2x%2x",$gray,$gray,$gray);
+    $str=~s/\s/0/g;
+    $str;
+}
+
 sub do_cmd_DefineNamedColor {
     local($_) = @_;
     local($model,$name,$rest);
-    s/$next_pair_pr_rx//o; $model =$2;
+    $model = &missing_braces unless (
+	(s/$next_pair_pr_rx/$model =$2;''/eo)
+	||(s/$next_pair_rx/$model =$2;''/eo));
     $rest = $_;
 #    local($get_string) = "get_${model}_color";
 #    if (defined  &$get_string) {
@@ -243,12 +347,19 @@ sub do_cmd_DefineNamedColor {
 sub do_cmd_definecolor {
     local($_) = @_;
     local($name,$model,$hex)=('','','');
-    local(@data,$get_string);
-    s/$next_pair_pr_rx//o; $name =$2;
+    local(@data,$data, $get_string);
+    $name = &missing_braces unless (
+	(s/$next_pair_pr_rx/$name =$2;''/eo)
+	||(s/$next_pair_rx/$name =$2;''/eo)); 
     $name =~ s/^\s*//g; $name =~ s/\s*$//g;
-    s/$next_pair_pr_rx//o; $model =$2;
+    $model = &missing_braces unless (
+	(s/$next_pair_pr_rx/$model =$2;''/eo)
+	||(s/$next_pair_rx/$model =$2;''/eo));
     $model =~ s/^\s*//g; $model =~ s/\s*$//g;
-    s/$next_pair_pr_rx//o; @data = split(',',$2);
+    $data = &missing_braces unless (
+	(s/$next_pair_pr_rx/$data =$2;''/eo)
+	||(s/$next_pair_rx/$data =$2;''/eo));
+    @data = split(/\s*,\s*|\s+/,$data);
     $get_string = "get_${model}_color";
     if (defined  &$get_string) {
 	$hex = &$get_string(@data) ;
@@ -309,15 +420,23 @@ sub initialise_colors {
 # \textcolor is for a `local' color-change to specified text
 
 sub do_cmd_textcolor {
-    local($color,$rest) = &find_color;
+    local($color,$_,$color_cmd) = &find_color;
     if (!($color)) {
 	$color= "000000";  # default = black
-	print STDERR "\ntext color = black\n";}
-    $_= $rest;
-#    local($text);
-#    s/$next_pair_pr_rx//o; $text =$2;
-#    $_=join('',"<FONT color=\"\#$color\">$text</FONT>",$_);
-    &styled_text_chunk("FONT COLOR=\"\#$color\"",'hue','font','color',"\#$color",'',$_);
+	print STDERR "\ntext color = black\n";
+    }
+
+    if ($inside_math) {
+	# allow math-parsing to use this $color_env
+	$color_env = $color_cmd;
+    } else {
+	# environments will be parsed with this $color_env
+	local($color_env) = $color_cmd;
+    }
+    push (@$open_tags_R, $color_cmd);
+    $_ = &styled_text_chunk("FONT COLOR=\"\#$color\""
+	, 'hue', 'font', 'color', "\#$color", '', $_);
+    pop (@$open_tags_R); $_;
 }
 
 # \pagecolor is for a `global' color-change to the background;
@@ -335,23 +454,28 @@ sub do_cmd_pagecolor {
 # colorboxes use the `blink' effect; only one color can be used.
 
 sub do_cmd_colorbox {
-    local($color,$_) = &find_color;
-#    s/$next_pair_pr_rx//o;
-#    join('',"\n<blink><FONT color=\"\#$color\">",$2,"</FONT></blink>\n",$_);
-    $_=&styled_text_chunk("BLINK><FONT COLOR=\"\#$color\"",'cbox','background','color',"\#$color",'',$_);
+    local($color,$_,$color_cmd) = &find_color;
+    local($color_env) = $color_cmd;
+    push (@$open_tags_R, $color_cmd);
+    $_= &styled_text_chunk("BLINK><FONT COLOR=\"\#$color\""
+	, 'cbox', 'background', 'color', "\#$color", '', $_);
     s/\/BLINK/\/FONT><\/BLINK/ unless ($USING_STYLES);
+    pop (@$open_tags_R);
     $_;
 }
 
 sub do_cmd_fcolorbox {
     local($_) = @_;
+    my $fcolor, $bcolor, $color_cmd;
     if ($USING_STYLES) { 
-	local($fcolor) = &find_color;
-	local($color) = &find_color;
+	($fcolor, $_, $color_cmd) = &find_color($_);
+	($bcolor, $_, $color_cmd) = &find_color($_);
+#	push (@$open_tags_R, $color_cmd);  # not needed
 	&multi_styled_text_chunk('','fcol',"border,background"
-		,",color","solid thin \#$fcolor,\#$color",$_);
+		,",color","solid thin \#$fcolor,\#$bcolor",$_);
+#	pop (@$open_tags_R);  # not needed 
     } else {
-	s/$next_pair_pr_rx//o;
+	(s/$next_pair_pr_rx//o||s/$next_pair_rx//o);
 	&do_cmd_colorbox($_);
     }
 }
@@ -369,10 +493,17 @@ sub do_cmd_fcolorbox {
 #
 
 sub do_cmd_color {
-    local($color,$rest) = &find_color;
+    local($color,$rest,$color_cmd) = &find_color;
     if (!($color)) {
 	$color= "000000";  # default = black
 	print STDERR "black\n";
+    }
+    $color_env = $color_cmd;
+    if ($tex2html_deferred) {
+	$color_cmd = 'color'. $color_cmd unless ($color_cmd =~ /^color/);
+	$color_cmd =~ s/\,/ /g;
+	$declarations{$color_cmd} = "<FONT COLOR=\"\#$color\"></FONT>"
+	    unless ($declarations{$color_cmd});
     }
     if (($PREAMBLE)&&($NESTING_LEVEL == 0)) { 
 	&apply_body_options("text","$color");
@@ -381,10 +512,14 @@ sub do_cmd_color {
     } elsif ($PREAMBLE) { 
 	$rest;
     } elsif ($NESTING_LEVEL == 0) { 
+	push ( @$open_tags_R, $color_cmd );
 	$next_section_color = $color;
-	join('',"\n<FONT color=\"\#$color\">",$rest,"\n</FONT>");
+	join('',"\n<FONT COLOR=\"\#$color\">", $rest )
+#	    , ($tex2html_deferred ? '' : "\n</FONT>" ));
     } else {
-	join('',"\n<FONT color=\"\#$color\">",$rest,"\n</FONT>");
+	push ( @$open_tags_R, $color_cmd );
+	join('',"\n<FONT COLOR=\"\#$color\">",$rest )
+#	    , (($tex2html_deferred||!$rest) ? '' : "\n</FONT>" ));
     }
 }
 
@@ -405,9 +540,13 @@ sub set_section_color {
 sub do_cmd_normalcolor {
     local($_) = @_;
     if ($next_section_color) {
-	local($color) = &find_color($next_section_color);
+	local($color,$_,$color_cmd) = &find_color($next_section_color);
 	if ($color) {
-	    $_ = join('',"<FONT color=","\"$color\"",$_,"</FONT>");
+	    local($color_env) = $color_cmd;
+	    push (@$open_tags_R, $color_cmd);
+	    $_ = &styled_text_chunk("FONT COLOR=\"\#$color\""
+		    ,'hue','font','color',"\#$color",'', $_ );
+	    pop (@$open_tags_R);
 	}
     }
     $_;
@@ -454,20 +593,29 @@ sub get_model_color {
 
 sub find_color {
     local($_) = @_;
-    local($rest,$get_string,$color);
+    local($rest,$get_string,$color,$color_cmd,@color);
     local ($model,$dum)=&get_next_optional_argument;
-    if (!($dum)) {$model = "named";}
+    if (!($dum)) {$model = 'named'}
+    else { $color_cmd = &revert_to_raw_tex($dum); $dum = '' }
     $model = "named" unless ($model);
     $get_string = "get_${model}_color";
     $color = &missing_braces
-	unless ((s/$next_pair_pr_rx/$color=$2;''/eo)
-	        ||(s/$next_pair_rx/$color=$2;''/eo));
+	unless ((s/$next_pair_pr_rx/$color=$2;$dum=$&;''/eo)
+	        ||(s/$next_pair_rx/$color=$2;$dum=$&;''/eo));
     $rest =$_;
+    $color_cmd .= &revert_to_raw_tex($dum);
+
     if (!(defined &$get_string)) {
 	print "\nno routine for $get_string, trying named color: $color\n";
 	$get_string = "get_named_color";
     }
-    {&$get_string($color),$rest};
+    if ($model =~ /named/) { @color = ($color) }
+    else { @color = split(/\s+|,\s*/, $color) }
+    $color = &$get_string(@color);
+    $color_cmd = 'color'. $color_cmd;
+    $declarations{$color_cmd} = "<FONT COLOR=\"\#$color\"></FONT>"
+	unless ($declarations{$color_cmd});
+    ($color, $rest, $color_cmd );
 }
 
 sub apply_body_options{
@@ -557,11 +705,16 @@ sub do_color_ln {
 
 #	Some declarations
 
-    &process_commands_nowrap_in_tex ( <<_IGNORED_CMDS_);
-color # [] # {}
+&process_commands_nowrap_in_tex ( <<_IGNORED_CMDS_);
+#color # [] # {}
 pagecolor # [] # {}
 _IGNORED_CMDS_
 
+&process_commands_wrap_deferred ( <<_DEFERRED_CMDS_);
+color # [] # {}
+textcolor # [] # {} # {}
+DefineNamedColor # {} # {} # {} # {}
+_DEFERRED_CMDS_
 
 # Get rid of color specifications, but keep contents,
 # when the html version is inappropriate.
