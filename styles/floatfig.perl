@@ -21,12 +21,14 @@ sub do_env_floatingfigure {
     &process_environment("figure", $global{'max_id'}++);
     }
 
+sub do_env_floatingfigure { &do_env_figure(@_) }
+
 &ignore_commands( <<_IGNORED_CMDS_);
 initfloatingfigs
 _IGNORED_CMDS_
 
 &process_commands_in_tex (<<_RAW_ARG_CMDS_);
-floatingfigure
+floatingfigure # <<endfloatingfigure>>
 _RAW_ARG_CMDS_
 
 1;                              # This must be the last line

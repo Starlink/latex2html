@@ -3,11 +3,13 @@
 \usepackage{html,htmllist,makeidx,longtable}
 \input manhtml.tex
 %
-\input{features.ptr}		% Input counters and section
+\input{features.ptr}    % Input counters and section
 \end{htmlonly}
 \startdocument
 %
 %\section{Special Features\label{sec:fea}\index{features}}%
+\label{sec:fea}%
+\index{environments}\index{special features}
 \index{special considerations}\html{\\}\noindent
 This {section} describes major features available for processing
 documents using \latextohtml.
@@ -34,14 +36,22 @@ Other supported packages are \hyperref{listed}{listed in Table~}{}{styles}.
 \index{HTML@\texttt{HTML}!an evolving standard}%
 \index{HTML@\texttt{HTML}!basic version, 2.0 }%
 \index{HTML@\texttt{HTML}!current version, 3.2 }%
+\index{HTML@\texttt{HTML}!future version, 4.0 }%
 \html{\\}\noindent
 The Hypertext Mark-up Language (\texttt{HTML}) is an evolving standard,
 with different versions supporting different features.  
 In order to make your documents viewable by the widest possible audience,
 you should use the most advanced \texttt{HTML} version with widely-accepted usage.
-Currently this is \htmladdnormallink{version 3.2}%
-{http://www.w3.org/hypertext/WWW/MarkUp/html-spec/html-spec_toc.html};
-it is the default version for \latextohtml, version 97.1.
+
+\cbversion{98.1}\begin{changebar}\cbversion{98.1}
+Currently the most advanced is \HTMLIV. 
+However this has only recently become an officially recommended version.
+Not all of its features are fully implemented in popular browsers,
+and the level of usage is unclear.
+Hence the default version for \latextohtml, version 98.1 remains at \HTMLIII.
+Further work is required before \latextohtml{} can fully exploit the
+features available using \HTMLIV.
+\end{changebar}
 
 \index{iso-latin1@ISO--Latin--1|see{\htmlref{character set}{IIIcharset}}}%
 \index{iso-8879@ISO--8879|see{\htmlref{character set}{IIIcharset}}}%
@@ -84,7 +94,7 @@ available functionality.
 Other \texttt{HTML} versions and extensions 
 supported by \latextohtml\ are described below.
 See the description of the \Cs{html\_version} command-line
-\hyperref[page]{option switch}{option switch, on page~}{}{htmlversion}.
+\hyperref[page]{option switch}{option switch, on page~}{}{cs_htmlversion}.
 %
 \begin{htmllist}\htmlitemmark{RedBall}
 %begin{latexonly}
@@ -207,9 +217,9 @@ in which some section titles will appear. For example setting it to
 $LANGUAGE_TITLES = 'french';
 \end{verbatim}
 \end{quote}
-will cause \latextohtml{} to produce ``Table des mati\`{e}res'' instead of
+will cause \latextohtml{} to produce ``Table des mati{\`e}res'' instead of
 ``Table of Contents''.
-\cbversion{96.1}\begin{changebar}
+%\cbversion{96.1}\begin{changebar}
 Furthermore, the value of the \Lc{today} command is presented in a format
 customary in that language.
 
@@ -225,29 +235,161 @@ As a guide here is the entry for the French titles:
 %end{latexonly}
 \begin{verbatim}
 sub french_titles {
- $toc_title = "Table des mati\\`eres";	
- $lof_title = "Liste des figures";
- $lot_title = "Liste des tableaux";
- $idx_title = "Index";
- $bib_title = "R\\'ef\\'erences";		
- $info_title = "\\`A propos de ce document..."; 
- $abs_title = "R&eacute;sum&eacute;";
- $pre_title = "Pr&eacute;face";
- $app_title = "Annexe";
- @Month = ('', 'janvier', 'f&eacute;vrier', 'mars', 'avril', 'mai',
-              'juin', 'juillet', 'ao&ucirc;t', 'septembre', 'octobre',
-              'novembre', 'd&eacute;cembre');
+    $toc_title = "Table des mati\{\`e}res";
+    $lof_title = "Liste des figures";
+    $lot_title = "Liste des tableaux";
+    $idx_title = "Index";
+    $bib_title = "R\{\'e}f\{\'e}rences";
+    $abs_title = "R\{\'e}sum\{\'e}";
+    $pre_title = "Pr\{\'e}face";
+    $app_title = "Annexe";
+    $info_title = "\{\`A}propos de ce document...";
+    @Month = ('', 'janvier', 'f\{\'e}vrier', 'mars', 'avril', 'mai',
+              'juin', 'juillet', 'ao\{\^u}t', 'septembre', 'octobre',
+              'novembre', 'd\{\'e}cembre');
+    $GENERIC_WORDS = "a|au|aux|mais|ou|et|donc|or|ni|car"
+        . "|l|la|le|les|c|ce|ces|un|une|d|de|du|des";
 }
 \end{verbatim}
 %begin{latexonly}
 \end{small}
 %end{latexonly}
-\end{changebar}%
+%\end{changebar}%
+\cbversion{98.1}\begin{changebar}
+The \texttt{\$GENERIC\_WORDS} are a list of short words excluded
+when filenames are specially requested to be created from section-headings.
+\end{changebar}
 In order to provide full support for another language you may also
 replace the navigation buttons which come with \latextohtml{} 
 (by default in English) with your own. 
 As long as the new buttons have the same file-names as the old ones, 
 there should not be a problem.
+
+
+\subsubsection{Alternate Font Encodings\label{fontEncodings}}%
+%
+\index{extension!options}%
+\html{\\}%
+\latextohtml{} can interpret input using 8-bit fonts, 
+provided it is told which font-encoding is being used.
+This can be done by appending an ``extension'' option
+to the \Cs{html\_version} command-line switch; e.g.
+%
+%begin{latexonly}
+\begin{small}
+%end{latexonly}
+\begin{verbatim}
+ latex2html -html_version 3.2,latin2 ....  myfile.doc
+\end{verbatim}
+%begin{latexonly}
+\end{small}
+%end{latexonly}
+declares that any 8-bit characters in the \LaTeX\ source
+within the file \texttt{myfile.doc} are to be interpreted
+according to the ISO--8859--2 (ISO-Latin2) font encoding,
+rather than the default of ISO--8859--1 (ISO-Latin1).
+
+Furthermore, ISO--10646 (Unicode) entities can be embedded within
+the output produced by \latextohtml.
+For this a further ``extension'' option is appended; viz.
+%
+%begin{latexonly}
+\begin{small}
+%end{latexonly}
+\begin{verbatim}
+ latex2html -html_version 3.2,latin2,unicode ....  myfile.doc
+\end{verbatim}
+%begin{latexonly}
+\end{small}
+%end{latexonly}
+declares that the input is ISO-Latin2, but that 8-bit characters
+be output as the corresponding Unicode number.
+For example, e.g. the Polish {\L} would become \texttt{\&\#321;}.
+Otherwise the browser might render the character as \mbox{\pounds},
+which is the character in the corresponding place for ISO-Latin1.
+The input encodings that are recognised are listed in 
+\hyperref{the following table}{Table~}{}{tab_encodings}.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|>{\ttfamily}lll|}\hline
+\textbf{extension}& (notes) & \textbf{encoding}\\\hline
+unicode & (partial)& ISO--10646 (Unicode)\\
+latin1 & (default) & ISO--8859--1 (ISO-Latin1) \\
+latin2 &  & ISO--8859--2 (ISO-Latin2) \\
+latin3 &  & ISO--8859--3 (ISO-Latin3) \\
+latin4 &  & ISO--8859--4 (ISO-Latin4) \\
+latin5 &  & ISO--8859--9 (ISO-Latin5) \\
+latin6 &  & ISO--8859--10 (ISO-Latin6)\\\hline
+\end{tabular}
+\caption{Supported Font-encodings\label{tab_encodings}}
+\end{center}
+\end{table}
+
+If multiple extension options are requested, then later ones
+override earlier ones.\html{\\}
+Only in rare circumstances should it be necessary to do this.
+For example, if the latter encoding does not define characters
+in certain places, but an earlier encoding does so, and these
+characters occur within the source. 
+In this case the \texttt{unicode} extension ought to be loaded also,
+else browsers may get quite confused about what to render.
+
+
+
+\subsubsection{Multi-lingual documents, using Images\label{multilang}}%
+%
+Some multi-lingual documents can be constructed, when all the languages
+can be presented using characters from a single font-encoding,
+as discussed in the \hyperref{previous section}{Section~}{}{fontEncodings}.
+
+Another way to present multiple languages within a Web document is to
+create images of individual letters, words, sentences, paragraphs
+or even larger portions of text, which cannot be displayed within
+the chosen font-encoding.
+This is a technique that is used with \IndicHTML, for presenting
+traditional Indic language scripts within Web pages.
+For these the \LaTeX\ source that is to be presented as an image
+needs special treatment using a ``pre-processor''. 
+For the special styles defined in \IndicHTML, running the preprocessor
+is fully automated, so that it ibecomes just another step 
+within the entire image-generation process.
+
+\medskip
+
+The technique of using images, can be used with \emph{any} font 
+whose glyphs can be typeset using \TeX{} or \LaTeX. 
+Using \TeX's \Lcs{font} command, a macro is defined to declare
+the special font required; 
+e.g. for Cyrillic characters, using the Univ. of Washington font:
+%begin{latexonly}
+\begin{small}
+%end{latexonly}
+\begin{verbatim}
+ \font\wncyr = wncyr10
+\end{verbatim}
+%begin{latexonly}
+\end{small}
+%end{latexonly}
+
+\noindent
+Now use this font switch immediately surrounded by braces:
+%begin{latexonly}
+\begin{small}
+%end{latexonly}
+\begin{verbatim}
+ published by {\wncyr Rus\-ski\char26\ \char23zyk}.
+\end{verbatim}
+%begin{latexonly}
+\end{small}
+%end{latexonly}
+to get:
+\begin{center}
+ published by {\wncyr Rus\-ski\char26\ \char23zyk}.
+\end{center}
+
+
+
 
 
 \subsection{Mathematics\label{maths}}
@@ -313,7 +455,7 @@ uses entities and \HTMLtag{MATH} tags; e.g. for \texttt{HTML-Math}
 Using the \Cs{no\_math} switch is best for having a consistent
 style used for all mathematical expressions, whether inline or in displays.
 The images are of especially good quality when ``anti-aliasing'' 
-is being used (see \hyperref[page]{here}{page~}{}{aaliastext}),
+is being used (see \hyperref[page]{here}{page~}{}{cs_aaliastext}),
 provided the browser is set to have a light background colour.
 (When set against a gray or dark background, these images can become
 rather faint and hard to read.)
@@ -372,7 +514,7 @@ They are automatically numbered \dots
  \frac{1}{2}h^2\frac{\partial^2\Phi}{\partial x^2} +
  \frac{1}{6}h^3\frac{\partial^3\Phi}{\partial x^3} + \,\ldots\,\Bigr)_{l,m,n}
 \end{equation}
-\dots\ with some gratuitously \'{a}c\c{c}\"{e}nted text in-between \dots
+\dots\ with some gratuitously {\'a}c{\c c}{\"e}nted text in-between \dots
 %
 \index{equations!array}%
 \index{eqnarray@\env{eqnarray} environment!example}%
@@ -870,8 +1012,8 @@ this gives a pseudo-3D effect in some browsers.
     \caption{A sample figure showing part of a page generated by
        \latextohtml{} containing a customised navigation panel 
        (from the \protect\htmladdnormallink
-	{CSEP project\latex{\protect\footnotemark}}%
-	{http://csep1.phy.ornl.gov/csep.html}).}
+        {CSEP project\latex{\protect\footnotemark}}%
+        {http://csep1.phy.ornl.gov/csep.html}).}
        \label{fig:example}
 \end{figure}
 \latex{\footnotetext{http://csep1.phy.ornl.gov/csep.html}}
@@ -892,8 +1034,8 @@ this gives a pseudo-3D effect in some browsers.
     \caption{A sample figure showing part of a page generated by
        \protect\latextohtml{} containing a customised navigation panel 
        (from the \protect\htmladdnormallink
-	{CSEP project\latex{\protect\footnotemark}}%
-	{http://csep1.phy.ornl.gov/csep.html}).}
+        {CSEP project\latex{\protect\footnotemark}}%
+        {http://csep1.phy.ornl.gov/csep.html}).}
        \label{fig:example}
 \end{figure}
 \latex{\footnotetext{http://csep1.phy.ornl.gov/csep.html}}%
@@ -1110,12 +1252,12 @@ Here is a simple example, from the \LaTeX{} \htmlcite{`blue book'}{lamp:latex}.
 \begin{table}[hbt]
 \begin{center}
 \begin{tabular}{||l|lr||}   \hline
-gnats	&	gram	&	\$13.65  \\ \cline{2-3}
-	&	each	&        .01	\\ \hline
-gnu	& 	stuffed	&        92.50  
+gnats   &       gram    &       \$13.65  \\ \cline{2-3}
+        &       each    &        .01    \\ \hline
+gnu     &       stuffed &        92.50  
                 \\  \cline{1-1} \cline{3-3}
-emur	&		&	33.33   \\ \hline
-armadillo	& frozen	&	8.99 \\ \hline
+emur    &               &       33.33   \\ \hline
+armadillo       & frozen        &       8.99 \\ \hline
 \end{tabular}
 \caption{A sample table taken from \protect\cite{lamp:latex}%}
 \index{table@\env{table} environment}%
@@ -1133,12 +1275,12 @@ table, as follows:
 \begin{center}
 \begin{makeimage}
 \begin{tabular}{||l|lr||}   \hline
-gnats	&	gram	&	\$13.65  \\ \cline{2-3}
-	&	each	&        .01	\\ \hline
-gnu	& 	stuffed	&        92.50  
+gnats   &       gram    &       \$13.65  \\ \cline{2-3}
+        &       each    &        .01    \\ \hline
+gnu     &       stuffed &        92.50  
                 \\  \cline{1-1} \cline{3-3}
-emur	&		&	33.33   \\ \hline
-armadillo	& frozen	&	8.99 \\ \hline
+emur    &               &       33.33   \\ \hline
+armadillo       & frozen        &       8.99 \\ \hline
 \end{tabular}
 \end{makeimage}
 \caption{Alternate view of the table from \protect\cite{lamp:latex}}
@@ -1215,14 +1357,89 @@ ILU       & Incomplete LU factorization\footnotemark[2] \\ \hline
 %end{latexonly}
 
 
-\subsection{Other Style-Files\label{sec:sty}}
-%\section{Other Style-Files\label{sec:sty}}
+\subsection{Document Classes and Options\label{sec:cls}}
+\tableofchildlinks*
+\index{document class}%
+\cbversion{97.1b}\begin{changebar}
+In general the standard \LaTeX{} document-classes: 
+\texttt{article}, \texttt{report}, \texttt{book}, \texttt{letter}, \texttt{slides}
+are translated by \latextohtml{} in the same way. 
+Currently the only real difference is with the display of section-numbering,
+when the \htmlref{\Cs{show\_section\_numbers}}{showsecnums} switch is used,
+and when numbering of \htmlref{theorem-like environments}{theoremenvs} 
+is linked to section-numbering.
+
+\index{document class!loads file@loads a \texttt{.perl} file}%
+\index{document class!options}%
+
+These differences are achieved using a mechanism that automatically loads a file:
+\fn{article.perl}, \fn{report.perl}, \fn{book.perl}, \fn{letter.perl}, \fn{slides.perl} 
+according to the requested document-class. 
+These files contain \Perl{} code and are located in the \fn{styles/} directory.
+If a file of the same name exists in the working directory, this will be loaded
+instead.
+
+Typically such files \texttt{\Meta{class}.perl} contain code to define subroutines 
+or sets values for variables that will affect how certain translations are performed. 
+There can be code that is executed only when specific class-options are specified
+along with the chosen document-class.
+For example, the \fn{foils.perl} implementation of \FoilTeX's \env{foils} class
+defines code create a new sub-section for each `foil'.
+It also has code which allows \latextohtml{} to ignore those of \FoilTeX's special 
+formatting commands that have no relevance when constructing an \texttt{HTML} page.
+
+\medskip 
+\index{document class!loads file}%
+\index{class-option!loads file}%
+
+Any options given on the \Lc{documentclass} or \Lc{documentstyle} line
+may also cause a file containing \Perl{} code to be loaded. 
+Such a file is named \texttt{\Meta{option}.perl} for the appropriate \Meta{option}.
+When such a file exists, in the local directory or in the \fn{styles/} directory,
+it typically contains \Perl{} code to define subroutines or set values for variables 
+that will affect how certain translations are performed.
+There can be code that is executed only for specific document-classes.
+
+Since the files for class-options are loaded after those for the document-class,
+it is possible for the \texttt{\Meta{option}.perl} file to contain code that overrides
+settings made within the document-class file.
+
+\medskip\index{class-option!specific file}%
+If a file named \texttt{\Meta{class}\_\Meta{option}.perl} happens to exist for
+a given combination of document-class \Meta{class} and class-option \Meta{option},
+then this will be loaded. 
+When such a file exists, reading and executing its contents is done,
+rather than executing any \Meta{class}\_\Meta{option} specific information
+that may be contained in  \texttt{\Meta{class}.perl} or \texttt{\Meta{option}.perl}~.
+
+\medskip
+Currently there are no special option or class-option files provided with 
+the \latextohtml{} distribution. It is hoped that users will identify ways 
+that specific features can be improved or adapted to specific classes of documents, 
+and will write such files themselves, perhaps submitting them for general distribution.
+
+\bigskip
+\textbf{Note: }
+This mechanism for handling code specific to different document classes
+and class-options is more general than that employed by \LaTeXe.
+New options can be defined for document-classes generally, or for specific classes,
+without the need to have corresponding \texttt{.sty} or \texttt{.clo} files.
+\LaTeX{} simply notes the existence of unusupported options---processing is not
+interrupted.  
+
+\end{changebar}
+
+
+\subsection{Packages and Style-Files\label{sec:sty}}
+%\section{Packages and Style-Files\label{sec:sty}}
 \tableofchildlinks*
 \index{support!for specific style-files}%
 \index{support!for german language}\html{\\}%
 %
+Similar to the document-class mechanism described in
+\hyperref{the previous section}{Section}{}{sec:cls},
 \latextohtml{} provides a mechanism whereby the code to translate specific
-style-files is auto\-matic\-ally loaded, if such code is available.
+packages and style-files is auto\-matic\-ally loaded, if such code is available.
 For example, when use of a style such as \fn{german.sty} 
 is detected in a \LaTeX{} source document, either by
 \begin{itemize}
@@ -1257,11 +1474,12 @@ further extensions to \latextohtml.%
 \begin{center}
 %\begin{tabular}{|c|p{3in}|}
 \begin{longtable}{|c|l|}
-\caption{Supported \protect\latextohtml\ style-files\label{styles}.}\\
+\caption{Supported \protect\latextohtml\ style-files.}\\
 \hline
 \endhead
 \hline
 \endfoot
+\label{styles}
 \texttt{.perl}~file &\hfill\textbf{Description}\hfill\hfill~\\\hline
 \env{\bf alltt}\index{environment!alltt@\env{alltt}}\index{alltt@\env{alltt} environment}%
  & Supports the \LaTeXe's \env{alltt} package.\label{alltt}\\
@@ -1277,6 +1495,8 @@ further extensions to \latextohtml.%
  & Interface to \fn{german.perl} via the \env{babel} package.\label{babel}\\
 \env{\bf changebar}\index{package!changebar@\env{changebar}}\index{changebar@\env{changebar} package}%
  & Provides rudimentary change-bar support.\label{changebar}\\
+\env{\bf chemsym}\index{package!chemsym@\env{chemsym}}\index{chemsym@\env{chemsym} package}%
+ & defines the standard atomic symbols.\label{chemsym}\\
 \env{\bf color}\index{package!color@\env{color}}\index{color@\env{color} package}%
  & Causes colored text to be processed as ordinary text by \latextohtml.\label{color}\\
 \env{\bf colordvi}\index{package!colordvi@\env{colordvi}}\index{color!colordvi@\env{colordvi} package}%
@@ -1291,6 +1511,8 @@ further extensions to \latextohtml.%
  & Processes floating figures.\label{floatfig}\\
 \env{\bf floatflt}\index{package!floatflt@\env{floatflt}}\index{floatflt@\env{floatflt} package}%
  & Processes floating figures and tables.\label{floatflt}\\
+\env{\bf foils}\index{class!foils@\env{foils}}\index{foils@\env{foils} class}\index{FoilTeX@\FoilTeX}%
+ & Supports \FoilTeX{} system.\label{foils}\\
 \env{\bf frames}\index{package!frames@\env{frames}}\index{frames@\env{frames} package}%
  & Provides separate frames for navigation and footnotes.\label{frames}\\
 \env{\bf francais}\index{package!francais@\env{francais}}\index{french!francais@\env{francais} package}%
@@ -1309,12 +1531,16 @@ further extensions to \latextohtml.%
  & Supports the \env{harvard} style of \htmlref{citation}{harvard} (same as fn{nharvard.perl}).\\
 \env{\bf heqn}\index{package!heqn@\env{heqn}}\index{heqn@\env{heqn} package}%
  & Alters the way displayed equations are processed.\label{heqn}\\
+\env{\bf hthtml}\index{environment!hthtml@\env{hthtml}}\index{hthtml@\env{hthtml} environment}%
+ & gives an alternative syntax for specifying hyperlinks, etc.\label{hthtml}\\
 \env{\bf htmllist}\index{environment!htmllist@\env{htmllist}}\index{htmllist@\env{htmllist} environment}%
  & Provides support for \htmlref{fancy lists}{htmllist}.\\
 \env{\bf justify}\index{package!justify@\env{justify}}\index{justify@\env{justify} package}%
  & supports paragraph alignment---no longer needed.\\
 \env{\bf latexsym}\index{package!latexsym@\env{latexsym}}\index{latexsym@\env{latexsym} package}%
  & supports the \LaTeX{} symbol font.\label{latexsym}\\
+\env{\bf lgrind}\index{package!lgrind@\env{lgrind}}\index{lgrind@\env{lgrind} package}%
+ & macros for nice layout of computer program code.\label{lgrind}\\
 \env{\bf longtable}\index{package!longtable@\env{longtable}}%
 \index{tables!longtable@longtable\env{longtable} package}%
  & supports use of long tables, as a single table.\label{longtable}\\
@@ -1326,6 +1552,8 @@ further extensions to \latextohtml.%
  & Supports many different styles for citations and bibliographies.\label{natbib}\\
 \env{\bf nharvard}\index{package!nharvard@\env{nharvard}}\index{citations!nharvard@\env{nharvard} package}%
  & Supports harvard-style citations, using \env{natbib}.\label{nharvard}\\
+\env{\bf seminar}\index{package!seminar@\env{seminar}}\index{seminar@\env{seminar} package}%
+ & for creation of overhead-presentation slides.\label{seminar}\\
 \env{\bf supertabular}\index{package!supertabular@\env{supertabular}}\index{tables!supertabular@\env{supertabular} package}%
  & supports use super-tables, as an ordinary table.\label{supertabular}\\
 \env{\bf texdefs}\index{package!texdefs@\env{texdefs}}\index{texdefs@\env{texdefs} package}%
@@ -1431,6 +1659,34 @@ but are treated exactly as an ordinary \env{figure}s in the electronic version.
 They are described in \hypercite{The \LaTeX{} Companion}%
 {\emph{The \LaTeX{} Companion}}{}{goossens:latex}.%
 \end{changebar}
+
+\subsubsection{Support for \FoilTeX\label{sec:foils}}
+\index{foils@\env{foils} class}%
+\index{FoilTeX@\FoilTeX} The \FoilTeX{} system presents some
+additional problems for \latextohtml:
+\begin{itemize}
+\item It has additional commands like \Lc{foilhead} and
+  \Lc{rotatefoilhead}, that roughly correspond to sectioning commands,
+\item The images are produced at the sizes suitable for large screen
+  presentation, but not for the HTML.
+\end{itemize}
+The package \fn{foils.perl} deals with these problems. It treats foils as
+starred subsections and ignores \FoilTeX-specific commands that have no
+meaning for HTML, like \Lc{LogoOn}. The header
+\Lc{documentclass[}+\texttt{\it options}\verb+]{foils}+ in the
+\fn{images.tex} file is substituted by the header
+\Lc{documentclass[}\fn{\$FOILOPTIONS}\verb+]{+\fn{\$FOILCLASS}\verb+}+,
+where the variables \fn{\$FOILOPTIONS} and \fn{\$FOILCLASS} can be set
+in the configuration file (by default they are \texttt{'10pt'} and
+\texttt{'article'} correspondingly).
+A further variable \fn{\$FOILHEADLEVEL} holds the level of sectioning
+at which a `foil' is to correspond; the default level is 4 (sub-section).
+
+The \LaTeX{} style file \fn{foilhtml.sty} in the \fn{texinputs/}
+directory provides some additional features for \FoilTeX{}. It implements
+structural markup commands like \Lc{section},
+\Lc{tableofcontents} for foils. See the directory \fn{docs/foilhtml/} for
+the details.
 
 
 

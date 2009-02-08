@@ -22,6 +22,7 @@ sub do_env_floatingfigure {
     $contents =~ s/$next_pair_rx//o;
     &process_environment("figure", $global{'max_id'}++);
     }
+sub do_env_floatingfigure { &do_env_figure(@_) }
 
 #
 #  Make the floatingtable environment be translated as
@@ -34,6 +35,7 @@ sub do_env_floatingtable {
     $contents =~ s/$optional_arg_rx/$opt=$1;''/eo;
     &process_environment("table", $global{'max_id'}++);
     }
+sub do_env_floatingtable { &do_env_table(@_) }
 
 #
 #  The following command is no longer needed for LaTeX2e:

@@ -112,8 +112,132 @@
 \documentstyle{article}
 
 \begin{document}
+\section*{Test Description}
+Test suite for the verb substitution task in pre_process.
+
+\begin{verbatim}
+%% Test suite decription:
+%% The suite focuses on the substitution statements of the task in pre_process().
+%% We have the following equivalence classes (written in perl style):
+%%
+%% $del, $dels, $deln are meta variables for delimiters.
+%% Important: In this notation the dot (.) includes the newline (\n).
+%%
+%%
+%% a): \\verb[a-zA-Z].*
+%%	not a \verb statement
+%%	Hint: \\verb[$del][^$del]*[$del] with $del in [a-zA-Z] was falsely
+%%	expanded in previous revisions.
+%%
+%% b): \\verb\*.*
+%%	$del be a char in [^\t \n]
+%%
+%%     b1): \\verb\*\t*[$del][^$del]*[$del].*
+%%	\verb statement
+%%	$del may be escaped by &escape_rx_chars or not, hence the subclasses:
+%%       b11): $del is \w
+%%       b12): $del is \W
+%%
+%%     b2): \\verb\*\t*[$del][^$del]*
+%%	not a \verb statement
+%%
+%%     b3): \\verb\*\t*[ \n].*
+%%	not a \verb statement
+%%
+%%     b1) or b2) or b3) => b)
+%%
+%% c): \\verb[^a-zA-Z*\t \n].*
+%%     <=>
+%%     \\verb[$del].*  iff $del in [^a-zA-Z*\t \n]
+%%
+%%     c1): \\verb[$del][^$del]*[$del].*
+%%	\verb statement, $del may be escaped by &escape_rx_chars or
+%%	not. Hence the subclasses:
+%%	c11): $del is \w
+%%	c12): $del is \W
+%%
+%%     c2): \\verb[$del][^$del]*
+%%	not a \verb statement
+%%
+%%	c1) or c2) => c)
+%%
+%% d): \\verb\t.*
+%%	$dels be in [^ \n\t], $deln be in [^ \n\t*]
+%%	d1): \\verb\t\t*\*.*
+%%	    d11): \\verb\t\t*\*\t*[$dels][^$dels][$dels].*
+%%	    \verb statement, $dels may be escaped by &escape_rx_chars
+%%	    or not. Hence the subclasses:
+%%		d111): $dels is \w
+%%		d112): $dels is \W
+%%	    d12): \\verb\t\t*\*\t*[$dels][^$dels]*
+%%	    not a \verb statement
+%%	    d13): \\verb\t\t*\*\t*[ \n].*
+%%	    not a \verb statement
+%%
+%%	d2): \\verb\t\t*[$deln].*
+%%	    d21): \\verb\t\t*[$deln][^$deln][$deln].*
+%%	    \verb statement, $deln may be escaped by &escape_rx_chars
+%%	    or not. Hence the subclasses:
+%%		d211): $deln is \w
+%%		d212): $deln is \W
+%%	    d22): \\verb\t\t*[$deln][^$deln]*
+%%	    not a \verb statement
+%%
+%%	d3): \\verb\t\t*[ \n].*
+%%	not a \verb statement
+%%
+%%	d1) or d2) or d3) => d)
+%%
+%% e): \\verb[ \n].*
+%%	not a \verb statement
+%%
+%% a) or b) or c) or d) or e) => \\verb.*
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Expected output of this suit:
+%% tex: \verbxtestax = undefined control sequence
+%% l2h: \verbxtestax = unknown command
+%% html output should look like dvi output
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+The tests have passed if LaTeX2HTML reports {\bf only} verbxtestax to be
+an unknown command, and if the HTML output looks like:
+testb11 
+
+testb11 
+
+testb11 
+
+testb12 
+
+testb12 
+
+testb12 
+
+testc11 
+
+testc12 
+
+testd111 
+
+testd111 
+
+testd111 
+
+testd112 
+
+testd112 
+
+testd211 
+
+testd212 
+
+x y\ test1 
+
+test2 test3 test4\ \\\ \ 
+\end{verbatim}
+
+\section*{Test Part}
 %%% The Tests matching the equivalence classes.
 %%% Commented-out tests don't run in LaTeX, so testing seems
 %%% to be obsolete there.

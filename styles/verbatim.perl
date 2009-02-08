@@ -1,7 +1,7 @@
 #
-# $Id: verbatim.perl,v 1.3 1996/12/23 01:33:58 JCL Exp $
+# $Id: verbatim.perl,v 1.4 1998/02/19 22:24:33 latex2html Exp $
 # verbatim.perl
-#   Jens Lippmann <lippmann@cdc.informatik.th-darmstadt.de> 17-DEC-96
+#   Jens Lippmann <lippmann@cdc.informatik.tu-darmstadt.de> 17-DEC-96
 #
 # Extension to LaTeX2HTML to support the verbatim.sty LaTeX2e package.
 #
@@ -10,6 +10,9 @@
 #  jcl = Jens Lippmann <http://www-jb.cs.uni-sb.de/~www/people/lippmann>
 #
 # $Log: verbatim.perl,v $
+# Revision 1.4  1998/02/19 22:24:33  latex2html
+# th-darmstadt -> tu-darmstadt
+#
 # Revision 1.3  1996/12/23 01:33:58  JCL
 # uses now shell variable TEXINPUTS (this is set up by LaTeX2HTML before)
 # to locate the input file

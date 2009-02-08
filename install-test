@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 
-# $Id: install-test,v 1.5 1997/07/07 00:38:59 JCL Exp $
-# LaTeX2HTML Version 96.2 : install_test
+# $Id: install-test,v 1.10 1998/02/19 22:27:19 latex2html Exp $
+# LaTeX2HTML Version 98.1 : install-test
 
 $dd = '/';  # directory delimiter;
 
@@ -25,7 +25,7 @@ $dd = '/';  # directory delimiter;
 
 print<<"#EOM";
 
-This is install-test for LaTeX2HTML V97.1
+This is install-test for LaTeX2HTML V98.1
 =========================================
 
 #EOM
@@ -40,23 +40,29 @@ close TMP;
 unlink "TEST.TMP";
 
 # Read latex2html.config to get the value of $LATEX2HTML
-&read_config_file;
+open(TMP,"<latex2html.config") ||
+    die "Cannot open latex2html.config!\n";
+while (<TMP>) {
+    if (/^\s*\$LATEX2HTMLDIR\s*=(.*)$/) {
+	$LATEX2HTMLDIR = eval($1);
+	last;
+    }
+}
+close TMP;
 
 if ($LATEX2HTMLDIR eq "/user" || !$LATEX2HTMLDIR) {
     print <<"#EOM";
-Your LaTeX2HTML release needs a directory for installation.
-This is defined in LATEX2HTMLDIR in latex2html.config, and will be used to find
-perl modules, LaTeX styles, programs, etc.
-Before we set this, make sure that everything of LaTeX2HTML is there and you
-are in that directory.
-The latex2html script itself must not reside here, you can place it elsewhere
-after install-test succeeded.
+\$LATEX2HTMLDIR of latex2html.config is not set up, we can do this now.
+\$LATEX2HTMLDIR will be used to host the release of LaTeX2HTML you unpacked
+and is defined at the top of latex2html.config.
+Before we continue, make sure that everything of LaTeX2HTML is there and that
+you are *in* that directory.
+Note: the latex2html script itself must not reside here, you can place it
+somewhere else after install-test succeeded.
 #EOM
-    print "Continue?\n";
-    <STDIN>;
 
     local($pwd) = `pwd`; chop $pwd;
-    print "What is the LaTeX2HTML directory [$pwd]: ";
+    print "\nWhat is the LaTeX2HTML directory?\n [$pwd]: ";
     $_ = <STDIN>; chop;
     if (/(\S+)/) {
 	$LATEX2HTMLDIR = $1;
@@ -67,15 +73,19 @@ after install-test succeeded.
     print "\$LATEX2HTMLDIR will be \"$LATEX2HTMLDIR\"\n";
 
     print "changing LaTeX2HTML directory in latex2html.config was " .
-	(&substitute_dir_var("latex2html.config") ? "" : "not ") .
+	(&substitute_dir_var(0,"latex2html.config") ? "" : "not ") .
 	    "successful.\n";
 }
 
 
+# Require contents of latex2html.config.
+&read_config_file;
+
+
 # Substitute the variable $LATEX2HTMLDIR
-print "\nMain script installation was " .
-    (&substitute_dir_var("latex2html") ? "" : "not ") .
-    "successful.\n";
+print STDERR "\nMain script installation was... ";
+print STDERR (&substitute_dir_var(-1,"latex2html") ? "" : "not ")
+	. "successful.\n";
 
 
 print "Testing availability of external programs...\n";
@@ -94,28 +104,34 @@ sub read_config_file {
 # to
 # $LATEX2HTMLDIR = <current value of $LATEX2HTMLDIR> 
 sub substitute_dir_var {
-    local($file) = @_;
-    local($SUCCESS) = 0;
+    local($SUCCESS, $file) = @_;
 
     if ( (-f "$LATEX2HTMLDIR${dd}$file") ||
 	die "\nCannot find $LATEX2HTMLDIR${dd}$file\nPlease check the value of \$LATEX2HTMLDIR in latex2html.config\n") {
-	open(IN, "<$LATEX2HTMLDIR${dd}$file")
-	    || die "Cannot open $LATEX2HTMLDIR${dd}$file";
-	rename("$LATEX2HTMLDIR${dd}$file","$LATEX2HTMLDIR${dd}$file.bak");
+	rename("$LATEX2HTMLDIR${dd}$file","$LATEX2HTMLDIR${dd}$file.bak")
+	    || die "Cannot rename $LATEX2HTMLDIR${dd}$file: $!";
+	open(IN, "<$LATEX2HTMLDIR${dd}$file.bak")
+	    || die "Cannot open $LATEX2HTMLDIR${dd}$file.bak: $!";
 	open(OUT, ">$LATEX2HTMLDIR${dd}$file")
-	    || die "Cannot open $LATEX2HTMLDIR${dd}$file";
+	    || die "Cannot open $LATEX2HTMLDIR${dd}$file: $!";
 	chmod(0755, "$LATEX2HTMLDIR${dd}$file")
-	    unless $file =~ /.config$/;
+	    if -x "$LATEX2HTMLDIR${dd}$file.bak";
+
 	while (<IN>) {
-	    s/\$LATEX2HTMLDIR\s*=.*$/
-		do {$SUCCESS = 1;
-		    "\$LATEX2HTMLDIR='$LATEX2HTMLDIR';" .
-			"# Inserted by installation script"}/eo;
+#	    s/\$LATEX2HTMLDIR\s*=.*$/
+#		do {$SUCCESS = 1;
+#		    "\$LATEX2HTMLDIR='$LATEX2HTMLDIR';"
+	    s/^\s*(\$LATEX2HTMLDIR\s*=|use lib ).*$/
+		do {$SUCCESS += 1; print STDERR $SUCCESS." ";
+		    (($1 =~ m|use lib|)? "use lib \"$LATEX2HTMLDIR\";"
+			: "\$LATEX2HTMLDIR='$LATEX2HTMLDIR';")
+			. " # Inserted by installation script"}/eg;
 	    print OUT;
 	}
 	close IN;
 	close OUT;
     }
+    print STDERR "...";
     $SUCCESS;
 }
 
@@ -130,15 +146,23 @@ sub test_external_programs {
     # Perl
     $ver = $] * 1.0;
     $vers = sprintf("%4.3f", $ver);
-    if ($ver < 4.036) {
+    if ($ver < 5.000) {
 	print "\n*** ERROR: You are using Perl version $vers\n".
 	    "\nThis may cause problems." .
-		"Please upgrade to version 4 at patch level 36\n";}
+		"Please upgrade to version 5 at patch level 3 or higher\n";}
+    elsif ($ver < 5.003) {print "Perl version $vers is OK for most things. \n"
+	    ."However upgrading to v5.003 or later is advisable.\n"}
     else {print "Perl version $vers is OK. \n"}
 
-    print "\n*** ERROR: Will not be able to run latex2html: ".
-	"Cannot find texexpand.\n"
-	    if ($nolatex2html = &look_for($TEXEXPAND, "exec", "texexpand"));
+    $nolatex2html = &look_for($TEXEXPAND, "exec", "texexpand");
+    if ($nolatex2html) {
+	print "\n*** ERROR: Will not be able to run latex2html: ".
+	    "Cannot find texexpand.\n"}
+    else {
+	print STDERR "Setting up texexpand script...";
+	print STDERR (&substitute_dir_var(0,"texexpand") ? "succeeded\n" : "\n*failed*\n");
+    }
+#	    if ($nolatex2html = &look_for($TEXEXPAND, "exec", "texexpand"));
 
     print "Checking for availability of DBM or NDBM (Unix DataBase Management)...\n";
     if ((! eval 'dbmopen(%array, "DBM.tst",0755)') && $@) {
@@ -214,10 +238,10 @@ sub test_external_programs {
 
 # Substitute the variable $LATEX2HTMLDIR in pstoimg
     if (!$nopic) {
-	print "Setting up pstoimg script...",
-	    (&substitute_dir_var("pstoimg") ? "succeeded\n" : "\n*failed*\n");
-	print "Setting up configure-pstoimg script...",
-	    (&substitute_dir_var("configure-pstoimg") ? "succeeded\n" : "\n*failed*\n");
+	print "Setting up pstoimg script...";
+	print (&substitute_dir_var(-1,"pstoimg") ? "succeeded\n" : "\n*failed*\n");
+	print "Setting up configure-pstoimg script...";
+	print (&substitute_dir_var(0,"configure-pstoimg") ? "succeeded\n" : "\n*failed*\n");
     }
 
     $tmp = &look_for($LATEX, "util", $LATEX);

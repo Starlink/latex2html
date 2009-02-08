@@ -1,8 +1,8 @@
 #!/usr/local/bin/perl
 
-# $Id: texexpand,v 1.11 1997/06/15 18:26:00 JCL Exp $
+# $Id: texexpand,v 1.21 1998/02/19 22:26:49 latex2html Exp $
 #
-# texexpand for LaTeX2HTML 96.2
+# texexpand for LaTeX2HTML 97.2
 
 # Based on texexpand by Robert Thau, MIT AI lab, including modifications by
 # Franz Vojik <vojik@de.tu-muenchen.informatik>
@@ -109,9 +109,52 @@
 ###############################################################################
 # History:
 #   mro = Marek Rouchal <marek@saftsack.fs.uni-bayreuth.de>
-#   jcl = Jens Lippmann <lippmann@cdc.informatik.th-darmstadt.de>
+#   jcl = Jens Lippmann <lippmann@cdc.informatik.tu-darmstadt.de>
 #
 # $Log: texexpand,v $
+# Revision 1.21  1998/02/19 22:26:49  latex2html
+# th-darmstadt -> tu-darmstadt
+#
+# Revision 1.20  1997/12/04 07:35:25  RRM
+#  --  include a  use lib  command, to find the Override.pm  module
+#  --  generalised pattern for matching verbatim-like environments
+#
+# Revision 1.19  1997/11/05 11:31:27  RRM
+#  --  changed the way Override.pm is called; this should work better.
+#
+# Revision 1.18  1997/10/14 16:28:16  JCL
+# o added command line option -unsegment and $UNSEGMENT
+#   Use latex2html -unsegment, or texexpand -unsegment, or set $UNSEGMENT to 1
+#   in latex2html.config.
+#
+# Revision 1.17  1997/10/10 10:40:07  RRM
+#  --  Oops, didn't quite get that right last time.
+#
+# Revision 1.15  1997/10/09 07:11:14  RRM
+#  --  temporary fix to the Override problem
+#
+# Revision 1.14  1997/10/06 16:02:29  UW
+# override.pm contains now unlink() too. Adapted the call to override.pm
+# accordingly
+#
+# Revision 1.13  1997/10/06 14:49:37  UW
+# Added support for override.pm to texepand.
+# Furthermore, all references to the path-delimiter ':'
+# should now be made via $envkey
+# Texepand used previously the variable $DS as directory delimiter. Since
+# all other modules use $dd, I changed $DS to $dd.
+#
+# Revision 1.12  1997/09/27 10:36:14  JCL
+# o several enhancements to the inline documentation
+# o small fix to &interprete, \input|include now doesn't loose the comment
+#   if merging fails
+# o introduced -no_segments switch (or set shell variable $NO_SEGMENTS to 1):
+#   This will force a segmented document to expand its segment files, so
+#   that it may be processed as a whole with LaTeX2HTML.
+#   Use this feature to test a segmented document or whenever a document
+#   needs to be fully expanded.
+#   XtractFAQ will need this feature to determine the FAQ entries.
+#
 # Revision 1.11  1997/06/15 18:26:00  JCL
 # Now texexpand will only merge files that exist *and* are readable.
 # (Trying to merge a void link caused it to crash on my site.)
@@ -192,22 +235,45 @@
 #
 ###############################################################################
 
-# Path separator. Will be configured sometimes.
-    $DS = '/';
+if ($] >= 5 ) {# we have Perl 5.0 or later...
+
+# All operating system depended stuff should be defined in
+# override.pm before used in the code. 
+# See export.pm on how to do this
+# This path is set to where the Override module can be found.
+use lib "$ENV{'L2HMODULE'}/user";
+
+    use Override qw(getpwuid link setenv getenv symlink rename
+		make_directory_absolute unlink $dd $envkey $DEBUG);
+} else {
+    print STDERR "\n*** could not configure automatically using Override.pm ***";
+    print STDERR "\n*** so assuming standard Unix conventions apply ***\n";
+
+# With Perl 5 these should have been set already, within  Override.pm  
+
+# The key, which delimts expressions defined in the environment
+# depends on the operating system. 
+    $envkey=':' unless ($envkey);
+
+# $dd is the directory delimiter character
+    $dd = '/' unless ($dd);
+}
+
+    $prompt = "texexpand:";
 
 # Initialize texinputs
     @texinputs = (".");
 
     if(defined $ENV{'TEXINPUTS'}) {
-	foreach $dir (split(/:/,$ENV{'TEXINPUTS'})) {
+	foreach $dir (split(/$envkey/,$ENV{'TEXINPUTS'})) {
 	    push (@texinputs, $dir) if($dir =~ /\S+/); # save only if non-empty
 	}
     }
 
 # Expand paths with `~'
     $homeDir = (getpwuid($<))[7];
-    grep(s|^~$DS|$homeDir$DS|, @texinputs);
-    grep((m|^~([^$DS]+)$DS|) && ($homeDir = (getpwnam($1))[7]) && (s||$homeDir$DS|), @texinputs);
+    grep(s|^~$dd|$homeDir$dd|, @texinputs);
+    grep((m|^~([^$dd]+)$dd|) && ($homeDir = (getpwnam($1))[7]) && (s||$homeDir$dd|), @texinputs);
 
 # Initialize styles to be excluded (if any).
 # This is a sanity setup in case the \d is garbled during shell
@@ -219,7 +285,7 @@
     $dont_include_ext_rx = 'sty|cls|clo';
 
     if(defined $ENV{'TEXE_DONT_INCLUDE'}) {
-	foreach(split(/:/,$ENV{'TEXE_DONT_INCLUDE'})) {
+	foreach(split(/$envkey/,$ENV{'TEXE_DONT_INCLUDE'})) {
 	    &process_dont_include($_);
 	}
     }
@@ -229,7 +295,7 @@
     $do_include_ext_rx = '';
 
     if(defined $ENV{'TEXE_DO_INCLUDE'}) {
-	foreach(split(/:/,$ENV{'TEXE_DO_INCLUDE'})) {
+	foreach(split(/$envkey/,$ENV{'TEXE_DO_INCLUDE'})) {
 	    &process_do_include($_);
 	}
     }
@@ -246,14 +312,14 @@
 	elsif (/^-do_include$/) { &process_do_include(shift); }
 	elsif (/^-w$/) {} ### Compatibility hack.
 	elsif (/^-auto_exclude$/) { $auto_exclude++}
+	elsif (/^-unsegment$/) { $unsegment++}
 	elsif (/^-save_styles$/) { $style_file = shift; }
 	elsif (/^-debug$/) { $debug++; }
 	elsif (/^-verbose$/) { $debug=2; }
 	elsif (/^-o$/) { $outfile = shift; }
-	else { print STDERR "%--- WARNING:  Unrecognized option: $_ \n"; }
+	else { print STDERR "$prompt WARNING:  Unrecognized option: $_ \n"; }
     }
-    die "texexpand: No input file\n" unless($infile = shift);
-
+    die "$prompt No input file\n" unless($infile = shift);
 
 &initialise;
 &main;
@@ -275,22 +341,22 @@ sub initialise {
 
 # Print environments
     if ($debug) {
-	print STDERR "%TeX inputs are in:\n";
-	foreach $dir (@texinputs) { print STDERR "%--- $dir\n"; }
+	print STDERR "$prompt TeX inputs are in:\n";
+	foreach $dir (@texinputs) { print STDERR "$prompt   $dir\n"; }
 
 	if ($debug>1) {
-	    print STDERR "\n%Special names (not to be input or included):\n";
-	    foreach $name (@dont_include) { print STDERR "%--- $name\n"; }
-	    print STDERR "\n%Extensions of files not to be input or included: "
+	    print STDERR "\n$prompt Special names (not to be input or included):\n";
+	    foreach $name (@dont_include) { print STDERR "$prompt   $name\n"; }
+	    print STDERR "\n$prompt Extensions of files not to be input or included: "
 		. "$dont_include_ext_rx\n";
 
-	    print STDERR "\n%Special names (to *be* input or included):\n";
-	    foreach $name (@do_include) { print STDERR "%--- $name\n"; }
-	    print STDERR "\n%Extensions of files to *be* input or included: "
+	    print STDERR "\n$prompt Special names (to *be* input or included):\n";
+	    foreach $name (@do_include) { print STDERR "$prompt   $name\n"; }
+	    print STDERR "\n$prompt Extensions of files to *be* input or included: "
 		. "$do_include_ext_rx\n";
 	}
     }
-    print STDERR "\n%--- Expanding $infile\n" if ($debug>1);
+    print STDERR "\n$prompt %--- Expanding $infile\n" if ($debug>1);
 }
 
 
@@ -311,10 +377,10 @@ sub main {
     $do_include_rx = join("|",@do_include);
 
     if($style_file) {
-	open(STYLES,">$style_file") || die "%--- Cannot open style file\n";
+	open(STYLES,">$style_file") || die "$prompt Cannot open style file\n";
     }
     if($outfile) {
-	open(OUT,">$outfile") || die "%--- Cannot open output file\n";
+	open(OUT,">$outfile") || die "$prompt Cannot open output file\n";
     }
     else {
 	open(OUT,">&STDOUT");
@@ -325,28 +391,28 @@ sub main {
     close(OUT) if ($outfile);
     close(STYLES) if ($style_file);
 
-    print STDERR "%--- Warning: No ${latexonlytype}end\{latexonly\} found.\n"
+    print STDERR "$prompt Warning: No ${latexonlytype}end\{latexonly\} found.\n"
 	if ($latexonly);
-    print STDERR "%--- Warning: No ${fakeenvtype}end\{$fakeenvname\} found.\n"
+    print STDERR "$prompt Warning: No ${fakeenvtype}end\{$fakeenvname\} found.\n"
 	if ($fakeenv);
-    print STDERR "%--- Warning: No \\end\{$keepcommentsname\} found.\n"
+    print STDERR "$prompt Warning: No \\end\{$keepcommentsname\} found.\n"
 	if ($keepcomments);
-    print STDERR "%--- Warning: No \\end{verbatim} found.\n"
+    print STDERR "$prompt Warning: No \\end{verbatim} found.\n"
 	if ($verbatim);
 }
 
 
 # Include and parse a file.
-# This routine is recursive, see also &find_and_process_file,
+# This routine is recursive, see also &process_input_include_file,
 # &process_document_header, and &process_package_cmd.
 #
-# Two global flags control the modes of texexpand.
+# Two global flags control the states of texexpand.
 #  o $active is true if we should interprete the lines to expand
 #    files, check for packages, etc.
 #  o $mute is true if we should prevent the lines from going
 #    into the out file.
 #
-# We have three general modes of texexpand:
+# We have three general states of texexpand:
 #  1) interprete the lines and pass them to the out file
 #     This is the normal case.
 #     Corresponding: $active true, $mute false
@@ -368,6 +434,42 @@ sub main {
 # We must at least parse verbatim/comment environments in
 # latexonly environments, to catch fake latexonly tags.
 #
+# The work scheme:
+# Five functions influence texexpand's behavior.
+# o &process_file opens the given file and parses the non-comment part in
+#   order to set $active and $mute (see above).
+#   It calls &interprete to interprete the non-comment content and either
+#   continues with the next line of its file or terminates if &interprete
+#   detected the \end{document} or an \endinput.
+# o &interprete handles some LaTeX tags with respect to the three states
+#   controlled by $active and $mute.
+#   Regarding to \input|include, \document(class|style), and
+#   \(use|Require)package the functions &process_input_include_file,
+#   &process_document_header, and &process_package_cmd are called respectively.
+# o These three functions check if the file name or option files are enabled
+#   or disabled for merging (via TEXE_DO_INCLUDE or TEXE_DONT_INCLUDE).
+#   Any file that is to include will be 'merged' into the current file, i.e.
+#   the function &process_file is called at this place in time (recursively).
+#   This will stop interpretation at the current line in file, start with the
+#   new file to process and continues with the next line as soon as the new
+#   file is interpreted to its end.
+#
+# The call tree (noweb+xy.sty would be handy here):
+#
+#     main
+#       |
+#       v
+#  +->process_file
+#  |    |
+#  |    v
+#  |  interprete (with respect to the current line, one of that three)
+#  |    |                           |                        |
+#  |    v                           v                        v
+#  |  process_input_include_file  process_document_header  process_package_cmd
+#  |    |                           |                        |
+#  |    v                           v                        v
+#  +----+---------------------------+------------------------+
+#
 # Bugs:
 # o Since the latexonly environment is not parsed, its contents
 #   might introduce environments which are not recognized.
@@ -376,6 +478,19 @@ sub main {
 # o One environment tag per line, yet!
 # o If I would have to design test cases for this beast I would
 #   immediately desintegrate into a logic cloud.
+#
+# Notes:
+# o Ok, I designed test cases for it.
+#   Please refer to test 'expand' of the regression test suite
+#   in the developers' module of the l2h repository.
+# o -unsegment feature:
+#   In this (rare) case, the user wants to translate a segmented document
+#   not in segments but in a whole (for testing, say).
+#   We enable this by recognizing the \segment command in &interprete,
+#   causing the segment file to be treated like \input but loosing the first
+#   lines prior to \startdocument (incl.), as controlled via $segmentfile.
+#   On how to segment a document you are best guided by section
+#   ``Document Segmentation'' of the LaTeX2HTML manual.
 #
 sub process_file {
     local($infile) = @_;
@@ -386,13 +501,24 @@ sub process_file {
     # Keep track of input/include level
     $includelevel++;
 
-    open(IN,"<$infile") || die "%--- Cannot open $infile\n";
-    print STDERR "%--- Processing $infile\n" if ($debug > 1);
+    open(IN,"<$infile") || die "$prompt Cannot open $infile\n";
+    print STDERR "$prompt %--- Processing $infile\n" if ($debug > 1);
 
     # if we don't include this file marker LaTeX2HTML won't split
     # the document at this point
     print OUT "%%% TEXEXPAND: INCLUDED FILE MARKER $infile\n"
 	if ($includelevel > 1 && $active);
+
+    if ($segmentfile) {
+	# This variable is set by &interprete to change the behavior of the
+	# next file to merge.
+	while(<IN>) {
+	    # strip comments
+	    s/(^|[^\\])(\\\\)*(%.*)/$comments = $3; $1.$2/e;
+	    last if /^\s*\\startdocument/;
+	}
+	$segmentfile = 0;
+    }
 
     while(<IN>) {
 	#for debugging
@@ -462,13 +588,14 @@ sub process_file {
 	    $active=1;
 	    $mute=1 unless $latexonly;
 	}
-	elsif (!$fakeenv && !$verbatim && /\\begin\s*\{\s*verbatim(\*)?\s*\}/) {
+#	elsif (!$fakeenv && !$verbatim && /\\begin\s*\{\s*verbatim(\*)?\s*\}/) {
+	elsif (!$fakeenv && !$verbatim && /\\begin\s*\{\s*(\w*[Vv]erbatim\w*\*?)\s*\}/) {
 	($before,$verbatimname) = ($`,$1);
 	($active,$verbatim) = (0,1)
 		unless ($before =~ /$ignore_cmd_rx/o);
 	}
 
-	print STDERR "%--line::${orig}%--      active=$active mute=$mute ".
+	print STDERR "$prompt %--line::${orig}%--      active=$active mute=$mute ".
 	    "latexonly=$latexonly fakeenv=$fakeenv verbatim=$verbatim ".
 	    "keepcomments=$keepcomments\n"
 		if ($debug > 1) && $orig =~ /\\begin|%\s*begin/;
@@ -531,13 +658,14 @@ sub process_file {
 		    unless $latexonly && $latexonlyenv eq "%";
 	    }
 	}
-	elsif ( /\\end\s*\{\s*verbatim(\*)?\s*\}/) {
+#	elsif ( /\\end\s*\{\s*verbatim(\*)?\s*\}/) {
+	elsif ( /\\end\s*\{\s*(\w*[Vv]erbatim\w*\*?)\s*\}/) {
 	    if ($1 eq $verbatimname) {
 		$verbatim=0;
 		$active = ($latexonly ? 0 : 1);
 	    }
 	}
-	print STDERR "%--line::${orig}%--      active=$active mute=$mute ".
+	print STDERR "$prompt %--line::${orig}%--      active=$active mute=$mute ".
 	    "latexonly=$latexonly fakeenv=$fakeenv verbatim=$verbatim\n"
 		if ($debug > 1) && $orig =~ /\\end|%\s*end/;
 
@@ -548,13 +676,28 @@ sub process_file {
     $includelevel--;
 }
 
-# Handle the three states here.
-# The state 'interprete minimal and suppress' does not require
-# further actions, just do nothing.
+
+# Handle the LaTeX tags \input, \include, \endinput, \documentclass,
+# \documentstyle, \usepackage, \RequirePackage, \end{document},
+# \includecomment, \excludecomment with respect to the three states
+# controlled by $active and $mute.
+# The state 'interprete minimal and suppress' ($active false, $mute true)
+# does not require further actions, just do nothing.
+# When in $active state, call one of &process_input_include_file,
+# &process_document_header, or &process_package_cmd to examine the
+# apropriate line further.
+# 
+# Returns 0 if the caller is to stop interpreting the current file (\endinput).
+# Returns 1 otherwise.
+# Set $end_document to 1 if an \end{document} is detected (this stops
+# the whole task of texexpand).
 #
 sub interprete {
     local($_,$comments) = @_;
     local($line) = $_;
+    local($before,$after);
+
+    # the default to print to OUT
     $line =~ s/\n/$comments\n/;
 
     if ($active) {
@@ -562,36 +705,23 @@ sub interprete {
 	#or usepackage/RequirePackage
 
 	if (/\\(input|include)\W/) { 
-	    local($after) = '';
-	    $before = $`;
-	    $after = $&.$';
-	    if($before =~ /$ignore_cmd_rx/o) {
-		print OUT $line;
-	    }
-	    else {
-                if ($before) {
-		    print OUT $before."\%\n";
-		    $line = $after;
-                    $before =~ s/(\W)/\\$1/g;
-                    s/$before//;
-		}
-		print OUT $line
-		    #may re-enter &process_file
-		    unless &find_and_process_file($_);
-	    }
-	}
-	elsif (/\\endinput/) {
-	    $before=$`;
-	    return(0) #stop this file
-		if ($includelevel > 1 && $before !~ /$ignore_cmd_rx/o);
-	}
-	elsif (/\\document(class|style)\s*$options_rx\s*$arg_rx/o) {
-	    $before = $`;
+	    ($before,$after) = ($`,$&.$');
 	    if ($before =~ /$ignore_cmd_rx/o) {
 		print OUT $line;
 	    }
 	    else {
-		&process_document_header($_);
+                if (length($before)) {
+		    #put prefix to \\input etc. to single line
+		    print OUT $before,"\%\n";
+		    #mask special chars
+                    $before =~ s/(\W)/\\$1/g;
+		    #strip prefix from total line incl. comments
+		    $line =~ s/$before//;
+		}
+		# print total line incl. comments if merging failed
+		print OUT $line
+		    #may re-enter &process_file
+		    unless &process_input_include_file($after);
 	    }
 	}
 	elsif (/\\(usepackage|RequirePackage)\s*$options_rx\s*$arg_rx/o) {
@@ -603,6 +733,56 @@ sub interprete {
 		&process_package_cmd($_);
 	    }
 	}
+	elsif (/\\document(class|style)\s*$options_rx\s*$arg_rx/o) {
+	    $before = $`;
+	    if ($before =~ /$ignore_cmd_rx/o) {
+		print OUT $line;
+	    }
+	    else {
+		&process_document_header($_);
+	    }
+	}
+	elsif ($unsegment && /^\s*\\segment(\*?)\s*$options_rx\s*$arg_rx\s*$arg_rx\s*/) {
+	    # We found a segmenting command which must vanish.
+	    # Therefore, mutate the \segment into the section command specified
+	    # by $4 (section, subsection, ...) and $1 (* or empty) followed by
+	    # the section text, and an \input statement with filename $3.
+	    # To obtain the section text, we need to take a preview to the next
+	    # lines, as it might be truncated with %'s.
+	    # Line truncations between the regex above (like \segment%\n) are
+	    # not recognized.
+	    # There are as much lines fetched as required to satisfy the equality
+	    # of the amounts of left and right braces, since we aren't able to
+	    # handle nested brace pairs.
+	    # If this strategy fails, texexpand is terminated, thereby satisfying
+	    # the 'all or nothing' requirement.
+
+	    local($file) = $3;
+	    print OUT "\\$4$1";
+	    $after = $_ = $'; #get tail
+	    local($left,$right) = (tr/\{/\{/,tr/\}/\}/);
+	    while (($left != $right) || !$left) {
+		#braces not balanced or no opening brace at all, get next line
+		$_ = <IN>;
+		die "$prompt arguments to \\segment are too complex"
+		    unless length($_) && length($after) < 500;
+		# strip comments
+		s/(^|[^\\])(\\\\)*(%.*)/$1$2/;
+		$left += tr/\{/\{/; $right += tr/\}/\}/;
+		$after .= $_;
+	    }
+	    $after =~ /\}([^\}]*)$/;
+	    $after = $1;
+	    $_ = $`;
+	    # Ok we have it. $_ should carry the whole section title plus
+	    # opening brace, the original lines squeezed into one.
+	    print OUT $_,"}\n";
+
+	    # set this globally to control behavior of next &process_file
+	    $segmentfile = 1;
+	    die "$prompt segment file <$file> could not be merged"
+		unless &process_input_include_file("\\input\{$file\}$after");
+	}
 	# Print the first /end{document}, only.  Truncate anything after it.
 	elsif (/^(.*\\end\{document\})/) {
 	    $before = $1;
@@ -613,6 +793,11 @@ sub interprete {
 		print OUT "$before\n";
 		$end_document++;
 	    }
+	}
+	elsif (/\\endinput/) {
+	    $before=$`;
+	    return(0)	#stop this file
+		if ($includelevel > 1 && $before !~ /$ignore_cmd_rx/o);
 	}
 	elsif (/\\(in|ex)cludecomment\s*$arg_rx/o) {
 	    local($mode,$env) = ($1,$2);
@@ -649,11 +834,11 @@ sub interprete {
 }
 
 
-sub find_and_process_file {
+sub process_input_include_file {
     local($_) = @_;
     local($before,$after,$class,$styles);
 
-    print STDERR "%--- Found include at level $includelevel: $_\n"
+    print STDERR "$prompt %--- Found include at level $includelevel: $_\n"
 	if($debug);
 
 # Get filename
@@ -665,13 +850,13 @@ sub find_and_process_file {
 	$filename =~ s/\s//g;
     }
     else {
-	print STDERR "%--- COULDN'T FIND FILENAME\n" if($debug);
+	print STDERR "$prompt %--- COULDN'T FIND FILENAME\n" if($debug);
     }
 
     if ($filename) {
 	# Get base name
 	$styles = $filename;
-	$styles =~ s|.*$DS||; # strip path
+	$styles =~ s|.*$dd||; # strip path
 	$styles =~ s/\.[^.]*$//; # strip extension
 
 	# Sorry for the next if-statement... (hmm,ok)
@@ -679,7 +864,7 @@ sub find_and_process_file {
 	    $filename !~ /\.($do_include_ext_rx)$/o &&
 	    ($styles =~ /^($dont_include_rx)$/o || 
 	     ($auto_exclude && $filename =~ /\.($dont_include_ext_rx)$/o))) {
-	    print STDERR "%--- ignoring $filename\n" if($debug);
+	    print STDERR "$prompt %--- ignoring $filename\n" if($debug);
 	    print STYLES "$styles\n" if($style_file);
 	}
 	else {
@@ -696,17 +881,17 @@ sub find_and_process_file {
 		&process_file($fname);
 
 		print OUT $after if($after =~ /\S+/);
-		print STDERR "%--- successfully included $filename\n"
+		print STDERR "$prompt %--- successfully included $filename\n"
 		    if($debug > 1);
 
 		return(1); #merge
 	    }
 	    else {
-		print STDERR "%--- include $filename failed. Reinserting $before command\n";
+		print STDERR "$prompt include $filename failed. Reinserting $before command\n";
 	    }
 	}
     }
-    return(0); #no merge
+    return(0);		#no merge
 }
 
 
@@ -717,7 +902,7 @@ sub process_document_header {
     /\\document(class|style)\s*$options_rx\s*$arg_rx/o;
     local($before, $latextype, $styles, $class, $after) = ($`, $1, $2, $3, $');
 
-    print STDERR "%--- Found $1: $_\n" if($debug);
+    print STDERR "$prompt %--- Found $1: $_\n" if($debug);
     $styles =~ s/\[(.*)\]/$1/; # Strip braces
     $class =~ s/\s//g;	# Strip spaces
     # the class cannot be included, so stuff it in the style file
@@ -764,7 +949,7 @@ sub process_package_cmd {
     /\\(usepackage|RequirePackage)\s*$options_rx\s*$arg_rx/o;
     local ($before,$class,$options,$styles,$after) = ($`, $1, $2, $3, $');
 
-    print STDERR "%--- Found \\$class: $_\n" if($debug > 1);
+    print STDERR "$prompt %--- Found \\$class: $_\n" if($debug > 1);
     $options =~ s/\[(.*)\]/$1/o; # strip braces
 
     foreach $key (split(/,/,$styles)) {
@@ -821,30 +1006,34 @@ sub process_do_include {
     }
 }
 
+
+# Returns true if style has to be included, i.e.:
+#  1. The style is found in do_include *or*
+#  2. Automatic exclusion is disabled and the style is *not* found in
+#     dont_include
+#
 sub should_include {
     local($style) = @_;
-    # returns true if style has to be included, i.e.:
-    #  1. The style is found in do_include *or*
-    #  2. Automatic exclusion is disabled and the style is *not* found in
-    #     dont_include
+
     return($style =~ /^($do_include_rx)$/o ||
 	   (!$auto_exclude && $style !~ /^($dont_include_rx)$/o ));
 }
+
 
 sub find_file {
     local($file) = @_;
     local($fname,$dname);
     local($found)=0;
-    print STDERR "%--- checking for $file\n" if($debug);      
+    print STDERR "$prompt %--- checking for $file\n" if($debug);      
 
-    if ($file =~ m|^$DS|) {
+    if ($file =~ m|^$dd|) {
 	$fname=$file;
 	if(&file_or_ext) { $found=1; }
     }
     else {
 	# search input directories
 	foreach $dir (@texinputs) {
-	    ($dname = $dir) =~ s|[$DS]+$||; # Remove slashes at the end
+	    ($dname = $dir) =~ s|[$dd]+$||; # Remove slashes at the end
 	    if (-d $dname) {
 		if ($fname = &dir_search($dir,$file)) {
 		    $found = 1;
@@ -852,17 +1041,17 @@ sub find_file {
 		}
 	    }
 	    else {
-		print STDERR "%--- Warning: \"$dname\" is no directory\n"
+		print STDERR "$prompt %--- Warning: \"$dname\" is no directory\n"
 		    if ($debug);
 	    }
 	}
     }
     if ($found) {
-	print STDERR "%--- found $fname\n" if ($debug);
+	print STDERR "$prompt %--- found $fname\n" if ($debug);
 	return($fname);
     }
     else {
-	print STDERR "%--- file not found\n" if ($debug);      
+	print STDERR "$prompt %--- file not found\n" if ($debug);      
 	return(undef);
     }
 }
@@ -873,13 +1062,13 @@ sub dir_search {	# search directory recursively
     local(*SUBDIR);	# make file pointer local
     local($dname,$found,$recursive) =('',0,0);
 
-    if ($dir =~ m|$DS$DS$|) { # does dir end in `//'?
+    if ($dir =~ m|$dd$dd$|) { # does dir end in `//'?
 	$recursive = 1;
     }
-    $dir =~ s|[$DS]+$||; # Remove any slashes at the end
-    local($fname) = join ($DS, $dir, $file);
+    $dir =~ s|[$dd]+$||; # Remove any slashes at the end
+    local($fname) = join ($dd, $dir, $file);
 
-    print STDERR "%--- looking for $fname\n" if($debug);
+    print STDERR "$prompt %--- looking for $fname\n" if($debug);
     # Does file exist in this directory?
     if (&file_or_ext) {
 	return($fname);
@@ -889,8 +1078,8 @@ sub dir_search {	# search directory recursively
 	opendir(SUBDIR,$dir); # open directory
 	while ($_=readdir(SUBDIR)) { # read dir-entries
 	    next if(/^\./); # do not check dotfiles
-	    $dname = join ($DS, $dir, $_);
-	    if ((-d $dname) && ($fname = &dir_search($dname.$DS.$DS,$file))) {
+	    $dname = join ($dd, $dir, $_);
+	    if ((-d $dname) && ($fname = &dir_search($dname.$dd.$dd,$file))) {
 		$found = 1;
 		last;
 	    }

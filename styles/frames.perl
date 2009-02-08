@@ -1,4 +1,4 @@
-# $Id: frames.perl,v 1.4 1997/07/11 11:28:56 RRM Exp $
+# $Id: frames.perl,v 1.5 1998/02/19 22:24:28 latex2html Exp $
 # frames.perl - Martin Wilck (martin@tropos.de) 22.5.96
 # 
 # 
@@ -8,11 +8,14 @@
 # (HTML extension for browsers that understand frames)
 # 
 # Change Log:
-# jcl = Jens Lippmann <lippmann@cdc.informatik.th-darmstadt.de>
+# jcl = Jens Lippmann <lippmann@cdc.informatik.tu-darmstadt.de>
 # mwk = Martin Wilck
 # rrm = Ross Moore <ross@mpce.mq.edu.au>
 #
 # $Log: frames.perl,v $
+# Revision 1.5  1998/02/19 22:24:28  latex2html
+# th-darmstadt -> tu-darmstadt
+#
 # Revision 1.4  1997/07/11 11:28:56  RRM
 #  -  replace  (.*) patterns with something allowing \n s included
 #

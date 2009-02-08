@@ -28,6 +28,8 @@ sub do_env_longtable {
     $contents = &process_environment("tabular", $global{'max_id'}++, $contents);
 }
 
+sub do_env_longtable { &do_env_tabular(@_) }
+
 &ignore_commands( <<_IGNORED_CMDS_);
 LTleft
 LTright

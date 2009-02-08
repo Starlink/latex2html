@@ -1,4 +1,4 @@
-# $Id: germanb.perl,v 1.6 1997/06/13 13:54:51 RRM Exp $
+# $Id: germanb.perl,v 1.8 1998/02/22 05:27:07 latex2html Exp $
 # GERMAN.PERL by Nikos Drakos <nikos@cbl.leeds.ac.uk> 25-11-93
 # Computer Based Learning Unit, University of Leeds.
 #
@@ -13,18 +13,24 @@
 # Change Log:
 # ===========
 # $Log: germanb.perl,v $
-# Revision 1.6  1997/06/13 13:54:51  RRM
+# Revision 1.8  1998/02/22 05:27:07  latex2html
+# revised &german|french_titles
+#
+# Revision 1.7  1998/02/20 23:27:24  latex2html
+# added $GENERIC_WORDS
+#
+# Revision 1.6  1997/06/13 13:54:50  RRM
 #     Allow  &#34;  to be translated back into  \dq{}
 #
-# Revision 1.5  1997/06/06 12:44:50  RRM
+# Revision 1.5  1997/06/06 12:49:09  RRM
 #  -  Fixed the handling of umlauts
 #  -  used ISO-Latin characters for `french quotes'
 #  -  changed version info
 #
-# Revision 1.4  1997/05/19 13:34:59  RRM
+# Revision 1.4  1997/05/19 13:34:27  RRM
 #     Fixed a problem with umlauts.
 #
-# Revision 1.3  1996/12/23 01:39:56  JCL
+# Revision 1.3  1996/12/23 01:39:55  JCL
 # o added informative comments and CVS log history
 # o changed usage of <date> to an OS independent construction, the
 #   patch is from Piet van Oostrum.
@@ -171,16 +177,27 @@ sub german_titles {
     $lof_title = "Abbildungsverzeichnis";
     $lot_title = "Tabellenverzeichnis";
     $idx_title = "Index";
+    $ref_title = "Literaturverzeichnis";
     $bib_title = "Literatur";
     $abs_title = "Zusammenfassung";
-    $pre_title = "Vorwort";
     $app_title = "Anhang";
+    $pre_title = "Vorwort";
     $fig_name = "Abbildung";
     $tab_name = "Tabelle";
+    $part_name = "Teil";
+    $prf_name = "Beweis";
+    $child_name = "Unterabschnitte";
     $info_title = "&Uuml;ber dieses Dokument ...";
     @Month = ('', 'Januar', 'Februar', 'M&auml;rz', 'April', 'Mai',
 	      'Juni', 'Juli', 'August', 'September', 'Oktober',
-	      'November', 'Dezember');  
+	      'November', 'Dezember');
+
+    local($uuml,$Uuml) = (&iso_map('u','uml'),&iso_map('U','uml'));
+    $GENERIC_WORDS =
+	join('|',"aber","oder","und","doch","um","in","im","an","am","${uuml}ber",
+	     "${Uuml}ber","unter","auf","durch","der","die","das","des","dem","den",
+	     "ein","eine","eines","einem","einen","einer","vor","nach","f${uuml}r",
+	     "mit","zu","zur","zum","bei","beim","per","von","vom","aus");
 }
 
 #JKR: Replace do_cmd_today (\today) with a nicer one, which is more
@@ -202,7 +219,7 @@ $iso_latin1_character_map_inv{'&#171;'} ='\\flqq';
 $iso_latin1_character_map_inv{'&#187;'} ='\\frqq';
 $iso_latin1_character_map_inv{'&#196;'} ='"A';
 $iso_latin1_character_map_inv{'&#214;'} ='"O';
-$iso_latin1_character_map_inv{'&#220;'} ='"U';
+    $iso_latin1_character_map_inv{'&#220;'} ='"U';
 $iso_latin1_character_map_inv{'&#228;'} ='"a';
 $iso_latin1_character_map_inv{'&#246;'} ='"o';
 $iso_latin1_character_map_inv{'&#223;'} ='"s';

@@ -200,7 +200,7 @@ sub do_env_tabular {
 	$rule = " RULES=GROUPS" if ($rules);
     };
 
-    @rows = split(/\\\\|\\newline/);
+    @rows = split(/\\\\/);
     $#rows-- if ( $rows[$#rows] =~ /^\s*$/ );
     local($return) = "<TABLE COLS=$cols$border$frame$rule$_[1]>\n";
     $return .= "$htmlcolspec\n";
@@ -229,8 +229,10 @@ sub do_env_tabular {
 	$return .= "</TR>\n";
     };
     $return .= "</TBODY>\n" if ( $rules =~ /r/ );
-    $captions && ($return .= "<CAPTION ALIGN=BOTTOM>$captions</CAPTION>");
-    $captions = "";
+    if ($capenv && $captions) {
+        $return .= "<CAPTION ALIGN=BOTTOM>$captions</CAPTION>";
+	$captions = "";
+    }
     $return .= "</TABLE>\n";
     $return;
 }

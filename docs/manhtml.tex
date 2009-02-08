@@ -1,7 +1,13 @@
+
+%this font is used in  features.tex
+\font\wncyr = wncyr10
+
+
 \begin{htmlonly}
  \usepackage[dvips]{graphicx}
  \usepackage[dvips]{color}
  \usepackage[dvips,leftbars]{changebar}
+ \newcommand{\FoilTeX}{\env{FoilTeX}}
 %
  \def\url#1{\htmladdnormallink{#1}{#1}}
  \def\Email#1{\htmladdnormallink{<#1>}{mailto:#1}}
@@ -10,15 +16,18 @@
  \def\onlinedoc{\url{http://www-dsed.llnl.gov/files/programs/unix/latex2html/manual/}}
  \def\patches{\url{http://www-dsed.llnl.gov/files/programs/unix/latex2html/}}
  \def\sourceA{%
-  \url{http://www-dsed.llnl.gov/files/programs/unix/latex2html/sources/latex2html-97.1.tar.gz}}
- \def\sourceB{\url{ftp://ftp.mpn.com/pub/nikos/latex2html-97.1.tar.gz}}
- \def\sourceC{\url{ftp://ftp.rzg.mpg.de/outgoing/latex2html-97.1.tar.gz}}
- \def\CVSsite{\url{http://cdc-server.cdc.informatik.th-darmstadt.de/latex2html/}}
- \def\CVSrepos{\url{http://cdc-server.cdc.informatik.th-darmstadt.de/\~{}latex2html/user/}}
- \def\CTAN{\path{tex-archive/support/latex2html}}
+  \url{http://www-dsed.llnl.gov/files/programs/unix/latex2html/sources/}}
+% \def\sourceB{\url{ftp://ftp.mpn.com/pub/nikos/latex2html-98.1.tar.gz}}
+ \def\sourceB{\CTANtug{\CTANA}}
+ \def\sourceC{\url{http://ftp.rzg.mpg.de/pub/software/latex2html/sources/}}
+ \def\CVSsite{\url{http://cdc-server.cdc.informatik.tu-darmstadt.de/\~{}latex2html/}}
+ \def\CVSrepos{\url{http://cdc-server.cdc.informatik.tu-darmstadt.de/\~{}latex2html/user/}}
+ \def\CVSlatest{\url{http://cdc-server.cdc.informatik.tu-darmstadt.de/\~{}latex2html/l2h-latest.tar.gz}}
+ \newcommand{\CTANtug}[1]{\path{http://ctan.tug.org/ctan/#1}}
  \def\CTANA{tex-archive/support/latex2html}
- \def\curia{\url{http://curia.ucc.ie/info/TeX/menu.html}}
- \def\fernuni{\url{http://es-sun2.fernuni-hagen.de/info2html?(latex.info)Top}}
+ \def\tugURL{\url{http://www.tug.org}}
+ \def\danteURL{\url{http://www.dante.de}}
+ \def\ListURL{\url{http://www.rosat.mpe-garching.mpg.de/mailing-lists/LaTeX2HTML/}}
 %
  \def\glossary#1{\index{#1@\texttt{#1} \label{III#1}\htmlref{(G)}{GGG#1}}}
  \def\Glossary#1#2{\index{#1@{#2} \label{III#1}\htmlref{(G)}{GGG#1}}}
@@ -40,20 +49,58 @@
 \newcommand{\indexentry}[2]{\item #1 #2}
 
 %
+\internal{}%
 \internal{O}%
 \internal{S}%
 \internal{E}%
 \internal{M}%
 \internal{H}%
 \internal{P}%
+
+\newcommand{\texdev}[1]{\htmladdnormallink
+ {\texdevURL/#1}{\texdevURL/#1}}
+\newcommand{\ctan}{http://ctan.tug.org/ctan}
+\newcommand{\ctanTUG}{\htmladdnormallinkfoot
+ {TUG's searchable CTAN site}{\ctan}}
+\newcommand{\ctanURL}[1]{\htmladdnormallink
+ {CTAN:\texttt{.../#1}}{\ctan/tex-archive/#1}}
+\newcommand{\ctanURLbr}[1]{\htmladdnormallink
+ {CTAN:\texttt{.../#1}}{\ctan/tex-archive/#1}}
+\newcommand{\ctanTUGurl}[2]{\ctanURL{#2}}
+\newcommand{\indichtml}{l2h/indic/IndicHTML/}
+
+\def\smiley{ \texttt{:\^)}}
 \end{htmlonly}
 
+\newcommand{\texdevURL}{http://www-texdev.mpce.mq.edu.au/}
+\newcommand{\Unicode}{\htmladdnormallinkfoot
+ {Unicode}{http://www.unicode.org/}}
+\newcommand{\IndicHTML}{\htmladdnormallinkfoot
+ {Indic\TeX/HTML}{\texdev{\indichtml}}}
+
 %begin{latexonly}
+\usepackage{array}
+
 \newcommand{\Cs}[1]{{\upshape`\,\texttt{-#1}\,'}}
 \newcommand{\Ve}[1]{\index{#1@\texttt{#1}}{\upshape`\,\texttt{#1}\,'}}
 \newcommand{\Lc}[1]{{\upshape\ttfamily\char92#1}}
 \newcommand{\Tc}[1]{{\upshape\ttfamily\char92#1}}
+
+\newcommand{\ctanTUG}[1]{TUG's searchable CTAN site\footnote{\ctanTUGurl}}
+\newcommand{\ctanURL}{CTAN: \penalty-200\ctanurl}
+\newcommand{\ctanURLbr}{CTAN: \newline\ctanurl}
+\urldef\texdev\url{http://www-texdev.mpce.mq.edu.au/}
+\urldef\ctanurl\url{.../tex-archive/}
+\urldef\ctanTUGurl\url{http://ctan.tug.org/ctan/tex-archive/}
+\urldef\indichtml\url{l2h/indic/IndicHTML/}
+
+% thanks to \KrisRose for this macro:
+\def\smiley{\hbox{\rlap{$\bigcirc$}\kern1.3pt$\scriptstyle\ddot\smile$}}
+
 %end{latexonly}
+
+
+\newcommand{\Lcs}[1]{{\upshape\ttfamily\char92#1}}
 
 \renewcommand{\thefootnote}{\arabic{footnote}}
 
@@ -70,7 +117,14 @@
 {http://cbl.leeds.ac.uk/nikos/tex2html/doc/mail/mail.html}}
 %
 \newcommand{\HTMLiii}{\textup{\texttt{HTML} 3.2}}%
-%\newcommand{\latextohtml}{\textup{\LaTeX 2\texttt{HTML}}}%
+\newcommand{\HTMLIII}{\htmladdnormallink{\HTMLiii}%
+{http://www.w3.org/TR/REC-html32.html}}%
+
+\newcommand{\HTMLiv}{\textup{\texttt{HTML} 4.0}}%
+\newcommand{\HTMLIV}{\htmladdnormallink{\HTMLiv}%
+{http://www.w3.org/TR/REC-html40/}}%
+
+%\newcommand{\latextohtml}{\textup{\LaTeX 2{\ttfamily HTML}}}%
 \newcommand{\Perl}{\htmlref{\textsl{Perl}}{GGGPerl}}%  
 \newcommand{\PS}{\htmlref{\textup{Post\-Script}}{GGGpostscript}\Glossary{PostScript}{PostScript}{}}%
 \newcommand{\MF}{\htmlref{\textsl{Metafont}}{GGGMetafont}\Glossary{Metafont}{\textsl{Metafont}}{}}%
@@ -91,6 +145,8 @@
 %
 \newcommand{\RossMoore}{\index{Ross Moore}%\Email{ross@mpce.mq.edu.au}
 \htmladdnormallink{Ross Moore}{http://www.mpce.mq.edu.au/\~{}ross/}}
+\newcommand{\Macquarie}{\htmladdnormallink
+{Macquarie University}{http://www.mq.edu.au/}}
 %
 \newcommand{\Hennecke}{\index{Marcus Hennecke}%\Email{hennecke@dbag.ulm.DaimlerBenz.COM}
 \htmladdnormallink{Marcus Hennecke}{http://www.crc.ricoh.com/\~{}marcush/}}
@@ -114,11 +170,17 @@
 %\htmladdnormallink{Herb Swan}{mailto:herb.swan@perc.Arco.COM}}
 \htmladdnormallink{Herb Swan}{mailto:lanhws@expl.aai.arco.com}}
 %
-\newcommand{\Lippman}{\index{Jens Lippman}%\Email{lippmann@cdc.Informatik.TH-Darmstadt.DE}
-\htmladdnormallink{Jens Lippman}{http://www-jb.cs.uni-sb.de/\~{}www/people/lippmann}}
+\newcommand{\Lippmann}{\index{Jens Lippmann}%\Email{lippmann@cdc.informatik.tu-darmstadt.de}
+\htmladdnormallink{Jens Lippmann}{http://www-jb.cs.uni-sb.de/\~{}www/people/lippmann}}
 %
 \newcommand{\Rouchal}{\index{Marek Rouchal}%\Email{marek@hl.siemens.de}
 \htmladdnormallink{Marek Rouchal}{mailto:marek@hl.siemens.de}}
+%
+\newcommand{\Bohnet}{\index{Achim Bohnet}%\Email{ach@rosat.mpe-garching.mpg.de}
+\htmladdnormallink{Achim Bohnet}{mailto:ach@rosat.mpe-garching.mpg.de}}
+%
+\newcommand{\Nelson}{\index{Scott Nelson}%\Email{nelson18@llnl.gov}
+\htmladdnormallink{Scott Nelson}{mailto:nelson18@llnl.gov}}
 %
 \newcommand{\AxelRamge}{\index{Axel Ramge}%\Email{axel@ramge.de}
 \htmladdnormallink{Axel Ramge}{mailto:axel@ramge.de}}
@@ -128,6 +190,12 @@
 %
 \newcommand{\Wortmann}{\index{Uli Wortmann}%\Email{uli12@bonk.ethz.ch}
 \htmladdnormallink{Uli Wortmann}{mailto:uli12@bonk.ethz.ch}}
+%
+\newcommand{\Veytsman}{\index{Boris Veytsman}%\Email{boris@plmsc.psu.edu}
+\htmladdnormallink{Boris Veytsman}{mailto:boris@plmsc.psu.edu}}
+%
+\newcommand{\Taupin}{\index{Daniel Taupin}%\Email{taupin@lps.u-psud.fr}
+\htmladdnormallink{Daniel Taupin}{mailto:taupin@lps.u-psud.fr}}
 %
 %\endinput
 
@@ -157,20 +225,21 @@
 \newcommand{\LiPS}{\index{LiPS Design Team}%
 \htmladdnormallink{LiPS Design Team}{http://www-jb.cs.uni-sb.de/LiPS/node2.html}}
 \newcommand{\FIDarmstadt}{\index{Fachbereich Informatik, Darmstadt}%
-\htmladdnormallink{Fachbereich Informatik}{http://www.informatik.th-darmstadt.de/}}
+\htmladdnormallink{Fachbereich Informatik}{http://www.informatik.tu-darmstadt.de/}}
 \newcommand{\Darmstadt}{\index{Darmstadt!Fachbereich Informatik}%
-\htmladdnormallink{Darmstadt}{http://www.th-darmstadt.de/Welcome.de.html}}
+\htmladdnormallink{Darmstadt}{http://www.tu-darmstadt.de/Welcome.de.html}}
 %
 \newcommand{\DANTE}{\index{DANTE}%
 \htmladdnormallink{DANTE e.V.}{http://www.dante.de/}}
 \newcommand{\Praesidium}{\index{DANTE!Praesidium}%
 \htmladdnormallink{Praesidium}{http://www.dante.de/dante/Organe.html}}
-\newcommand{\LaTeXiii}{\index{LaTeX!LaTeX3@\LaTeX{3}}%
+\newcommand{\LaTeXiii}{\index{LaTeX@\LaTeX!LaTeX3@\LaTeX{3}}%
 \htmladdnormallink{\LaTeX{3}}{http://www.tex.ac.uk/CTAN/latex/latex3}}
 %
 \newcommand{\Engberg}{\index{Uffe Engberg}%
 \htmladdnormallinkfoot{Uffe Engberg}{http://www.brics.dk/\~{}engberg}} 
 
+\newcommand{\texdevINDIC}{\texdev\indic}
 %\endinput
 
 

@@ -4,16 +4,40 @@
 # to point to the DIRECTORY where the latex2html files can be found.
 $LATEX2HTMLDIR="$ENV{'L2HMODULE'}/user";# Inserted by installation script
 
-$dd = "/";  # directory delimiter character; change if necessary !
+if ($] >= 5 ) {# we have Perl 5.0 or later...
 
-# $Id: pstoimg_nopipes,v 1.3 1997/07/03 07:30:08 RRM Exp $
+# All operating system depended stuff should be defined in
+# Override.pm before being used in the code.
+# See export.pm on how to do this
+# This path is set to where the Override module can be found.
+use lib "$ENV{'L2HMODULE'}";
+
+use Cwd;
+
+use Override qw(getpwuid link setenv getenv symlink rename
+		make_directory_absolute unlink $dd $envkey $DEBUG);
+} else {
+    print "\n*** could not configure automatically using Override.pm ***";
+    print "\n*** so assuming standard Unix conventions apply ***\n";
+
+# With Perl 5 these should have been set already, within  Override.pm
+
+# The key, which delimts expressions defined in the environment
+# depends on the operating system.
+    $envkey=':' unless ($envkey);
+
+# $dd is the directory delimiter character
+    $dd = '/' unless ($dd);
+}
+
+# $Id: pstoimg_nopipes,v 1.8 1998/02/19 11:08:40 latex2html Exp $
 #
-# pstoimg V97.1
+# pstoimg V98.1
 #
 # originally by Nikos Drakos <nikos@cbl.leeds.ac.uk>
 # Computer Based Learning Unit, University of Leeds.
 #
-# Accompanies LaTeX2HTML Version 97.1
+# Accompanies LaTeX2HTML Version 98.1
 #
 # Script to convert an arbitrary PostScript image to a cropped GIF or PNG
 # image suitable for incorporation into HTML documents as inlined images
@@ -23,7 +47,6 @@ $dd = "/";  # directory delimiter character; change if necessary !
 # by Doug Crabill dgc@cs.purdue.edu
 #
 # Please note the following:
-
 # - The -density argument has no effect unless the 
 #   color depth (set with the -depth argument) is equal to 1.
 # - Valid arguments for -depth are 1,8, or 24.
@@ -34,6 +57,21 @@ $dd = "/";  # directory delimiter character; change if necessary !
 # Computer Based Learning Unit, University of Leeds.
 #
 # $Log: pstoimg_nopipes,v $
+# Revision 1.8  1998/02/19 11:08:40  latex2html
+#  --  some messages are only printed with $DEBUG
+#
+# Revision 1.7  1998/02/13 13:05:59  latex2html
+#  --  defined &cp to making copying file platform-independent
+#
+# Revision 1.6  1998/02/12 06:43:43  latex2html
+#  --  fixed the error when $TMP is a relative directory
+#
+# Revision 1.5  1998/02/10 02:49:00  latex2html
+# 	updated for V98.1 and the changes in pstoimg
+#
+# Revision 1.4  1997/12/10 00:45:15  RRM
+#  --  bringing the nopipes version into line with the main pstoimg script
+#
 # Revision 1.3  1997/07/03 07:30:08  RRM
 #  -   Fixed up the  $/  for the  %%Papersize search
 #  -   Allow  $DEBUG  as a predefined variable
@@ -183,7 +221,7 @@ $SCALE = $ENV{'SCALE'}; # No default value
 
 $PAPERSIZE = $ENV{'PAPERSIZE'}; # No default value;
 
-$DEBUG = $ENV{'DEBUG'} || 0 unless $DEBUG ;
+$DEBUG = $ENV{'DEBUG'} || 0 unless $DEBUG;
 
 $DISCARD = $ENV{'DISCARD_PS'} || 0;
 
@@ -210,8 +248,6 @@ $TOP_JUSTIFY=0; # No right justifying by default
 $SHORE_UP=0; # No pixel alignment by default
 
 $BASE = $FILE = undef;
-
-#$DEBUG = 1;
 
 ######################################################################
 
@@ -253,6 +289,9 @@ EOF
         die <<"EOF" if $OUTFILE =~ /^-/;
 $prompt Fatal Error: Outfile musn't begin with a `-'
 EOF
+        }
+    elsif ("-tmp" =~ /^$_/) {
+        $TMP = shift @ARGV;
         }
     elsif ("-depth" =~ /^$_/) {
         $DEPTH = shift @ARGV;
@@ -387,7 +426,7 @@ EOF
     elsif ("-shoreup" =~ /^$_/) {
         $SHORE_UP = shift @ARGV;
         die <<"EOF" unless $SHORE_UP =~ /^[0-9.]+d?$/;
-$prompt Fatal Error: Illegal shoreup specified: \"$SHORE_UP\"
+$prompt Fatal Error: Illegal shore-up specified: \"$SHORE_UP\"
          Value must be numeric, or <num>d
 EOF
         do {
@@ -405,8 +444,9 @@ EOF
 $FILE = $ARGV[0];
 die "$prompt Error: No input file specified\n" unless ($FILE);
 $BASE = $FILE;
-# remove a trailing suffix the same way a shell would do it
+# remove a trailing suffix and a leading path in shell-like way
 $BASE =~ s/\.[^.]*$//;
+$BASE =~ s/.*$dd([^$dd]*)$/$1/;
 die "$prompt Cannot find file $FILE: $!\n" unless (-f "$FILE");
 die "$prompt Error: No output image type specified\n" unless ($IMAGE_TYPE);
 
@@ -437,15 +477,33 @@ if (($AALIAS)&&($GS_DEVICE =~ /p(p|n|g)+mraw/io)) {
 }
 
 
+local($DESTDIR);
+
+# LaTeX2HTML may supply a directory: .../tmp/<pid>/
+if ($TMP =~ /$dd\w*\d+$dd$/) {
+    $BASE =~ s/$TMP//;
+    $DESTDIR = &getcwd;
+    $DESTDIR .= $dd;
+    print STDERR "\ncurrent directory is $DESTDIR ...\n" if $DEBUG;
+    print STDERR "\ntemp directory is $TMP ...\n" if $DEBUG;
+} else { $BASE =~ s/^(${dd}tmp)$dd/$TMP=$1;''/e }
+
+# If l2h already uses a temp dir, the input file is located within it.
+$FILE =~ /()/;# clears $`
+$FILE =~ /$dd[^$dd]*$/;
+$TMP = $` unless $TMP; # get leading path or empty
+
 if (!($TMP)) {
+    # l2h uses no temp dir, let's see if we can find one.
     if (-d "${dd}tmp") { $TMP = "${dd}tmp${dd}"}
     elsif (-d "${dd}usr${dd}tmp") { $TMP = "${dd}usr${dd}tmp$dd"}
-    else { print "\nCannot find a ${dd}tmp directory" }
+    else { print "\nCannot find a ${dd}tmp directory, taking this one..." }
 } elsif ($TMP =~ /$dd$/) {
 } else { $TMP .= $dd }
+print "\nUsing $TMP as tmp directory\n" if $DEBUG;
 
-local($DESTDIR);
-if ($TMP) {
+
+if ($TMP && !($DESTDIR)) {
     open(SO, ">&STDOUT");
     open(STDOUT, ">${TMP}foo$$");
     select(STDOUT); $| = 1;
@@ -459,13 +517,33 @@ if ($TMP) {
     chop $DESTDIR;
     $DESTDIR .= $dd;
     print STDERR "\ncurrent directory is $DESTDIR ...\n";
+    print STDERR "\ntemp directory is $TMP ...\n";
 }
 if (!(($TMP)&&($DESTDIR))) {  $TMP = '' }
+select(STDERR); $| = 1;
 
 # Main program
 
 $outfile = $OUTFILE || "$BASE.$IMAGE_TYPE";
 open(STDERR, ">${dd}dev${dd}null") unless $DEBUG;
+
+
+sub cp {                        # Marcus Hennecke  6/3/96
+    local($src, $dest) = @_;
+    return unless (-f $src);
+    if ( -d $dest ) {
+        $src =~ /[^$dd]*$/;
+        $dest .= $dd . $&;
+        $dest =~ s|$dd$dd||g;
+    }
+    open(IN, $src) || return; binmode(IN);
+    open(OUT, ">$dest") || return; binmode(OUT);
+    local($/) = undef;
+    print OUT <IN>;
+    close(OUT);
+    close(IN);
+}
+
 
 # Invoke Ghostscript
 &convert;
@@ -478,10 +556,10 @@ if (-f "$TMP$BASE.ppm") {
     &crop_scale_etc("$BASE.ppm", $outfile);
     ++$done if(-s $outfile);
     if ($TMP) {
-        if (system("cp $outfile $DESTDIR$outfile")) {
+#	if (system("cp $outfile $DESTDIR$outfile")) {
+	if (&cp("$outfile", "$DESTDIR$outfile")) {
             print "\nOutput image is in file: $TMP$outfile\n";
-        } else { unlink $outfile }
-#        chdir("$DESTDIR");
+        } else { unlink "$outfile" }
     }
 } else {
     @list = <$TMP$BASE.[1-9]*.ppm>;
@@ -505,7 +583,7 @@ exit(($done) ? 0 : 1 );
 sub crop_scale_etc {
     local($in, $out) = @_;
     local($tmp) = $in . ".tmp";
-    local($_,$cmd,$type,$width,$height,$just,$overfull);
+    local($_,$cmd,$type,$width,$height,$just);
     open(STDERR, ">${dd}dev${dd}null") unless $DEBUG;
 
     if($RIGHT_JUSTIFY || $TOP_JUSTIFY || $CENTER || $EXTRA_CROP || $SHORE_UP) {
@@ -513,7 +591,6 @@ sub crop_scale_etc {
 	$cmd = "$PNMCROP < $in ";
 	    print "Running $cmd > $tmp\n" if $DEBUG;		# no_pipes
 	if (system("$cmd > $tmp")) {
-	    $overfull = 1;
 	    &cleanup($BASE);
 	    die ("Cropping failed; image too large?")
 	}
@@ -659,6 +736,7 @@ sub crop_scale_etc {
 	}
 	$height += $just;
     }
+
     if ($SHORE_UP) { # RRM: make height and width an exact multiple of $SHORE_UP
 	if ($cmd) {
             print "Running $cmd > $tmp\n" if $DEBUG;
@@ -731,7 +809,7 @@ sub crop_scale_etc {
 
     if($INTERLACE) { # use netpbm if possible
         do {
-            $PNMTOIMG .= " -interlace";
+            $PNMTOIMG .= " -interlace" unless ($height < 8);
             $INTERLACE=0;
 	} unless ($IMAGE_TYPE eq "gif" && 
                 $HOWTO_INTERLACE_GIF !~ /netpbm/io);
@@ -777,7 +855,7 @@ sub crop_scale_etc {
 	}
         if($IMAGE_TYPE =~ /^gif/ && $TRANSPARENT) {
             if($HOWTO_TRANSPARENT_GIF =~ /giftrans/i) {
-                print "Running $GIFTRANS -t '#ffffff' -B '#bfbfbf' $out > $tmp\n" if $DEBUG;
+		print "Running $GIFTRANS -t '#ffffff' -B '#bfbfbf' $out > $tmp\n" if $DEBUG;
 		rename($tmp,$out) unless system("$GIFTRANS -t '#ffffff' -B '#bfbfbf' $out > $tmp");
 	    } elsif ($HOWTO_TRANSPARENT_GIF =~ /giftool/i) {
                 print "Running $GIFTOOL -B -rgb ff,ff,ff $out > $tmp\n" if $DEBUG;
@@ -845,7 +923,6 @@ sub convert {
 	$GEOMETRY =~ /\s*([0-9.]+)x([0-9.]+)/;
 	$bbw = $1 + 10;  # allow for the side-bars
 	$bbh = $2;
-#        $bby = int($bbh - $bby + 5); # allow small margin for error
 	$bby = int($bbh - $bby + 8); # allow small margin for error
 	$bbx = int(-$bbx + 5);       # allow small margin for error
 	if ( $DENSITY ) {
@@ -865,10 +942,11 @@ sub convert {
     if ($have_geometry) {
 	# Remove any Postscript commands concerning Papersize if -g switch is used
 	# thanks to  Axel Ramge for identifying the problem and for this code
+	$* = 1;    # Multiline matching ON
+	$saveRS = $/; undef $/;
 	open(PS,"<$FILE");
 	$_ = <PS>;
-	$saveRS = $/; undef $/; $* = 1;
-	local($change) = s/\n%%BeginPaperSize.*%%EndPaperSize.*?\n//;
+	local($change) = s/\n%%BeginPaperSize.*%%EndPaperSize.*?\n//s;
 	close(PS);
 	if ($change) {
 	    open(PS,">$FILE");
@@ -877,13 +955,19 @@ sub convert {
 		die "\n\n***file $FILE contains %%Papersize comments"
 		    . "\n these must be removed else GS will fail.\n";
 	    } unless print PS;
-	    close(PS); $/ = $saveRS; $* = 0;
+	    close(PS);
 	}
+	$/ = $saveRS; $* = 0;    # Multiline matching OFF
     }
 
     local($basename) = $BASE . ($MULTIPLEPAGES ? ".%d" : '');
     local($quiet) = "-q -dNOPAUSE -dNO_PAUSE ";
-    local($outfile) = "-sOutputFile=$TMP$basename.ppm";
+    local($outfile);
+    if ($basename =~ /^$dd/) {
+	$outfile = "-sOutputFile=$basename.ppm";
+    } else {
+	$outfile = "-sOutputFile=$TMP$basename.ppm";
+    }
     if ( $DEBUG ) {
         print "Running $GS $quiet -sDEVICE=$GS_DEVICE $size $density $aalias $outfile\n";
         print "GS>$GSROTATE " if ($GSROTATE);
@@ -900,7 +984,7 @@ sub convert {
     print GS "quit\n";
     close GS;
     print "\n";
-    }
+}
 
 sub choose_paper {
     local($_) = @_;
@@ -929,16 +1013,14 @@ sub choose_paper {
     elsif (($width < 2380)&&($height < 3368)) { $size = "a0" }
     else { $size = "b0" }
     $size;
-    }
+}
   
 sub cleanup {
-    unlink <$BASE[0-9.]*ppm> unless ($DEBUG || $overfull);
+    unlink <$BASE[0-9.]*ppm> unless $DEBUG;
     unlink <$BASE[0-9.]*ppm.tmp> unless $DEBUG;
     unlink <$BASE[0-9.]*ppm.tmp.tmp> unless $DEBUG;
     chdir("$DESTDIR") if ($TMP);
-#    unlink <$FILE> if($DISCARD && # (!$DEBUG)&&
-    unlink <$FILE> if($DISCARD && (!$DEBUG)&&
-		      ($FILE =~ /^[0-9]+_image[0-9]{3}\.ps$/));
+    unlink "$FILE" if ($DISCARD && (!$DEBUG));
 }
 
 sub usage {

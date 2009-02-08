@@ -1,10 +1,10 @@
 #!/usr/local/bin/perl -w
 #use diagnostics;
 
-$LATEX2HTMLDIR="$ENV{'L2HMODULE'}/user"
+$LATEX2HTMLDIR="$ENV{'L2HMODULE'}/user";# Inserted by installation script
 
 ###############################################################################
-# $Id: configure-pstoimg,v 1.10 1997/07/20 20:26:02 JCL Exp $
+# $Id: configure-pstoimg,v 1.14 1998/02/19 20:08:54 latex2html Exp $
 #
 # Configure-Pstoimg
 #
@@ -25,6 +25,18 @@ $LATEX2HTMLDIR="$ENV{'L2HMODULE'}/user"
 # Changes History
 #
 # $Log: configure-pstoimg,v $
+# Revision 1.14  1998/02/19 20:08:54  latex2html
+# .
+#
+# Revision 1.13  1997/10/28 19:53:54  JCL
+# safer renaming of substitute files to .bak (lost files were reported)
+#
+# Revision 1.12  1997/09/27 10:37:47  JCL
+# small change regarding EOF tag
+#
+# Revision 1.11  1997/08/13 15:27:33  JCL
+# dies with message unless initialized via install-test
+#
 # Revision 1.10  1997/07/20 20:26:02  JCL
 # .
 #
@@ -112,6 +124,9 @@ $dd = '/';
 ###############################################################################
 # Parse the command line
 
+die "Please run install-test, it will start this script automatically.\n"
+    unless $LATEX2HTMLDIR;
+
 if(@ARGV) {
    foreach(@ARGV) {
       if(/^(-h|--help)$/) {
@@ -175,13 +190,15 @@ sub substitute_img_var {
 
     if ( (-f "$LATEX2HTMLDIR${dd}$file") ||
 	die "\nCannot find $LATEX2HTMLDIR${dd}$file\nPlease check the value of \$LATEX2HTMLDIR in latex2html.config\n") {
-	open(IN, "<$LATEX2HTMLDIR${dd}$file")
-	    || die "Cannot open $LATEX2HTMLDIR${dd}$file";
-	rename("$LATEX2HTMLDIR${dd}$file","$LATEX2HTMLDIR${dd}$file.bak");
+	rename("$LATEX2HTMLDIR${dd}$file","$LATEX2HTMLDIR${dd}$file.bak")
+	    || die "Cannot rename $LATEX2HTMLDIR${dd}$file: $!";
+	open(IN, "<$LATEX2HTMLDIR${dd}$file.bak")
+	    || die "Cannot open $LATEX2HTMLDIR${dd}$file.bak: $!";
 	open(OUT, ">$LATEX2HTMLDIR${dd}$file")
-	    || die "Cannot open $LATEX2HTMLDIR${dd}$file";
+	    || die "Cannot open $LATEX2HTMLDIR${dd}$file: $!";
 	chmod(0755, "$LATEX2HTMLDIR${dd}$file")
-	    unless $file =~ /.config$/;
+	    if -x "$LATEX2HTMLDIR${dd}$file.bak";
+
 	while (<IN>) {
 	    s/\$IMAGE_TYPE\s*=.*$/
 		do {$SUCCESS = 1;
@@ -693,7 +710,7 @@ _EOM_
     foreach(keys %Configuration) {
         $vars .= "\$$_ = '$Configuration{$_}'; # Inserted by configure-pstoimg\n";
     }
-    print OUT << "_EOF_";
+    print OUT <<"_EOF_";
 #################################################################
 # local.pm
 #

@@ -111,10 +111,11 @@ local($i);
 	    (($9)? "<A NAME=\"$9\">\n<B>$1<\/B><\/A>" : "\n<B>$1<\/B>" ) ."\n<DD>"/eg;
 	}
     }
-  $* = 0;
+    $* = 0;
 #  $_ = &translate_environments($_);
-  $_ = &translate_commands($_);
-  "<DL$compact>$_</DL>";
+    $_ = &translate_commands($_);
+    $_ = '<DT>'.$_ unless (/^\s*<D(D|T)/);
+    "<DL$compact>$_</DL>";
 }
 
 1;                              # This must be the last line

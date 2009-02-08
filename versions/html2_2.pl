@@ -229,8 +229,10 @@ sub do_env_tabular {
 	$return .= "</TR>\n";
     };
     $return .= "</TBODY>\n" if ( $rules =~ /r/ );
-    $captions && ($return .= "<CAPTION ALIGN=BOTTOM>$captions</CAPTION>");
-    $captions = "";
+    if ($capenv && $captions) {
+        $return .= "<CAPTION ALIGN=BOTTOM>$captions</CAPTION>";
+	$captions = "";
+    }
     $return .= "</TABLE>\n";
     $return;
 }

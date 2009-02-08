@@ -29,7 +29,7 @@ sub preprocess_alltt {
 sub alltt_helper {
     local ($_) = @_;
     s/^/\\relax/;	# Preserve leading & trailing white space
-    s/\t//g;		# Remove tabs
+    s/\t/ /g;		# Remove tabs
     s/\$/;SPMdollar;/g;
     s/\%/;SPMpct;/g;
     s/~/;SPMtilde;/g;
@@ -38,10 +38,21 @@ sub alltt_helper {
 
 sub do_env_alltt {
     local ($_) = @_;
-    $_ = &revert_to_raw_tex($_);
-    &mark_string;
-    s/\\([{}])/$1/g;
-    "<PRE>$_</PRE>";
+    local($closures,$reopens) = &close_all_tags();
+    local(@open_tags,@save_open_tags) = ((),());
+    local($cnt) = ++$global{'max_id'};
+    $_ = join('',"$O$cnt$C\\tt$O", ++$global{'max_id'}, $C
+		, $_ , $O, $global{'max_id'}, "$C$O$cnt$C");
+    $_ = &translate_environments($_);
+    $_ = &translate_commands($_);
+    s/\n/<BR>/g;
+
+#    $_ = &revert_to_raw_tex($_);
+#    &mark_string; # ???
+#    s/\\([{}])/$1/g; # ???
+#    s/<\/?\w+>//g; # no nested tags allowed
+#    join('', $closures,"<PRE$env_id>$_</PRE>", $reopens);
+    join('', $closures,"<DIV$env_id>", $_, &balance_tags(), '</DIV>', $reopens);
     }
 
 1;	# Must be last line

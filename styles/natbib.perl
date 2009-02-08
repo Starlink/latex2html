@@ -1,14 +1,28 @@
-# $Id: natbib.perl,v 1.7 1997/07/11 11:28:52 RRM Exp $
+# $Id: natbib.perl,v 1.10 1998/02/19 22:24:30 latex2html Exp $
 # natbib.perl - LaTeX2HTML support for the LaTeX2e natbib package
 #  (flexible author-year citations)
 # Martin Wilck, 20.5.1996 (martin@tropos.de)
 #
 # Change Log:
-# jcl = Jens Lippmann <lippmann@cdc.informatik.th-darmstadt.de>
+# jcl = Jens Lippmann <lippmann@cdc.informatik.tu-darmstadt.de>
 # mwk = Martin Wilck
 # rrm = Ross Moore <ross@mpce.mq.edu.au>
 #
 # $Log: natbib.perl,v $
+# Revision 1.10  1998/02/19 22:24:30  latex2html
+# th-darmstadt -> tu-darmstadt
+#
+# Revision 1.9  1997/10/07 06:59:44  RRM
+#  --  moved the code to  do_cmd_citestar  up to just after do_cmd_cite
+#  --  implemented \citep*  (oops, forgot it last time)
+#  --  fixed \harvardurl to work properly and without html.sty
+# 	thanks to James A. Bednar <jbednar@cs.utexas.edu> for noticing
+#
+# Revision 1.8  1997/09/19 10:57:44  RRM
+#      Updated for compatibility with natbib.sty v6.6
+#  --  all \cite... commands have a *-version and 2 optional arguments
+#  --  Harvard emulation is now automatic
+#
 # Revision 1.7  1997/07/11 11:28:52  RRM
 #  -  replace  (.*) patterns with something allowing \n s included
 #
@@ -144,6 +158,25 @@ sub do_cmd_cite {
     } else {print "Cannot find citation argument\n";}
     $_;
 }
+
+sub do_cmd_citestar {
+# Same as do_cmd_cite, but uses full author information
+    local($_) = @_;
+    local($cite_key, @cite_keys);
+    local($has_optional,$optional1,$optional2)=&cite_check_options;
+    local ($c_mark) = ($has_optional ? $cite_par_full_mark : $cite_full_mark);
+    $c_mark = $cite_par_mark if ($NUMERIC);
+    s/^\s*\\space//o;           # Hack - \space is inserted in .aux
+    s/$next_pair_pr_rx//o;
+    if ($cite_key = $2) {
+        local ($br_id)=$1;
+        $_ = join('',
+            &do_cite_keys($br_id,($has_optional || $NUMERIC)
+                ,$optional1,$optional2,$c_mark,$cite_key), $_);
+    } else {print "Cannot find citation argument\n";}
+    $_;
+}
+
 
 # The following are Harvard-specific, but generally defined,
 # since they don't conflict with natbib syntax
@@ -337,23 +370,44 @@ sub do_cmd_harvardparenthesis {
     $_;
 }
 
-# special subroutine definition for Harvard emulation
-if ($HARVARD) {
-
-print "\nnatbib.perl: Operating in Harvard emulation mode.\n";
+## special subroutine definition for Harvard emulation
+#if ($HARVARD) {
+#
+#print "\nnatbib.perl: Operating in Harvard emulation mode.\n";
 
 sub do_cmd_citeyear {
-# "(1990a)"
+# "1990a"
     local($_) = @_;
     local($cite_key, @cite_keys);
-    $HARVARD && do { local($optional1,$dummy)=&get_next_optional_argument };
+#    $HARVARD && do { local($optional1,$dummy)=&get_next_optional_argument };
+    local($has_optional,$optional1,$optional2)=&cite_check_options;
     s/^\s*\\space//o;		# Hack - \space is inserted in .aux
     s/$next_pair_pr_rx//o;
     if ($cite_key = $2) {
 	local ($br_id)=$1;
 	$_ = join('', 
-	    &do_cite_keys($br_id,($HARVARD || $NUMERIC),$optional1,'',				
-		($NUMERIC ? $cite_par_mark : $cite_year_mark)
+	    &do_cite_keys($br_id,($HARVARD || $NUMERIC )
+		,$optional1 ,$optional2 
+		,($NUMERIC ? $cite_par_mark : $cite_year_mark)
+		,$cite_key),$_);
+    }
+    else {print "Cannot find citation argument\n";}
+    $_;
+}
+
+sub do_cmd_citeyearpar {
+# "(1990a)"
+    local($_) = @_;
+    local($cite_key, @cite_keys);
+#    $HARVARD && do { local($optional1,$dummy)=&get_next_optional_argument };
+    local($has_optional,$optional1,$optional2)=&cite_check_options;
+    s/^\s*\\space//o;		# Hack - \space is inserted in .aux
+    s/$next_pair_pr_rx//o;
+    if ($cite_key = $2) {
+	local ($br_id)=$1;
+	$_ = join('', 
+	    &do_cite_keys($br_id,1,$optional1 ,$optional2	
+		,($NUMERIC ? $cite_par_mark : $cite_year_mark)
 		,$cite_key),$_);
     }
     else {print "Cannot find citation argument\n";}
@@ -364,36 +418,36 @@ sub do_cmd_citeyearstar {
 # "1990a"
     local($_) = @_;
     local($cite_key, @cite_keys);
-    local($optional1,$dummy)=&get_next_optional_argument;
+    local($has_optional,$optional1,$optional2)=&cite_check_options;
     s/^\s*\\space//o;		# Hack - \space is inserted in .aux
     s/$next_pair_pr_rx//o;
     if ($cite_key = $2) {
 	local ($br_id)=$1;
-	$_ = join('', 
-	    &do_cite_keys($br_id,$NUMERIC,$optional1,'',				
-		($NUMERIC ? $cite_par_mark : $cite_year_mark)
+	$_ = join('',
+	    &do_cite_keys($br_id, $NUMERIC ,$optional1 ,$optional2
+		,($NUMERIC ? $cite_par_mark : $cite_year_mark)
 		,$cite_key),$_);
     }
     else {print "Cannot find citation argument\n";}
     $_;
 }
 
-#End of special HARVARD definitions
-} else { 
-# citeyear syntax differs between natbib and harvard
-print "\nnatbib.perl: Operating in natbib mode.\n";
-
-};
+##End of special HARVARD definitions
+#} else { 
+## citeyear syntax differs between natbib and harvard
+#print "\nnatbib.perl: Operating in natbib mode.\n";
+#
+#};
 
 # Citation commands specific for natbib
 sub do_cmd_citet {
 # Special citation style in natbib 6.x: Jones et al [21]
-# no optional arguments
 # Only makes sense with a numerical bibliography style.
 # Otherwise, acts like \cite (-> same marker)
 # In numeric mode, uses $cite_mark
     local($_) = @_;
     local($cite_key, @cite_keys);
+    local($has_optional,$optional1,$optional2)=&cite_check_options;
     s/^\s*\\space//o;		# Hack - \space is inserted in .aux
     s/$next_pair_pr_rx//o;
     if ($cite_key = $2) {
@@ -401,75 +455,59 @@ sub do_cmd_citet {
 	$_ = join('',
 # First argument to &do_cite_keys always empty ->
 # no parens, not even in numeric mode
-	    &do_cite_keys($br_id,'','','',$cite_mark,$cite_key), $_);
+	    &do_cite_keys($br_id, '', $optional1, $optional2
+		,$cite_mark,$cite_key), $_);
     } else {print "Cannot find citation argument\n";}
     $_;
 }
 
 sub do_cmd_citetstar {
 # Special citation style in natbib 6.x: Jones, Baker, and Williams [21]
-# no optional arguments
     local($_) = @_;
     local($cite_key, @cite_keys);
+    local($has_optional,$optional1,$optional2)=&cite_check_options;
     s/^\s*\\space//o;		# Hack - \space is inserted in .aux
     s/$next_pair_pr_rx//o;
     if ($cite_key = $2) {
 	local ($br_id)=$1;
 	$_ = join('',
-	    &do_cite_keys($br_id,'','','',$cite_full_mark,$cite_key), $_);
+	    &do_cite_keys($br_id, '', $optional1, $optional2
+		,$cite_full_mark,$cite_key), $_);
     } else {print "Cannot find citation argument\n";}
     $_;
 }
 
 sub do_cmd_citep {
 # Shortcut for parenthetical citation
-# no optional arguments
     local($_) = @_;
     local($cite_key, @cite_keys);
+    local($has_optional,$optional1,$optional2)=&cite_check_options;
     s/^\s*\\space//o;		# Hack - \space is inserted in .aux
     s/$next_pair_pr_rx//o;
     if ($cite_key = $2) {
 	local ($br_id)=$1;
 	$_ = join('',
 # First argument of &do_cite_keys set to 1 for parenthetical citation
-	    &do_cite_keys ($br_id,1,'','',
-		($cite_par_mark),
-		$cite_key), $_);
-    } else {print "Cannot find citation argument\n";}
-    $_;
-}
-
-sub do_cmd_citestar {
-# Same as do_cmd_cite, but uses full author information
-    local($_) = @_;
-    local($cite_key, @cite_keys);
-    local($has_optional,$optional1,$optional2)=&cite_check_options;
-    local ($c_mark) = ($has_optional ? $cite_par_full_mark : $cite_full_mark);
-    $c_mark = $cite_par_mark if ($NUMERIC);
-    s/^\s*\\space//o;		# Hack - \space is inserted in .aux
-    s/$next_pair_pr_rx//o;
-    if ($cite_key = $2) {
-	local ($br_id)=$1;
-	$_ = join('',
-	    &do_cite_keys($br_id,($has_optional || $NUMERIC),
-		$optional1,$optional2,$c_mark,$cite_key), $_); 
+	    &do_cite_keys ($br_id, 1, $optional1, $optional2
+		,($NUMERIC ? $cite_par_mark : $cite_year_mark)
+		,$cite_key), $_);
     } else {print "Cannot find citation argument\n";}
     $_;
 }
 
 sub do_cmd_citepstar {
 # Shortcut for full parenthetical citation
-# no optional arguments
     local($_) = @_;
     local($cite_key, @cite_keys);
+    local($has_optional,$optional1,$optional2)=&cite_check_options;
     s/^\s*\\space//o;		# Hack - \space is inserted in .aux
     s/$next_pair_pr_rx//o;
     if ($cite_key = $2) {
 	local ($br_id)=$1;
 	$_ = join('',
-	    &do_cite_keys($br_id,1,'','',
-		($NUMERIC ? $cite_par_mark :$cite_par_full_mark),
-		$cite_key), $_);
+	    &do_cite_keys($br_id, 1, $optional1, $optional2
+		,($NUMERIC ? $cite_par_mark :$cite_par_full_mark)
+		,$cite_key), $_);
     } else {print "Cannot find citation argument\n";}
     $_;
 }
@@ -479,6 +517,7 @@ sub do_cmd_citealt {
 #    i.e. "Jones et al. 1990"
     local($_) = @_;
     local($cite_key, @cite_keys);
+    local($has_optional,$optional1,$optional2)=&cite_check_options;
     s/^\s*\\space//o;		# Hack - \space is inserted in .aux
     s/$next_pair_pr_rx//o;
     if ($cite_key = $2) {
@@ -487,8 +526,8 @@ sub do_cmd_citealt {
 # First argument of &do_cite_keys = $NUMERIC
 # (In numeric mode, always use parentheses)
 # Same in the next subroutines
-	    &do_cite_keys($br_id,$NUMERIC,'','',
-		($NUMERIC ? $cite_par_mark : $citealt_mark)
+	    &do_cite_keys($br_id, $NUMERIC, $optional1, $optional2
+		,($NUMERIC ? $cite_par_mark : $citealt_mark)
 		,$cite_key),$_);
     }
     else {print "Cannot find citation argument\n";}
@@ -499,40 +538,82 @@ sub do_cmd_citealtstar {
 # Full alternative citation, i.e. "Jones, Baker, and Williams 1990"
     local($_) = @_;
     local($cite_key, @cite_keys);
+    local($has_optional,$optional1,$optional2)=&cite_check_options;
     s/^\s*\\space//o;		# Hack - \space is inserted in .aux
     s/$next_pair_pr_rx//o;
     if ($cite_key = $2) {
 	local ($br_id)=$1;
-	$_ = join('', 
-	    &do_cite_keys($br_id,$NUMERIC,'','',				
-		($NUMERIC ? $cite_par_mark : $citealt_full_mark)
+	$_ = join('',
+	    &do_cite_keys($br_id, $NUMERIC, $optional1, $optional2
+		,($NUMERIC ? $cite_par_mark : $citealt_full_mark)
 		,$cite_key),$_);
     }
     else {print "Cannot find citation argument\n";}
     $_;
 }
+
+sub do_cmd_citealp {
+# Alternative form of citation: with parentheses
+#    i.e. "(Jones et al. 1990)"
+    local($_) = @_;
+    local($cite_key, @cite_keys);
+    local($has_optional,$optional1,$optional2)=&cite_check_options;
+    s/^\s*\\space//o;		# Hack - \space is inserted in .aux
+    s/$next_pair_pr_rx//o;
+    if ($cite_key = $2) {
+	local ($br_id)=$1;
+	$_ = join('',
+# First argument of &do_cite_keys set to 1 for parenthetical citation
+	    &do_cite_keys ($br_id, 1, $optional1, $optional2
+		,($NUMERIC ? $cite_par_mark : $cite_alt_mark)
+		,$cite_key), $_);
+    } else {print "Cannot find citation argument\n";}
+    $_;
+}
+
+sub do_cmd_citealpstar {
+# Full alternative citation, i.e. "(Jones, Baker, and Williams 1990)"
+    local($_) = @_;
+    local($cite_key, @cite_keys);
+    local($has_optional,$optional1,$optional2)=&cite_check_options;
+    s/^\s*\\space//o;           # Hack - \space is inserted in .aux
+    s/$next_pair_pr_rx//o;
+    if ($cite_key = $2) {
+        local ($br_id)=$1;
+        $_ = join('',
+# First argument of &do_cite_keys set to 1 for parenthetical citation
+            &do_cite_keys ($br_id, 1, $optional1, $optional2
+                ,($NUMERIC ? $cite_par_mark : $citealt_full_mark)
+                ,$cite_key), $_);
+    } else {print "Cannot find citation argument\n";}
+    $_;
+}
+
 
 sub do_cmd_citeauthor {
 # "Jones et al."
     local($_) = @_;
     local($cite_key, @cite_keys);
+    local($has_optional,$optional1,$optional2)=&cite_check_options;
     s/^\s*\\space//o;		# Hack - \space is inserted in .aux
     s/$next_pair_pr_rx//o;
     if ($cite_key = $2) {
 	local ($br_id)=$1;
 	$_ = join('', 
-	    &do_cite_keys($br_id,$NUMERIC,'','',
-		($NUMERIC ? $cite_par_mark : $cite_author_mark)
+	    &do_cite_keys($br_id,$NUMERIC,'',''
+		,($NUMERIC ? $cite_par_mark : $cite_author_mark)
 		,$cite_key),$_);
     }
     else {print "Cannot find citation argument\n";}
     $_;
 }
+sub do_cmd_citeauthorstar { &do_cmd_citefullauthor(@_); }
 
 sub do_cmd_citefullauthor {
 # "Jones, Baker, and Williams"
     local($_) = @_;
     local($cite_key, @cite_keys);
+    local($has_optional,$optional1,$optional2)=&cite_check_options;
     s/^\s*\\space//o;		# Hack - \space is inserted in .aux
     s/$next_pair_pr_rx//o;
     if ($cite_key = $2) {
@@ -561,10 +642,12 @@ sub cite_check_options {
         local($opt1,$dummy)= &get_next_optional_argument;
         local($opt2,$dummy)= &get_next_optional_argument;
 # If optional Nr. 2 is present, exchange 1 and 2
-        if ($opt2) {
-            local($hopt)=$opt1;
-	    $opt1=$opt2;
-	    $opt2=$hopt;
+        if ($dummy) {
+	    ($opt1,$opt2) = ($opt2,$opt1);
+#        if ($opt2) {
+#            local($hopt)=$opt1;
+#	    $opt1=$opt2;
+#	    $opt2=$hopt;
         };
         ($hasopt,$opt1,$opt2)
    }
@@ -706,21 +789,22 @@ sub make_cite_reference {
 # First line ends with \newblock or with the next \bibitem  command
 #	$found = /\\newblock/o;	# these have been converted to  <BR>s
 	$found = /\<BR\>/o;
+	local($nbefore,$nafter) = ($`,$');
 	if ($found) {
-	    join('',"\n<DT><A NAME=\"$cite_key\"><STRONG>",
-		 &translate_commands($`),"</STRONG></A>\n<DD>", 
-# No call to &translate_commands on $': Avoid recursion
-		    $');
+	    join('',"\n<DT><A NAME=\"$cite_key\"><STRONG>"
+		 , &translate_commands($nbefore), "</STRONG></A>\n<DD>"
+		    , &translate_commands($nafter));
 	} else {
 	    $found= /(\\bibitem|\\harvarditem)/o;
 	    if ($found) {
-		join('',"\n<DT><A NAME=\"$cite_key\"><STRONG>",
-		    &translate_commands($`),"</STRONG></A>\n<DD>",
+		local($nbefore,$nafter) = ($`,$');
+		join('',"\n<DT><A NAME=\"$cite_key\"><STRONG>"
+		    ,&translate_commands($nbefore),"</STRONG></A>\n<DD>"
 # No call to &translate_commands on $': Avoid recursion
-		    $');
+		    , $nafter );
 	    } else {
-		join('',"\n<DT><A NAME=\"$cite_key\"><STRONG>",
-		     &translate_commands($_),"</STRONG></A>\n<DD>",' ');
+		join('',"\n<DT><A NAME=\"$cite_key\"><STRONG>"
+		    ,&translate_commands($_),"</STRONG></A>\n<DD>",' ');
 	    };
 	};
     }
@@ -847,12 +931,19 @@ sub do_cmd_harvardyearright {
     &translate_commands("$CITE_CLOSE_DELIM".$_[0]);
 }
 sub do_cmd_harvardurl{ 
-    if (defined &do_cmd_htmladdnormallink) { 
-	&translate_commands("\\htmladdnormallink".$_[0]);}
-    else {
-	print STDERR "\n\nload the html.perl package for  \\harvardurl\n\n";
-	&translate_commands("\\texttt".$_[0]);
-    }
+    local($_) = @_;
+    local($text, $url, $href);
+    local($name, $dummy) = &get_next_optional_argument;
+    $url = &missing_braces unless (
+	(s/$next_pair_pr_rx/$url = $2;''/eo)
+	||(s/$next_pair_rx/$url = $2;''/eo));
+    $url = &translate_commands($url) if ($url=~/\\/);
+    $text = "<b>URL:</b> ".$url;
+    if ($name) { $href = &make_named_href($name,$url,$text) }
+    else { $href = &make_href($url,$text) }
+    print "\nHREF:$href" if ($VERBOSITY > 3);
+    $_ =~ s/^[ \t]*\n?/\n/;
+    join ('',$href,$_);
 }
 
 sub do_cmd_bibcite {
@@ -1132,14 +1223,15 @@ sub do_env_thebibliography {
     $citefiles{$bbl_nr} = $citefile;
     s/$next_pair_rx//o;
     $* = 1;			# Multiline matching ON
-    s/^\s*$//g;	# Remove empty lines (otherwise will have paragraphs!)
-    s/\n//g;	# Remove all \n s --- we format the HTML file ourselves.
-    s/\\newblock/\n\<BR\>/g;	# break at each \newblock
+#    s/^\s*$//g;	# Remove empty lines (otherwise will have paragraphs!)
+#    s/\n//g;	# Remove all \n s --- we format the HTML file ourselves.
+#    $* = 0;			# Multiline matching OFF
+    s/\\newblock/\<BR\>/g;	# break at each \newblock
     $* = 0;			# Multiline matching OFF
     s/(\\bibitem|\\harvarditem)//o;	# skip to the first bibliography entry
     $_ = $&.$';
     $citations = join('',"\n<DL COMPACT>",
-		      &translate_commands(&translate_environments($_)),"\n</DL>");
+		&translate_commands(&translate_environments($_)),"\n</DL>");
     $citations{$bbl_nr} = $citations;
     $_ = join('','<P>' , "\n<H2><A NAME=\"SECTIONREF\">"
 	      , "$bib_title</A>\n</H2>\n$bbl_mark#$bbl_nr#");

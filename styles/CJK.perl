@@ -1,8 +1,8 @@
 
 ########################################################################
-# $Id: CJK.perl,v 1.2 1996/12/17 17:11:41 JCL Exp $
+# $Id: CJK.perl,v 1.3 1998/02/19 22:24:26 latex2html Exp $
 # CJK.perl
-#   Jens Lippmann <lippmann@cdc.informatik.th-darmstadt.de>,
+#   Jens Lippmann <lippmann@cdc.informatik.tu-darmstadt.de>,
 #   Boy Yang <yangboy@math.ntu.edu.tw>,
 #   Werner Lemberg <xlwy01@uxp1.hrz.uni-dortmund.de>
 #
@@ -15,6 +15,9 @@
 #  jcl = Jens Lippmann <http://www-jb.cs.uni-sb.de/~www/people/lippmann>
 #
 # $Log: CJK.perl,v $
+# Revision 1.3  1998/02/19 22:24:26  latex2html
+# th-darmstadt -> tu-darmstadt
+#
 # Revision 1.2  1996/12/17 17:11:41  JCL
 # typo
 #

@@ -15,16 +15,60 @@ package main;
 #
 
 sub do_env_supertabular {
-    local($_) = @_;
-
-#    $contents =~ s/$next_pair_rx//o;
-    &process_environment("tabular", $global{'max_id'}++);
+#   local($_) = @_;
+#   &process_environment("tabular", $global{'max_id'}++);
+    &do_env_tabular(@_);
     }
 
-&ignore_commands( <<_IGNORED_CMDS_);
-_IGNORED_CMDS_
+sub do_cmd_tablehead {
+    local($_) = @_;
+    local($text);
+    $text = &missing_braces unless (
+        (s/$next_pair_pr_rx/$text = $2;''/e)
+        ||(s/$next_pair_rx/$text = $2;''/e));
+    $TABLE_TITLE_TEXT = $text unless ($TABLE_TITLE_TEXT);
+    $_;
+}
 
-&process_commands_in_tex (<<_RAW_ARG_CMDS_);
+sub do_cmd_tablefirsthead {
+    local($_) = @_;
+    local($text);
+    $text = &missing_braces unless (
+        (s/$next_pair_pr_rx/$text = $2;''/e)
+        ||(s/$next_pair_rx/$text = $2;''/e));
+    $TABLE_TITLE_TEXT = $text;
+    $_;
+}
+
+sub do_cmd_tabletail {
+    local($_) = @_;
+    local($text);
+    $text = &missing_braces unless (
+        (s/$next_pair_pr_rx/$text = $2;''/e)
+        ||(s/$next_pair_rx/$text = $2;''/e));
+    $TABLE_TAIL_TEXT = $text unless ($TABLE_TAIL_TEXT);
+    $_;
+}
+
+sub do_cmd_tablelasttail {
+    local($_) = @_;
+    local($text);
+    $text = &missing_braces unless (
+        (s/$next_pair_pr_rx/$text = $2;''/e)
+        ||(s/$next_pair_rx/$text = $2;''/e));
+    $TABLE_TAIL_TEXT = $text;
+    $_;
+}
+
+
+&process_commands_wrap_deferred( <<_RAW_ARG_CMDS_);
+tablehead # {}
+tabletail # {}
+tablefirsthead # {}
+tablelasttail # {}
 _RAW_ARG_CMDS_
 
 1;                              # This must be the last line
+
+
+

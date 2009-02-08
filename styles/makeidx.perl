@@ -46,6 +46,7 @@ sub add_idx {
     foreach $key (@keys) {
 	$index .= &add_idx_key($key);
     }
+    $index = '<DD>'.$index unless ($index =~ /^\s*<D(D|T)>/);
     if ($SHORT_INDEX) { 
 	print "(compact version with Legend)";
 	local($num) = ( $index =~ s/\<D/<D/g ); 
@@ -69,10 +70,12 @@ sub makeidx_keysort {
 sub add_idx_key {
     local($key) = @_;
     local($index, $next);
-    if ( $index{$key} eq '@' ) { 
+#    if ( $index{$key} eq '@' ) { 
+    if (($index{$key} eq '@' )&&(!($index_printed{$key}))) { 
 	if ($SHORT_INDEX) { $index .= "<DD><BR>\n<DT>".&print_key."\n<DD>"; }
 	else { $index .= "<DT><DD><BR>\n<DT>".&print_key."\n<DD>"; }
-    } elsif ($index{$key}) {
+#    } elsif ($index{$key}) {
+    } elsif (($index{$key})&&(!($index_printed{$key}))) {
 	if ($SHORT_INDEX) { 
 	    $next = "<DD>".&print_key."\n : ". $index{$key};
 	} else { $next = "<DT>".&print_key."\n<DD>".$index{$key}; }
@@ -93,8 +96,7 @@ sub add_idx_key {
 	    $index .= "<DT>".&print_key."\n<DD>"  unless $index_printed{$key};
 	    $index .= "<DL COMPACT>\n"; }
 	foreach $subkey (@subkeys) {
-	    if (!($index_printed{$subkey} == 1)) {
-		$index .= &add_sub_idx_key($subkey); }
+	    $index .= &add_sub_idx_key($subkey) unless ($index_printed{$subkey});
 	}
 	$index .= "</DL>\n";
     }
@@ -118,21 +120,20 @@ sub add_sub_idx_key {
 #        	$index .= $next;
 		$next =~ s/(\n )?\| $//;
         	$index .= $next."\n";
-        	$index_printed{$key} = 1;
+#        	$index_printed{$key} = 1;
 	    } else { $index .= "<DD>".&print_key  unless $index_printed{$key} }
 	} else { 
 	    if ($index{$key}) {
 		$next = "<DT>".&print_key."\n<DD>".$index{$key};
 		$next =~ s/(\n )?\| $//;
 		$index .= $next."\n";
-		$index_printed{$key} = 1;
+#		$index_printed{$key} = 1;
 	    } else { $index .= "<DT>".&print_key  unless $index_printed{$key} }
 	} 
 	if ($SHORT_INDEX) { $index .= "<DD><DL>\n"; }
 	else { $index .= "<DD><DL COMPACT>\n"; }
 	foreach $subkey (@subkeys) {
-	    if (!($index_printed{$subkey} == 1)) {
-		$index .= &add_sub_idx_key($subkey); }
+	    $index .= &add_sub_idx_key($subkey) unless ($index_printed{$subkey})
 	}
 	$index .= "</DL>\n";
     } elsif ($index{$key}) {
@@ -141,8 +142,9 @@ sub add_sub_idx_key {
 	} else { $next = "<DT>".&print_key."\n<DD>".$index{$key}; }
 	$next =~ s/(\n )?\| $//;
 	$index .= $next."\n";
-	$index_printed{$key} = 1;
+#	$index_printed{$key} = 1;
     }
+    $index_printed{$key} = 1;
     return $index;
 }
 
@@ -178,8 +180,8 @@ sub named_index_entry {
     local($key_part, $pageref) = split("\003", $str, 2);
     local(@keys) = split("\001", $key_part);
 #print STDERR "\nINDEX ($str)\n($key_part, $pageref)(@keys)\n";
-    # If TITLE is not yet available (i.e the \index command is in the title of the
-    # current section), use $before.
+    # If TITLE is not yet available use $before.
+    $TITLE = $saved_title if (($saved_title)&&(!($TITLE)||($TITLE eq $default_title)));
     $TITLE = $before unless $TITLE;
     # Save the reference
     local($words) = '';

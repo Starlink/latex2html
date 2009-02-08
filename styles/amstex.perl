@@ -5,9 +5,93 @@
 #
 # Change Log:
 # ===========
+#
+# $Log: amstex.perl,v $
+# Revision 1.16  1998/02/20 22:06:57  latex2html
+# added log
+#
+# ----------------------------
+# revision 1.15
+# date: 1998/02/13 12:57:33;  author: latex2html;  state: Exp;  lines: +11 -0
+#  --  images of {subequations} have the correct numbering and alignment
+# ----------------------------
+# revision 1.14
+# date: 1998/02/06 22:57:13;  author: latex2html;  state: Exp;  lines: +39 -2
+#  --  copied &get_eqn_number from the  more_amsmath file
+# ----------------------------
+# revision 1.13
+# date: 1998/01/27 11:33:22;  author: RRM;  state: Exp;  lines: +30 -16
+#  --  \title needed updating, in line with changes in  latex2html
+# ----------------------------
+# revision 1.12
+# date: 1998/01/19 08:52:29;  author: RRM;  state: Exp;  lines: +3 -746
+#  	That part of  amstex.perl and amsmath.perl that needs the `math'
+# 	extension has been split-off into  more_amsmath.perl .
+# 	This is loaded automatically with switches:
+# 		 -no_math -html_version ...,math
+# ----------------------------
+# revision 1.11
+# date: 1997/12/19 11:36:00;  author: RRM;  state: Exp;  lines: +16 -7
+#  --  use a specified WIDTH="10%" for equation-numbering cells
+# 	(thanks to Bruce Miller for highlighting the problem)
+# ----------------------------
+# revision 1.10
+# date: 1997/12/18 11:18:31;  author: RRM;  state: Exp;  lines: +14 -9
+#  --  removed  do_cmd_numberwithin  which is in the  latex2html  script
+#  --  added support for CLASS="MATH"  with $USING_STYLES
+# ----------------------------
+# revision 1.9
+# date: 1997/12/17 10:19:19;  author: RRM;  state: Exp;  lines: +30 -16
+#  --  appended environment names to the new $display_env_rx variable
+#  --  removed the need for `math' extension to be loaded
+#  --  removed a redundant closing-tag `>' --- thanks Bruce Miller
+#  --  fixed the missing equation-numbers when on the right-hand side
+# ----------------------------
+# revision 1.8
+# date: 1997/12/11 02:42:44;  author: RRM;  state: Exp;  lines: +1 -1
+#  --  missing `;' inserted at end of %AMSenvs array (thanks Bruce Miller)
+# ----------------------------
+# revision 1.7
+# date: 1997/10/10 13:15:30;  author: RRM;  state: Exp;  lines: +10 -2
+#  --  made loading of some new environments depend on having the `math'
+# 	extension loaded. This probably should be made a requirement ?
+# ----------------------------
+# revision 1.6
+# date: 1997/10/04 07:26:37;  author: RRM;  state: Exp;  lines: +742 -17
+#  --  handles most of the amsmath alignment macros/environments
+#  --  supports leqno/reqno options
+#  --  support for more of the AMSbook/art internal commands, that
+# 	can also be used externally; e.g. \chapterrunhead, etc.
+# 
+#     Note: not *all* of the amsmath package is fully supported in the
+# 	best possible way; we are still working on it.
+# ----------------------------
+# revision 1.5
+# date: 1997/07/11 11:28:57;  author: RRM;  state: Exp;  lines: +1 -1
+#  -  replace  (.*) patterns with something allowing \n s included
+# ----------------------------
+# revision 1.4
+# date: 1997/07/09 13:28:38;  author: RRM;  state: Exp;  lines: +18 -18
+#     Too many commas in assoc-array, Oops --- thanks Michel, well spotted
+# ----------------------------
+# revision 1.3
+# date: 1997/05/19 13:27:50;  author: RRM;  state: Exp;  lines: +29 -28
+#  -  AmS-TeX style environment delimiters need a  `\\' .
+# ----------------------------
+# revision 1.2
+# date: 1997/05/02 04:08:16;  author: RRM;  state: Exp;  lines: +189 -16
+#      Extensive changes, preparatory to complete support for AmS-LaTeX.
+#      This work is not yet complete.
+# ----------------------------
+# revision 1.1
+# date: 1997/03/05 00:27:17;  author: RRM;  state: Exp;
+# Support for American Math Society (AMS) packages.
+# Mostly just recognises options to the AMS packages, to suppress warnings.
+
 
 package main;
 #
+
 
 # unknown environments:  alignedat, gathered, alignat, multline
 #   \gather([^* ])...\endgather
@@ -22,23 +106,36 @@ $Proof_name = "Proof";
 
 sub do_cmd_title {
     local($_) = @_;
+    local($text,$s_title,$rest);
     if (/\\endtitle/) {
-	$t_title = &translate_commands($`);
+	$rest = $';
+	$t_title = $text = &translate_commands($`);
 	$t_title =~ s/(^\s*|\s*$)//g;
-	return($');
+	$s_title = &simplify($text);
+	$TITLE = (($s_title)? $s_title : $default_title);
+	return($rest);
     }
     &get_next_optional_argument;
-    local($rest) = $_;
-    $rest =~ s/$next_pair_pr_rx//o;
-    $_ =  &translate_commands($&);
-    &extract_pure_text("liberal");
-    s/([\w\W]*)(<A.*><\/A>)([\w\W]*)/$1$3/;  # HWS:  Remove embedded anchors
-    ($t_title) = $_;
-    $TITLE = $t_title if ($TITLE eq $default_title);
-    $TITLE =~ s/<P>//g;		# Remove Newlines
-    $TITLE =~ s/\s+/ /g;	# meh - remove empty lines 
-    $rest;
+    $text = &missing_braces
+        unless ((s/$next_pair_pr_rx//o)&&($text = $2));
+    $t_title = &translate_environments($text);
+    $t_title = &translate_commands($t_title);
+    $s_title = &simplify(&translate_commands($text));
+    $TITLE = (($s_title)? $s_title : $default_title);
+    $_
 }
+
+#    local($rest) = $_;
+#    $rest =~ s/$next_pair_pr_rx//o;
+#    $_ =  &translate_commands($&);
+#    &extract_pure_text("liberal");
+#    s/([\w\W]*)(<A.*><\/A>)([\w\W]*)/$1$3/;  # HWS:  Remove embedded anchors
+#    ($t_title) = $_;
+#    $TITLE = $t_title if ($TITLE eq $default_title);
+#    $TITLE =~ s/<P>//g;		# Remove Newlines
+#    $TITLE =~ s/\s+/ /g;	# meh - remove empty lines 
+#    $rest;
+#}
 
 sub do_cmd_author {
     local($_) = @_;
@@ -220,38 +317,79 @@ sub do_cmd_boldsymbol {
     $_;
 }
 
-sub do_cmd_nobreakspace {
-    $_ = join('',"&nbsp;",$_);
-    $_;
-}
-
-
 
 
 # some simplifying macros that like
 # to existing LaTeX constructions.
+# are defined already in  latex2html 
 
-sub do_cmd_eqref {
-    join('',"(",&do_cmd_ref(@_),")");
+#sub do_cmd_eqref {
+#    local($_) = @_;
+#    join('','(',&process_ref($cross_ref_mark,$cross_ref_mark,'',')'));
+#}
+
+#sub do_cmd_numberwithin {
+#    local(*_) = @_;
+#    local($ctr, $within);
+#    $ctr = &get_next(1);
+#    $within = &get_next(1);
+#    &addto_dependents($within,$ctr) if ($within);
+#    $_;
+#}
+
+#########  for equation-numbers and tags  ###############
+
+sub get_eqn_number {
+    local($outer_num, $scan) = @_;
+    # an explicit \tag overrides \notag , \nonumber or *-variant
+    local($labels,$tag);
+    ($scan,$labels) = &extract_labels($scan); # extract labels
+    $scan =~ s/\n//g;
+    if ($scan =~ s/\\tag(\*|star\b)?\s*(($O|$OP)\d+($C|$CP))(.*)\2//) {
+	local($star) = $1; $tag = $5;
+	$tag = &translate_environments($tag) if ($tag =~ /\\begin/);
+	$tag = &translate_commands($tag) if ($tag =~ /\\/);
+	$tag = (($star)? $tag : $EQNO_START.$tag.$EQNO_END );
+    } elsif (($outer_num)&&(!($scan)||!($scan =~ s/\\no(tag|number)//))
+	&&(!($scan =~ /^\s*\\begin(<(<|#)\d+(>|#)>)($outer_math_rx)/))
+      ) { 
+        $global{'eqn_number'}++ ;
+	if ($subequation_level) {
+	    local($sub_tag) =  &get_counter_value('equation');
+	    $tag = join('', $EQNO_START
+		, $eqno_prefix
+		, &falph($sub_tag)
+		, $EQNO_END);
+	} else {
+	    $tag = join('', $EQNO_START
+		, &simplify(&translate_commands("\\theequation"))
+		, $EQNO_END);
+	}
+    } else { $tag = ';SPMnbsp;' }
+    $*=0;
+    if ($labels) {
+	$labels =~ s/$anchor_mark/$tag/o;
+	($labels , $scan);
+    } else { ($tag , $scan) }
 }
-
-sub do_cmd_numberwithin {
-    local(*_) = @_;
-    local($ctr, $within);
-    $ctr = &get_next(1);
-    $within = &get_next(1);
-    &addto_dependents($within,$ctr) if ($within);
-    $_;
-}
-
 
 ###   Special environments, for mathematics
 
-# the {equation*} environment is equivalent to {displaymath}
 sub do_env_equationstar {
+    local($no_eqn_numbers) = 1;
     &do_env_displaymath(@_);
 }
-
+sub do_env_subequations {
+    $latex_body .= join('', "\n\\setcounter{equation}{"
+		, $global{'eqn_number'} , "}\n");
+    $global{'eqn_number'}++;
+    local($this) = &process_undefined_environment('subequations'
+	    , ++$global{'max_id'}, @_);
+    local($div) = (($HTML_VERSION < 3.2)? 'P' : 'DIV');
+    join('', '<P ALIGN="' 
+	    , (($EQN_TAGS =~ /L/)? 'LEFT' : 'RIGHT')
+	    , "\">\n" , $this, '<BR></P>' )
+}
 
 
 #  Suppress the possible options to   \usepackage[....]{amstex}
@@ -281,12 +419,11 @@ sub do_amstex_namelimits {
 }
 sub do_amstex_nonamelimits {
 }
-sub do_amstex_leqno {
-}
-sub do_amstex_reqno {
-}
-sub do_amstex_fleqn {
-}
+sub do_amstex_leqno { $EQN_TAGS = 'L'; }
+sub do_amstex_reqno { $EQN_TAGS = 'R'; }
+sub do_amsmath_leqno { $EQN_TAGS = 'L'; }
+sub do_amsmath_reqno { $EQN_TAGS = 'R'; }
+sub do_amsmath_fleqn {}
 sub do_amstex_centereqn {
 }
 sub do_amstex_centertags {
@@ -324,7 +461,7 @@ sub do_amstex_ctagsplt {
 	, 'demo' , 'enddemo'
 	, 'roster' , 'endroster'
 	, 'ref' , 'endref'
-)
+);
 
 
 &ignore_commands( <<_IGNORED_CMDS_);
@@ -332,7 +469,6 @@ comment # <<\\endcomment>>
 displaybreak
 allowdisplaybreak
 allowdisplaybreaks
-intertext
 spreadlines
 overlong
 allowtthyphens
@@ -340,6 +476,8 @@ hyphenation
 BlackBoxes
 NoBlackBoxes
 split
+operatorname
+qopname # {} # {}
 text
 thetag
 mspace # {}
@@ -364,6 +502,9 @@ phantom # {}
 hphantom # {}
 vphantom # {}
 minCDarrowwidth # {}
+chapterrunhead # {} # {} # {}
+sectionrunhead # {} # {} # {}
+partrunhead # {} # {} # {}
 _IGNORED_CMDS_
 
 
@@ -385,8 +526,11 @@ alignedat # <<\\endalignedat>>
 flalign # <<\\endflalign>>
 gather # <<\\endgather>>
 multline # <<\\endmultline>>
-overset # <<\\to>> # {}
-underset # <<\\to>> # {}
+overset # {} # {}
+sideset # {} # {}
+underset # {} # {}
+overleftarrow # {}
+overrightarrow # {}
 oversetbrace # <<\\to>> # {}
 undersetbrace # <<\\to>> # {}
 lcfrac # <<\\endcfrac>>
@@ -410,5 +554,24 @@ numberwithin # {} # {}
 _RAW_ARG_NOWRAP_CMDS_
 
 
+#   add later extensions, which require `math' to be loaded
+
+if (($NO_SIMPLE_MATH)&&(defined &make_math)) { 
+    print "\nLoading $LATEX2HTMLSTYLES/more_amsmath.perl";
+    require "$LATEX2HTMLSTYLES/more_amsmath.perl";
+}
+
+
 1;                              # This must be the last line
+
+
+
+
+
+
+
+
+
+
+
 

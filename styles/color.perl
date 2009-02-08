@@ -1,4 +1,4 @@
-# $Id: color.perl,v 1.9 1997/06/06 12:02:44 RRM Exp $
+# $Id: color.perl,v 1.11 1997/12/08 12:45:17 RRM Exp $
 # color.perl by Michel Goossens <goossens@cern.ch>  01-14-96
 #
 # Extension to LaTeX2HTML V 96.2 to support color.sty
@@ -14,6 +14,12 @@
 # Change Log:
 # ===========
 # $Log: color.perl,v $
+# Revision 1.11  1997/12/08 12:45:17  RRM
+#  --  updated the color macros for style-sheets
+#
+# Revision 1.10  1997/11/05 10:35:29  RRM
+#  --  added "..." around color attribute values
+#
 # Revision 1.9  1997/06/06 12:02:44  RRM
 #  -  Changed some VERBOSITY levels
 #  -  added some error-detection to  finding the requested color
@@ -308,9 +314,10 @@ sub do_cmd_textcolor {
 	$color= "000000";  # default = black
 	print STDERR "\ntext color = black\n";}
     $_= $rest;
-    local($text);
-    s/$next_pair_pr_rx//o; $text =$2;
-    $_=join('',"<FONT color=\#$color>$text</FONT>",$_);
+#    local($text);
+#    s/$next_pair_pr_rx//o; $text =$2;
+#    $_=join('',"<FONT color=\"\#$color\">$text</FONT>",$_);
+    &styled_text_chunk("FONT COLOR=\"\#$color\"",'hue','font','color',"\#$color",'',$_);
 }
 
 # \pagecolor is for a `global' color-change to the background;
@@ -329,15 +336,26 @@ sub do_cmd_pagecolor {
 
 sub do_cmd_colorbox {
     local($color,$_) = &find_color;
-    s/$next_pair_pr_rx//o;
-    join('',"\n<blink><FONT color=\#$color>",$2,"</FONT></blink>\n",$_);
+#    s/$next_pair_pr_rx//o;
+#    join('',"\n<blink><FONT color=\"\#$color\">",$2,"</FONT></blink>\n",$_);
+    $_=&styled_text_chunk("BLINK><FONT COLOR=\"\#$color\"",'cbox','background','color',"\#$color",'',$_);
+    s/\/BLINK/\/FONT><\/BLINK/ unless ($USING_STYLES);
+    $_;
 }
 
 sub do_cmd_fcolorbox {
     local($_) = @_;
-    s/$next_pair_pr_rx//o;
-    &do_cmd_colorbox($_);
+    if ($USING_STYLES) { 
+	local($fcolor) = &find_color;
+	local($color) = &find_color;
+	&multi_styled_text_chunk('','fcol',"border,background"
+		,",color","solid thin \#$fcolor,\#$color",$_);
+    } else {
+	s/$next_pair_pr_rx//o;
+	&do_cmd_colorbox($_);
+    }
 }
+
 
 # the result of a \color command depends upon where it is issued:
 #   1.  in the preamble: change the global text-color,
@@ -346,6 +364,9 @@ sub do_cmd_fcolorbox {
 #   3.  top-level, within the body: treat as a local color change,
 #	and save the color for later (sub)sections;
 #   4.  bracketed, within the body: treat as a local color change.
+#
+#RRM:  3 and 4 are not implemented properly yet
+#
 
 sub do_cmd_color {
     local($color,$rest) = &find_color;
@@ -361,9 +382,9 @@ sub do_cmd_color {
 	$rest;
     } elsif ($NESTING_LEVEL == 0) { 
 	$next_section_color = $color;
-	join('',"\n<FONT color=\#$color>",$rest,"\n</FONT>");
+	join('',"\n<FONT color=\"\#$color\">",$rest,"\n</FONT>");
     } else {
-	join('',"\n<FONT color=\#$color>",$rest,"\n</FONT>");
+	join('',"\n<FONT color=\"\#$color\">",$rest,"\n</FONT>");
     }
 }
 
@@ -386,7 +407,7 @@ sub do_cmd_normalcolor {
     if ($next_section_color) {
 	local($color) = &find_color($next_section_color);
 	if ($color) {
-	    $_ = join('',"<FONT COLOR =","\"$color\"",$_,"</FONT>");
+	    $_ = join('',"<FONT color=","\"$color\"",$_,"</FONT>");
 	}
     }
     $_;

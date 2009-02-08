@@ -3,18 +3,19 @@
 \usepackage{html,htmllist,makeidx}
 \input{manhtml.tex}
 %
-\input{problems.ptr}		% Input counters and section
+\input{problems.ptr}    % Input counters and section
 \end{htmlonly}
 \internal{}%
 \startdocument
 %
 %\section{Known Problems\label{sec:prb}\index{problems|(}}%
+\label{sec:prb}\index{problems|(}%
 \tableofchildlinks*\htmlrule\index{bugs}\html{\\}%
 \noindent
 Here are some of the problems that were known to exist
 with previous versions of \latextohtml. 
 Most of those that were real errors are either fixed completely
-in the current version (\textsc{v97.1}), or are much less likely to occur
+in the current version (\textsc{v98.1}), or are much less likely to occur
 within correct \LaTeX{} source. (Some are not really errors but
 indications of poor style in the user's choices among
 various ways to organise their source code.)\html{\\} 
@@ -34,6 +35,13 @@ may place heavy demands on your resources.
 %end{latexonly}
 {The current version works much more efficiently than previous
 versions; many subtle bugs have been identified and eliminated.}
+\end{changebar}
+\cbversion{98.1}\begin{changebar}
+%begin{latexonly}
+\textit
+%end{latexonly}
+{The process of command substitution has been improved significantly,
+resulting in memory savings and faster translation.}
 \end{changebar}
 
 \item [Unrecognised Commands and Environments:\index{unrecognised commands} ]
@@ -205,7 +213,7 @@ create one and add the lines:
 \begin{small}
 %end{latexonly}
 \verb|$DONT_INCLUDE = "$DONT_INCLUDE" . ":|\Meta{style file name}\verb|";|\\
-\verb|1; 	# This must be the last line|
+\verb|1;        # This must be the last line|
 %begin{latexonly}
 \end{small}
 %end{latexonly}
@@ -217,7 +225,7 @@ put such commands inside a \env{latexonly}
 \hyperref{environment}{environment (see Section }{)}{sec:latexonly}.
 
 \cbversion{97.1}\begin{changebar}
-The \fn{\$VERBOSITY} \htmlref{variable}{verbosity} can be used 
+The \fn{\$VERBOSITY} \htmlref{variable}{verbosity}{} can be used 
 to create tracing messages, which may help to locate which command 
 or environment was being processed when everything stopped.
 \end{changebar}
@@ -228,7 +236,7 @@ or environment was being processed when everything stopped.
 Perhaps the processor has fallen into an unending loop.
 Usually there will be a bad definition, or other faulty source code,
 which has caused this.
-The \fn{\$VERBOSITY} \hyperref[page]{variable}{variable (see page~}{)}{verbositylevel}%
+The \fn{\$VERBOSITY} \hyperref[page]{variable}{variable (see page~}{)}{cs_verbositylevel}%
 can be set to generate tracing messages, which may help to locate which command 
 or environment is being processed repeatedly.
 Try setting a value of `\texttt{3}'; e.g. using the commandline switch \Cs{verbosity 3}.
@@ -241,25 +249,71 @@ See the previous item for how to detect which command or environment
 is causing the problem.
 \end{changebar}
 
+\cbversion{98.1}\begin{changebar}
+%
 \item [\Perl{} cannot parse the \fn{latex2html} script: ]
-Update your \Perl{} to patch level 36. You can check which version of
+If \Perl{} refuses to start \latextohtml{} and issues errors, your
+\Perl{} version is not up to date.
+Update your \Perl{} to 5.003 or later. You can check which version of
 \Perl{} you are using by invoking \Perl{} with the \Cs{v} option.
-Earlier versions of \Perl{} than that shown above
-have caused problems due to tighter control over syntax.
 
-\item [It crashes (dumps core) as soon as it starts \label{perl}: ]
-Update your \Perl{ 4} to patch level 36 or later (\Perl{ 5}).
+If \Perl{} issues errors during runtime, this is most probably related
+to bugs within \latextohtml{} or one of its modules.
+In this case you will need help from the developers or experienced users;
+this can be obtained via the discussion list.
 
-You can check which version of
-\Perl{} you are using by invoking \Perl{} with the \Cs{v} option.
-\html{\\}
-While you wait for your technical support people to upgrade \Perl{}
-you could try invoking \Perl{} from within \latextohtml{} with 
-the \Cs{d} (debug) option. Then when \latextohtml{} starts, it will
-immediately fall into the \Perl{} debugger. To continue just press 
-`\texttt{c<CR>}'. (This option is available only if the 
-local version of \Perl{} was specially compiled to allow it.)
 
+\item [It crashes (dumps core) as soon as it starts\label{perl}: ]
+Update your \Perl{} to 5.003 or later.
+\end{changebar}
+
+
+\cbversion{98.1}\begin{changebar}
+\item [It does not show any of your images: ]
+  You can't run \latextohtml{} in a subdirectory that contains a dot
+  within the directory name, such as {\tt latex2html-98.1},
+  or in name of any higher directory.
+  This is because \fn{dvips}'s \texttt{-o} option will change 98.1 into 98.001
+  and use that as the resulting output file, instead of image001~.
+  The \PS\ files will be placed higher up in the directory tree.
+
+For instance, if \texttt{ pwd } returns something like:
+\begin{verbatim}
+/usr/people/nelson/files/latex2html-98.1/work/tests
+\end{verbatim}
+and you run \latextohtml, then \fn{dvips} will generate 
+image output files here:
+\begin{verbatim}
+/usr/people/nelson/files
+\end{verbatim}
+  called \texttt{latex2html-98.001}, \texttt{latex2html-98.002}, \dots
+  instead of \texttt{image001}, \texttt{image002}, \texttt{image003}, \dots
+  in the subdirectory where your \texttt{.html} files were created.
+  As a result the images will not show in your documents.
+
+  If you are getting `File Not Found' errors,
+  then reprocess your job using the \Cs{debug} switch,
+  to see what options are passed to \fn{dvips}.
+  If there is a `.' in some parts of any directory name, 
+  then look above that directory
+  to see if files are being generated there.
+
+\medskip
+
+  One obvious fix is to rename the offending directory
+  to remove the `.' from its name.
+
+  If that is not possible, then define an alternative location
+  for image generation to take place; set \texttt{\$TMP} to contain
+  the name for this location. Typically \texttt{\$TMP = '/usr/tmp';}~.
+  (This use of \texttt{\$TMP} is a good thing to do anyway,
+  especially if your Unix account is subject to quota limitations.)
+
+\item [It stops after having run \LaTeX, displaying a message about \fn{dvips}: ]
+  See the previous item for the reason and `fix'. 
+  This version of \latextohtml{} detects the problem 
+  and will not allow images to be generated in the wrong place.
+\end{changebar}
 
 \item [\fn{dvips} complains about incorrect arguments:\label{dvips} ]
 Please use a version which supports the command-line options \Cs{M}, \Cs{S},
@@ -267,9 +321,8 @@ Please use a version which supports the command-line options \Cs{M}, \Cs{S},
 
 
 \item [It gives an ``\texttt{Out of memory}'' message and dies: ] 
-If you are using version \latextohtml{} 0.7 or later try splitting your 
-source file into more than one file, using the \LaTeX{} 
-commands \Lc{input} or \Lc{include}. 
+Try splitting your source file into more than one file,
+using the \LaTeX{} commands \Lc{input} or \Lc{include}. 
 Also, try using the \Cs{no\_images} option.
 
 \cbversion{97.1}\begin{changebar}
@@ -279,7 +332,7 @@ which has caused this.
 See an \htmlref{earlier problem}{looping} for
 how to set the \fn{\$VERBOSITY} \htmlref{variable}{verbosity} to 
 help locate the bad code leading to this memory exhaustion.
-\end{changebar}%
+\end{changebar}
 
 As a last resort you may consider increasing the virtual memory
 (swap space) of your machine. As an indication 
@@ -296,13 +349,30 @@ This part of the processing is much more efficient in \textsc{v97.1}\,.}
 \end{changebar}%
 
 
-\item [It gives ``dbm'' related error messages: ]
-\latextohtml{} 0.7 and later requires the
-Unix DataBase Management system (\appl{DBM} or \appl{NDBM}) in order to run.
-This is usually part of each Unix operating system but if you 
-don't have it then you may need to get it. 
+\cbversion{98.1}\begin{changebar}
+\item [\fn{install-test} issues ``dbm'' related error messages: ]\latex{~\\}%
+\latextohtml{} requires a DataBase Management system (\appl{NDBM},
+\appl{GDBM}, or \appl{SDBM}) in order to run.
+This is usually part of each Unix-like operating system and
+\appl{SDBM} is part of \Perl{ 5}, but sometimes this is either missing
+on your operating system or left out in a binary \Perl{} distribution.
 \htmladdnormallinkfoot{Use \appl{Archie}}{http://www.pvv.unit.no/archie/} 
-to find one.
+to find one or (better) update to a complete \Perl{ 5} distribution.
+
+\item [\fn{latex2html} issues ``dbm'' related error messages: ]
+If you get warnings like
+\begin{verbatim}
+ndbm store returned -1, errno 28, key "xyz" at latex2html line 123
+\end{verbatim}
+this is related to an overflow of \latextohtml{} internals.
+You will need help from the list, here.
+\smallskip
+
+If you get real error messages which cause \latextohtml{} to abort,
+run \fn{install-test} to check if your DataBase management works.
+You will probably need to re-install \Perl{ 5} (see above topic).
+\end{changebar}
+
 
 \cbversion{97.1}\begin{changebar}
 This can happen when an image is being created from a large piece
@@ -315,8 +385,9 @@ The message should contain the name of environment which caused the problem,
 along with an identifying number; e.g. \texttt{eqnarray268}.
 To find which exact piece of code this represents, run \latextohtml{}
 again, using the \Cs{debug} switch. Then look at the files
-in the working directory named \fn{TMP-part1}, \texttt{TMP-part2}, etc.
-Use the unix \fn{grep} command: \texttt{ grep 268 }\Meta{dir}\texttt{/TMP-* }
+in the \texttt{TMP} subdirectory of the working directory
+named \texttt{TMP/part001}, \texttt{TMP/part002}, etc.
+Use the unix \fn{grep} command: \texttt{ grep 268 }\Meta{dir}\texttt{/TMP/part* }
 to find that number in these files. 
 This should enable you to locate exactly where the problem occurs.
 
@@ -329,16 +400,22 @@ but uses just the environment name and number as the database key.
 
 
 \item [The \Lc{verb"ABC"} command doesn't work: ]
-This is a nasty bug. Please use any character other than quotes; 
-e.g. \Lc{verb+ABC+}.
+This is an unfortunate bug which can be avoided by using 
+any character other than quotes; e.g. \Lc{verb+ABC+}.
 
 \item [Cannot get the ``tilde'' (\~{}) to show: \hfill]
-The trick here is to use the command \verb|\~{}|.\html{\\} 
+The trick here is to use \verb|\~{}|.\html{\\}
 Alternatively try using something like:
 \url{\htmladdnormallink{mylink}{http://host/\%7Eme/path/file.html}}. 
 
 \textbf{Warning:} Some browsers may not be able to interpret the \verb|%7E|
 as a ``tilde'' character.
+
+\cbversion{98.1}\begin{changebar}
+Try using \Lc{char126}~.
+In any case tildes within \Lc{htmladdnormallink} and similar commands
+are now handled correctly.
+\end{changebar}
 
 \item [Macro definitions don't work correctly: ]
 As mentioned in other places, not all plain \TeX{} \Lc{def}-initions 
@@ -366,9 +443,15 @@ There is no quick fix other than suggesting that you put each
 in the \LaTeX{} source files.
 
 \item [\Lc{input} commands in \env{verbatim} environments: ]
-\strikeout{These cause problems; there's no fix yet.}
-Try using either the \env{verbatim} or the \env{verbatimfiles} package.
-
+\cbversion{98.1}\begin{changebar}
+These should no longer cause problems (actually since 97.1).
+\Lc{input} commands are also handled correctly within comment environments
+declared using \Lc{excludecomment} 
+and when loading multiple \texttt{.aux} files, 
+due to use of the \Lc{include} command.
+Alternatively you might want to use
+either the \env{verbatim} or the \env{verbatimfiles} package.
+\end{changebar}
 
 \item [Optional arguments in \env{description} environments: ]
 If~you have optional arguments for the \Lc{item} command in 
@@ -380,7 +463,7 @@ in \verb|{}|s;\\ e.g. \ \verb+\item[{[nested [angle [brackets] are ok]]}]+
 \item [\latextohtml{} behaves differently even when you run it on the
 same file: ]~\\
 If~you notice any strange side-effects from previous runs of \latextohtml{}, 
-try using the option \Lc{no\_reuse} and choose \texttt{(d)} when prompted. 
+try using the option \Cs{no\_reuse} and choose \texttt{(d)} when prompted. 
 This will clear any intermediate files generated during previous runs.
 Note that this option will disable the image-reuse mechanism.
 
@@ -428,7 +511,7 @@ using the \latextohtml{} variable \fn{\$PAPERSIZE}
 in the file \fn{latex2html.config}.
 
 \smallskip\noindent
-\textit{This reason for the error should no longer occur with \textsc{v97.1}\,.
+\textit{This error should no longer occur, with \textsc{v97.1}\,.
 Please report it on the mailing-list, if it does.}
 
 \item
@@ -478,7 +561,7 @@ Please make sure that the last line in the configuration files
 (i.e. \fn{.latex2html-init} and \fn{latex2html.config}) is:
 \begin{small}
 \begin{verbatim}
-1;	# This is the last line
+1;      # This is the last line
 \end{verbatim}
 \end{small}
 This is a \Perl{} quirk.
@@ -490,9 +573,9 @@ e.g. as one of the optional arguments to the \Lc{documentclass} command.
 
 Of course you also have to make sure that \LaTeX{} knows where the \fn{html.sty}
 file is, either by putting it in the same place as the other style-files on
-your system, or by changing your \fn{TEXINPUTS} shell environment variable%
-\footnote{If don't know how to do either of these things, copy (or link) \fn{html.sty} 
-to the directory of your \LaTeX{} document.}.
+your system, or by changing your \fn{TEXINPUTS} shell environment variable
+\footnote{If you don't know how to do either of these things, copy (or
+link) \fn{html.sty} to the directory of your \LaTeX{} document.}.
 
 \item [Some of the fonts are translated incorrectly: ]
 There is a fault in way the \LaTeX{} scoping rules have been 
@@ -525,135 +608,41 @@ default font.
 \end{verbatim}
 \end{small}
 
-\item [Using \appl{Ghostscript 3.x} it no
-longer generates inlined images for equations:] \hfil\\
-If~you have a version of \latextohtml{} later than 0.6.1, go to the
-\latextohtml{} directory and run \fn{install-test} again. 
-This should fix it.
-
-With earlier versions of \latextohtml{} you can fix it by 
-replacing the file \fn{pstoppm.ps} in the 
-\latextohtml{} directory with a newer one that accompanies 
-\appl{Ghostscript 3.x}.\\ 
-Alternatively you can avoid using \fn{pstoppm.ps} 
-by changing the way \texttt{GS} is invoked in the file \fn{pstogif},
-using something like: \\
-\verb/open (GS, "|$GS -q -sDEVICE=ppmraw -sOutputFile=$base.ppm $base.ps");/
+\cbversion{98.1}\begin{changebar}
+Nesting of font changing commands is now handled correctly.
+Such problems should no longer occur, though it always helps
+to use explicitly delimited `pseudo'-environments; e.g.
+\verb|{\bf ... }|, or \LaTeX's commands requiring an explicit argument,
+such as \Lc{textbf}.
+\end{changebar}
 
 \item [Cannot get it to generate inlined images: ]
-Try a small test file; e.g.
-\begin{small}
-\begin{verbatim}
-% image-test.tex
-\documentstyle{article}
-\begin{document}
-Some text followed by \fbox{some more text in a box}.
-\end{document}
-\end{verbatim}
-\end{small}
+Run \latextohtml{} on your document, using the \Cs{debug} switch.
+Look in the directory where the \texttt{HTML} files are generated
+for two files named \fn{images.tex} and \fn{images.log}.
+Examine their contents.
+Do you notice anything unusual in them?
 
-You should see something like:
-\begin{small}
-\begin{verbatim}
-This is LaTeX2HTML Version  (Wed Dec 1 1993) by Nikos Drakos, 
-Computer Based Learning Unit, University of Leeds.
-
-OPENING /usr/cblelca/nikos/scripts/tex2html/tests/image-test.tex 
-
-Reading ....
-Translating ...0/1.....1/1......
-Generating images using latex ...
-This is TeX, C Version 3.14t3
-12222_images.tex
-LaTeX Version 2.09 <7 Dec 1989>
-
-Generating postscript images using dvips ...
-This is dvips 5.521 Copyright 1986, 1993 Radical Eye Software
-\end{verbatim}
-\begin{verbatim}
-' TeX output 1993.12.03:1050' -> 12222_image
-(-> 12222_image001) <tex.pro>[1] 
-Initializing... done.
-Ghostscript 2.6.1 (5/28/93)
-Copyright (C) 1990-1993 Aladdin Enterprises, Menlo Park, CA.
-  All rights reserved.
-Ghostscript comes with NO WARRANTY: see the file COPYING for details.
-GS>GS>Writing 12222_image001.ppm
-GS>pnmcrop: cropping 119 rows off the top
-pnmcrop: cropping 961 rows off the bottom
-pnmcrop: cropping 208 cols off the left
-pnmcrop: cropping 484 cols off the right
-
-Doing section links .....
-Done.
-\end{verbatim}
-\end{small}
-
-
-If there is a problem somewhere during the conversion from \PS\ 
-to an image-format then you can try to do it manually,
-so that you can find out where the problem is. 
-Here is one way to do it (Please use the \fn{pstoppm3.ps}
-file instead of \fn{pstoppm.ps} if your version of \appl{Ghostscript} is
-later than 3.0):
-%
-\begin{small}
-\begin{verbatim}
-cblelca% latex image-test.tex
-This is TeX, C Version 3.14t3
-(image-test.tex
-LaTeX Version 2.09 <7 Dec 1989>
-(/usr/TeX/tex.lib/inputs/paper.sty
-Document Style `paper' <28 Nov 89>.
-(/usr/TeX/tex.lib/inputs/pap11.sty) 
-(/usr/TeX/tex.lib/inputs/doublespace.sty)
-(/usr/TeX/tex.lib/inputs/smaller.sty)) 
-(/usr/TeX/tex.lib/inputs/psfig.sty
-psfig/tex 1.9
-)
-No file image-test.aux.
-[1] (image-test.aux) )
-Output written on image-test.dvi (1 page, 652 bytes).
-Transcript written on image-test.log.
-cblelca% dvips -o image-test.ps image-test.dvi
-\end{verbatim}
-\begin{verbatim}
-This is dvips 5.519 Copyright 1986, 1993 Radical Eye Software
-' TeX output 1993.11.12:1412' -> image-test.ps
-<tex.pro>. [1] 
-cblelca% gs -dNODISPLAY pstoppm.ps
-Initializing... done.
-Ghostscript 2.6.1 (5/28/93)
-Copyright (C) 1990-1993 Aladdin Enterprises, Menlo Park, CA.
-  All rights reserved.
-Ghostscript comes with NO WARRANTY: see the file COPYING for details.
-GS>(image-test) ppm1run 
-Writing image-test.ppm
-GS>quit
-cblelca% pnmcrop image-test.ppm >image-test.crop.ppm
-pnmcrop: cropping 61 rows off the top
-pnmcrop: cropping 110 rows off the bottom
-pnmcrop: cropping 72 cols off the left
-pnmcrop: cropping 72 cols off the right
-cblelca% ppmtogif image-test.crop.ppm >image-test.gif
-\end{verbatim}
-\end{small}
-
-\item [STILL cannot get it to generate inlined images for equations, etc. ]
-If you have no problems with the \fn{image-test.tex} file but you
-still cannot convert the images in some of your files 
-have a look in the directory of the generated
-\texttt{HTML} files for two files \fn{images.tex} and \fn{images.log}. Do you notice
-anything unusual in them? Copy \fn{images.tex} in the directory 
+Copy \fn{images.tex} into the directory 
 of your original \LaTeX{} file and run \fn{latex} on \fn{images.tex}.
-Can you see any errors in \fn{images.log}? If yes can you fix
-\fn{images.tex} to get rid of the errors? 
+Can you see any errors in \fn{images.log}?
+If so, can you fix \fn{images.tex} to get rid of the errors? 
 After fixing \fn{images.tex}
-you can put it back in the directory of \texttt{HTML} files created by
-\latextohtml{} and run \latextohtml{} on the original document 
-using the option \Cs{images\_only}. 
+you can put it back in the directory of \texttt{HTML},
+then run \latextohtml{} on the original document 
+using the \Cs{images\_only} switch. 
 
-If you get into a mess try running \latextohtml{} with the options
+However if you make changes or additions to the original source
+then the same problems may occur again. 
+Thus it is better to understand why the changes were required 
+and alter your document's source code appropriately.
+
+\medskip
+
+If you get into a mess delete all the image files and run \latextohtml{}
+again. Often it is sufficient to just delete the file \fn{images.pl}.
+
+If you \emph{still} get into a mess, try running \latextohtml{} with the options
 \Cs{no\_reuse} and \Cs{no\_images}; e.g.
 \begin{small}
 \begin{verbatim}
@@ -689,8 +678,6 @@ Then try to have a look in the file  \fn{images.tex}
 (as described earlier) and perhaps fix it.
 Once you are happy that \fn{images.tex} is OK, run \latextohtml{}
 again with the option \Cs{images\_only}.
-The options \Cs{no\_reuse}, \Cs{no\_images} and \Cs{images\_only}
-are available with \latextohtml{} version 0.7 or later.
 
 Some problems in displaying the correct inlined images,
 may be due to the image caching mechanisms of your browser.

@@ -19,7 +19,7 @@ sub get_body_def {
     if ($is_simple_def && !defined (&$tmp))
     { $new_command{$cmd} = join(':!:',$argn,$body,'}'); }
     undef $body;
-    $_;
+    ''; # $_;
 }
 
 ######################### Other Concessions to TeX #############################
