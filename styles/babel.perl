@@ -13,15 +13,23 @@ package main;
 
 # implement usable options from LaTeX
 
-sub do_babel_german {
-    local($file,$dir)=("german.perl",'');
-    print "\nbabel.perl: Loading german.perl\n" if $DEBUG;
+sub load_babel_file {
+    local($lang) = @_;
+    local($dir) = '';
+    print "\nbabel.perl: Loading $lang.perl\n" if $DEBUG;
     foreach $dir (split(/:/,$LATEX2HTMLSTYLES)) {
-	if (-f "$dir/$file") {
-           require("$dir/$file");
+	if (-f "$dir$dd$lang.perl") {
+           require("$dir$dd$lang.perl");
 	}
-    }
+    }    
 }
+
+sub do_babel_german { &load_babel_file("german") }
+sub do_babel_austrian { &load_babel_file("german") }
+sub do_babel_finnish { &load_babel_file("finnish") }
+sub do_babel_french { &load_babel_file("french") }
+sub do_babel_francais { &load_babel_file("francais") }
+sub do_babel_spanish { &load_babel_file("spanish") }
 
 # cancel redundant options from LaTeX
 

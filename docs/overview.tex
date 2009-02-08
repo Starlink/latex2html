@@ -3,11 +3,12 @@
 \usepackage{html,htmllist,makeidx}
 \input{manhtml.tex}
 %
-\input{overview.ptr}		% Input counters and section
+\input{overview.ptr}	% Input counters and section
 \end{htmlonly}
 \startdocument
 %
 %\section{Overview\label{sec:ovw}\index{overview}}
+\label{sec:ovw}\index{overview}
 \noindent 
 This manual describes the \latextohtml{} translator which is
 used to create Web pages from document source written for
@@ -159,6 +160,8 @@ help when things do not go as expected, can be found in
 \hyperref{the support section}{Section~}{}{sec:sup}.
 
 
+%%% END XTRACTFAQ (START is within outer document)
+
 \bigskip\noindent
 What follows next is a brief summary of the features supported
 within \latextohtml{}.\html{\dots}
@@ -263,7 +266,8 @@ By including hyperlinks between index entries,
 simple navigation aids can be built into the index, for easy browsing.
 \end{changebar}
 
-\index{references@references\label{IIIrefs}!hyper-links}%
+%\index{references@references\label{IIIrefs}!hyper-links}%
+\index{references@references!hyper-links}%
 \index{references!between documents}%
 \item 
 automatically translates cross-references and citations into hyper-links,
@@ -278,8 +282,9 @@ which may reside in remote locations;
 \index{accents}%%
 \item 
 translates \LaTeX{}  accent and special character 
-commands (e.g. \. {A} \O \"o \pounds \copyright \P) to
-the equivalent ISO--Latin--1 or Unicode character set, where possible;
+commands (e.g. \. {A} \O {\"o} \pounds \copyright \P) to
+the equivalent ISO--Latin--1 or Unicode character set,
+else an image can be created;
 
 \index{hypertext links}\index{hypertext links!multi-media resources}%
 \index{hypertext links!Internet services}%
@@ -320,7 +325,8 @@ as well as many other \LaTeX{} constructions, such as are described in the
 and \LaTeX{} \hypercite{\textit{Graphics Companion} (e.g. \Xy-pic)}%
 {\textit{Graphics Companion}}{\Xy-pic}{goossens:latexGraphics};
 
-\index{images@images\label{IIIimages}!equations}%
+%\index{images@images\label{IIIimages}!equations}%
+\index{images@images!equations}%
 \index{GIF|see{\htmlref{images}{IIIimages}}}%
 \index{images!tables}%
 \index{tables!as images}\index{tables!as HTML@as \texttt{HTML} mark-up}%
@@ -422,10 +428,10 @@ or \htmladdnormallinkfoot{``down-under''}{http://www-math.mpce.mq.edu.au/texdev/
 
 \item 
 LiPS --- \htmladdnormallinkfoot{A System for Distributed Processing on Workstations}
-{http://cdc-server.cdc.informatik.th-darmstadt.de/}\\
-\htmladdnormallink{Manual}{http://cdc-server.cdc.informatik.th-darmstadt.de%
+{http://cdc-server.cdc.informatik.tu-darmstadt.de/}\\
+\htmladdnormallink{Manual}{http://cdc-server.cdc.informatik.tu-darmstadt.de%
 /home/zohar/LiPS/documentation/objects/doc/html/Manual2.1/lipsdist/}, 
-\htmladdnormallink{Lecture Notes}{http://cdc-server.cdc.informatik.th-darmstadt.de%
+\htmladdnormallink{Lecture Notes}{http://cdc-server.cdc.informatik.tu-darmstadt.de%
 /home/zohar/LiPS/documentation/objects/doc/html/Talks/LectureSS97/LectureSS97/}
 and various theses
 \html{\smallskip}%
@@ -559,7 +565,7 @@ Resources for Economists on the Internet\\
 \html{\smallskip}
 
 \item
-\textit{Les math\`emes de Lacan} by Jacques Siboni\\
+\textit{Les math{\`e}mes de Lacan} by Jacques Siboni\\
 \url{http:www.shef.ac.uk/~psysc/thesaur3/index.html}
 \html{\smallskip}
 

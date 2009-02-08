@@ -136,14 +136,13 @@ LSEC7	  = $(COMMON) -prefix C -dir $(TOP)  -info 0  \
 manual.ps:      manual.cb
 	$(DVIPS) manual.dvi -o $@
 
-manual.aux + manual.cb: \
+manual.aux manual.cb: \
 	    manual.tex credits.tex licence.tex overview.tex \
 	    support.tex userman.tex hypextra.tex features.tex \
 	    problems.tex l2hfiles.dat  manhtml.tex l2hman.sty
 	$(LATEX) manual.tex
-	$(LATEX) manual.tex
 
-manual.glo + manual.idx: \
+manual.glo manual.idx: \
 	    manual.tex credits.tex licence.tex overview.tex \
 	    support.tex userman.tex hypextra.tex features.tex \
 	    problems.tex l2hfiles.dat  manhtml.tex l2hman.sty

@@ -1,9 +1,12 @@
+: # *-*-perl-*-*
+  eval 'exec perl -S  $0 "$@"'
+  if $running_under_some_shell;
 #!/usr/bin/perl
 ###!/usr/local/bin/perl
 
 $dd = '/';  # directory-delimiter
 
-### $Id$
+### $Id: makemap 12004 2004-02-20 13:13:29Z nxg $
 ### File:  makemap
 ### Written by Herbert W. Swan <dprhws@edp.Arco.com>
 ### Version 1.0,  December 22, 1995
@@ -25,11 +28,8 @@ $dd = '/';  # directory-delimiter
 
 ## Change Log (for initials see file Changes):
 ## $Log$
-## Revision 1.1  2004/02/20 13:13:28  nxg
+## Revision 1.1  2004/02/20 13:13:26  nxg
 ## Initial import
-##
-## Revision 1.1  1998/08/20 15:49:27  pdraper
-## *** empty log message ***
 ##
 ## Revision 1.4  1997/07/03 14:16:18  RRM
 ##  -  added HTML comments with the USEMAP option

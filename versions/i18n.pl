@@ -18,7 +18,7 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-$DOCTYPE = '-//IETF//DTD HTML i18n//';
+$DOCTYPE = '-//IETF//DTD HTML i18n';
 
 sub do_cmd_oe {
     join('', &iso_map("oe", "lig"), $_[0]);}

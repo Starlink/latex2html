@@ -16,6 +16,7 @@ package main;
 sub do_env_xy {
     local($border,$attribs);
     if (s/$htmlborder_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
+    elsif (s/$htmlborder_pr_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
     $contents = &process_undefined_environment($env, $id,$contents);
     if ((($border)||($attribs))&&($HTML_VERSION > 2.1 )) { 
 	$contents = &make_table( $border, $attribs, '', '', '', $contents ) }
@@ -117,6 +118,7 @@ _IGNORED_CMDS_
 
 &process_commands_inline_in_tex (<<_RAW_ARG_CMDS_);
 xy # <<\\endxy>>
+xystar # <<\\endxy>>
 xygraph # {}
 xypolygon # {}
 xymatrix # {}
@@ -198,8 +200,8 @@ everyentry # {}
 everyxy # {}
 entrymodifiers # {}
 newdir # {} # {}
-newxycolor # {} # {}
-newgraphescape # {} # {}
+newxycolor # {} # [] # {}
+newgraphescape # {} # [] # {}
 knotholesize # {}
 knotstyle # {}
 knotstyles # {}

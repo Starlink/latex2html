@@ -1,5 +1,5 @@
 #
-# $Id$
+# $Id: html.perl 12004 2004-02-20 13:13:29Z nxg $
 #
 # HTML.PERL by Nikos Drakos <nikos@cbl.leeds.ac.uk> 2-DEC-93
 # Computer Based Learning Unit, University of Leeds.
@@ -15,8 +15,41 @@
 # Revision 1.1  2004/02/20 13:13:28  nxg
 # Initial import
 #
-# Revision 1.1  1998/08/20 16:03:41  pdraper
-# *** empty log message ***
+# Revision 1.30  1998/06/30 13:22:01  RRM
+#  --  protect $dd  for Win32 etc. platforms
+#
+# Revision 1.29  1998/06/18 11:55:12  RRM
+#  --  only put the short image-name into ALT text with \htmladdimg
+#
+# Revision 1.28  1998/05/04 12:02:46  latex2html
+#  --  removed the &translate_commands from \htmlref etc.
+# 	It is now done by &process_ref in the main script.
+#
+# Revision 1.27  1998/04/28 13:27:57  latex2html
+#  --  small fix to \HTMLset and \HTMLsetenv
+#  --  cleaned up the parameter reading of some macros
+#  --  {rawhtml} sets a flag, so that entities are preserved
+#
+# Revision 1.26  1998/02/26 10:21:29  latex2html
+#  --  fixed missing $TITLE in \segment
+#  --  made the argument-reading more robust
+#
+# Revision 1.25  1998/01/22 08:24:47  RRM
+#  --  put in cosmetic \n
+#  --  \htmlmeta defined, for inserting <META...> tags
+#
+# Revision 1.24  1997/12/16 05:41:02  RRM
+#  --  IMG requires an ALT tag in HTML 4
+#
+# Revision 1.23  1997/12/05 12:53:45  RRM
+#  --  cosmetic
+#
+# Revision 1.22  1997/11/05 10:44:00  RRM
+#  --  made some code more robust, concerning section-titles
+#
+# Revision 1.21  1997/10/20 13:18:07  RRM
+#  --  adapted \htmlhead \htmlrule and \htmlrule*
+#      to use the new font-state stack, to keep tags correctly nested
 #
 # Revision 1.20  1997/07/04 13:40:16  RRM
 #  -  \htmladdimg now handle image-maps properly, with more flexibility
@@ -122,7 +155,9 @@ sub do_cmd_htmlrule {
             }
         }
     } else { $BRattribs = " CLEAR=\"ALL\"" }    # default if no [...]
-    join('',"<BR$BRattribs>\n<HR$HRattribs>",$_);
+    local($pre,$post) = &minimize_open_tags("<BR$BRattribs>\n<HR$HRattribs>");
+    join('',$pre,$_);
+#    join('',"<BR$BRattribs>\n<HR$HRattribs>",$_);
 }
 
 
@@ -140,7 +175,8 @@ sub do_cmd_htmlrulestar {
             }
         }
     } else { }  # default if no [...]
-    join('',"<HR$HRattribs>",$_);
+    local($pre,$post) = &minimize_open_tags("<HR$HRattribs>");
+    join('',$pre,$_);
 }
 
 sub do_cmd_htmladdnormallink{
@@ -149,15 +185,15 @@ sub do_cmd_htmladdnormallink{
     local($name, $dummy) = &get_next_optional_argument;
     s/$next_pair_pr_rx/$text = $2; ''/eo;
     s/$next_pair_pr_rx/$url = $2; ''/eo;
-    $*=1; s/^\s+//; $*=0;
+    $*=1; s/^\s+/\n/; $*=0;
     if ($name) { $href = &make_named_href($name,$url,$text) }
     else { $href = &make_href($url,$text) }
     print "\nHREF:$href" if ($VERBOSITY > 3);
-    join ('',$href,"\n",$_);
+    join ('',$href,$_);
 }
 
 sub do_cmd_htmladdnormallinkfoot{
-    &do_cmd_htmladdnormallink;
+    &do_cmd_htmladdnormallink(@_);
 }
 
 sub do_cmd_htmladdimg{
@@ -171,6 +207,12 @@ sub do_cmd_htmladdimg{
     $opts =~ s/\s*ALT=\"([^\"]+)\"\s*/$alt=$1;''/ioe if ($opts);
     $opts =~ s/\s*ISMAP\s*/$map=$1;''/ioe if ($opts);
     s/$next_pair_pr_rx/$url = $2; ''/eo;
+    if (!$alt) {
+#    	$url=~ /$dd([^$dd$dd]+)$/;
+	$url =~ m@/([^/]+)$@;
+	$alt = $1;
+    	$alt = $url unless $alt;
+    }
     $url = &revert_to_raw_tex($url);
     join('',&embed_image($url,$name,'',$alt,'',$map,$align
 		,'','',$opts),$_);
@@ -201,27 +243,36 @@ sub do_cmd_htmlhead {
     local(@tmp, $section_number, $sec_id, $hash, $align, $dummy);
     ($align, $dummy) = &get_next_optional_argument;
     if ($align =~/(left|right|center)/i) { $align = "ALIGN=\"$1\""; }
-    s/$next_pair_pr_rx//o; $curr_sec = $2;
-    s/$next_pair_pr_rx//o; $TITLE = $2;
+    local($curr_sec, $title);
+    $curr_sec = &missing_braces unless (
+	(s/$next_pair_pr_rx/$curr_sec = $2;''/e)
+	||(s/$next_pair_rx/$curr_sec = $2;''/e));
     $curr_sec =~ s/\*$/star/;
     $current_depth = $section_commands{$curr_sec};
+    $title = &missing_braces unless (
+	(s/$next_pair_pr_rx/$title = $2;''/e)
+	||(s/$next_pair_rx/$title = $2;''/e));
 #JCL - use &sanitize
-    $hash = &sanitize($TITLE);
+    $hash = &sanitize($title);
     # This is the LaTeX section number read from the $FILE.aux file
     @tmp = split(/$;/,$encoded_section_number{$hash});
     $section_number = shift(@tmp);
     $section_number = "" if ($section_number eq "-1");
-    $TITLE = "$section_number " . $TITLE if $section_number;
+    $title = "$section_number " . $title if $section_number;
+    $TITLE = $title unless ($TITLE);
 
     # record it in encoded form, when it starts a segment
     if (($SEGMENT)&&($PREAMBLE)) {
+	$TITLE = $title;
 	$encoded_section_number{$hash} = join($;, @tmp);
 	@tmp = @curr_sec_id;
 #	$tmp[$current_depth] = 0;
 	$toc_section_info{join(' ', @tmp)} =
 	    "$current_depth$delim$CURRENT_FILE$delim$TITLE";
     }
-    join('', '<P>' , &make_section_heading($TITLE, "H2", $align), $_);
+    local($this_head) = &make_section_heading($title, "H2", $align);
+    local($pre,$post) = &minimize_open_tags("<P>$this_head");
+    join('',$pre,$_);
 }
 
 sub do_cmd_htmlnohead {
@@ -233,11 +284,16 @@ sub do_cmd_htmlnohead {
 
 sub do_cmd_segment {
     local($_) = @_;
-    local($ctr, $index);
+    local($ctr, $index, $ditch);
     &get_next_optional_argument;# heading alignment, ignored
-    s/$next_pair_pr_rx//o;	# Ditch file
-    s/$next_pair_pr_rx//o; $ctr = $2;
-    s/$next_pair_pr_rx//o;	# Ditch heading
+    $ditch = &missing_braces unless (# Ditch filename
+	(s/$next_pair_pr_rx//o)||(s/$next_pair_rx//o));
+    $ctr = &missing_braces unless (
+	(s/$next_pair_pr_rx/$ctr = $2;''/eo)
+	||(s/$next_pair_rx/$ctr = $2;''/eo));
+    $ditch = &missing_braces unless (# Ditch title
+	(s/$next_pair_pr_rx//o)||(s/$next_pair_rx//o));
+#    s/$next_pair_pr_rx//o;
     $segment_sec_id[$index] += 1 if ($index = $section_commands{$ctr});
     $SEGMENTED = 1;
     $_;
@@ -252,6 +308,12 @@ sub do_cmd_segmentstar {
 sub do_cmd_htmlbase {
     local($_) = @_;
     s/$next_pair_pr_rx/$BASE = &revert_to_raw_tex($2);''/e;
+    $_;
+}
+
+sub do_cmd_htmlmeta {
+    local($_) = @_;
+    s/$next_pair_pr_rx/$HTML_META .= join('',&revert_to_raw_tex($2),"\n");''/e;
     $_;
 }
 
@@ -291,15 +353,21 @@ sub do_cmd_internal{
     }
     local($dir,$nosave) = ('',1); 
     local($tmpdir,$rest) = ('',''); 
-    ($tmpdir, $rest) = split("/", $file, 2); 
-    while ($rest) { $dir .= $tmpdir . "/";
-	($tmpdir, $rest) =  split("/", $rest, 2);
+    if ($MULTIPLE_FILES && $ROOTED) {
+	$nosave = '';
+    } else {
+	($tmpdir, $rest) = split(/\Q$dd\E/, $file, 2); 
+	while ($rest) {
+	    $dir .= $tmpdir . $dd;
+	    ($tmpdir, $rest) =  split(/\Q$dd\E/, $rest, 2);
+	}
     }
+
     if (!($type =~ /(figure|table)/)) {
-	print "Loading segment data from $file \n" if ($DEBUG);
+	print "Loading segment data from $file \n" if ($DEBUG||$VERBOSITY);
 	require ($file);
 	return ($_);
-	}
+    }
 
     # figure/table captions
     local($after,$this) = ($_,'');
@@ -349,7 +417,7 @@ sub do_cmd_hyperref {
     s/$next_pair_pr_rx/$text = $2; ''/eo;
     s/$next_pair_pr_rx//o; # Throw this away ...
     s/$next_pair_pr_rx//o unless ($opt =~ /no/);
-    &process_ref($cross_ref_mark,$cross_ref_mark,&translate_commands($text));
+    &process_ref($cross_ref_mark,$cross_ref_mark,$text);
 }
 
 sub do_cmd_hypercite {
@@ -360,13 +428,13 @@ sub do_cmd_hypercite {
     s/$next_pair_pr_rx/$text = $2; ''/eo;
     s/$next_pair_pr_rx//o;                # Throw this away ...
     s/$next_pair_pr_rx//o unless ($opt);  # ... and this too.
-    &process_cite($opt, &translate_commands($text));
+    &process_cite($opt, $text);
 }
 
 sub do_cmd_htmlref {
     local($_) = @_;
     local($text);
-#    local($opt, $dummy) = &get_next_optional_argument;
+    local($opt, $dummy) = &get_next_optional_argument;
     s/$next_pair_pr_rx/$text = $2; ''/eo;
     &process_ref($cross_ref_mark,$cross_ref_mark,$text);
 }
@@ -377,7 +445,6 @@ sub do_cmd_htmlcite {
     local($opt, $dummy) = &get_next_optional_argument;
     $opt = (($opt =~ /ext/) ? "external" : '' );
     s/$next_pair_pr_rx/$text = $2; ''/eo;
-    $text = &translate_commands($text);
     &process_cite($opt,$text);
 }
 
@@ -443,16 +510,23 @@ sub do_cmd_HTMLset {
     local($_) = @_;
     local($which,$value,$hash,$dummy);
     local($hash, $dummy) = &get_next_optional_argument;
-    $which = &missing_braces
-	unless ((s/$next_pair_rx/$which = $2;''/eo)
-	    ||(s/$next_pair_pr_rx/$which = $2;''/eo));
-    $value = &missing_braces
-	unless ((s/$next_pair_rx/$value = $2;''/eo)
-	    ||(s/$next_pair_pr_rx/$value = $2;''/eo));
+    $which = &missing_braces unless (
+	(s/$next_pair_pr_rx/$which = $2;''/eo)
+	||(s/$next_pair_rx/$which = $2;''/eo));
+    $value = &missing_braces unless (
+	(s/$next_pair_pr_rx/$value = $2;''/eo)
+	||(s/$next_pair_rx/$value = $2;''/eo));
     if ($hash) {
-	local($tmp) = "\$hash";
-	if (defined ${$tmp}) { eval "\$$tmp{$which} = \"$value\";" }
-    } elsif ($which) { eval "\$$which = \"$value\";" }
+	local($tmp) = "\%$hash";
+	if (eval "defined \%{$hash}") { $! = '';
+#	    eval "\$$hash{'$which'} = \"$value\";";
+	    ${$hash}{'$which'} = $value;
+	    print "\nHTMLset failed: $! " if ($!);
+	} else { print "\nhash: \%$hash not defined" }
+    } elsif ($which) { $! = '';
+	eval "\${$which} = \"$value\";";
+	print "\nHTMLset failed: $! " if ($!);
+    }
     $_;
 }
 
@@ -464,8 +538,12 @@ sub do_cmd_HTMLsetenv { &do_cmd_HTMLset;}
 &process_commands_wrap_deferred (<<_RAW_ARG_DEFERRED_CMDS_);
 comment # <<\\endcomment>>
 htmlonly # <<\\endhtmlonly>>
+latexonly # <<\\endlatexonly>>
 imagesonly # <<\\endimagesonly>>
-rawhtml # <<\\endrawhtml>> 
+rawhtml # <<\\endrawhtml>>
+htmlhead # [] # {} # {}
+htmlrule # [] 
+htmlrulestar # [] 
 _RAW_ARG_DEFERRED_CMDS_
 
 
@@ -475,9 +553,9 @@ latex # {}
 latexhtml # {}
 htmlonly
 endhtmlonly
-latexonly # {}
+latexonly # <<\\endlatexonly>>
 imagesonly # <<\\endimagesonly>>  &do_env_imagesonly(\$args)
-rawhtml # <<\\endrawhtml>> \$_ = join('',&revert_to_raw_tex(\$args),\$_)
+rawhtml # <<\\endrawhtml>> local(\$env)='rawhtml';\$_ = join('',&revert_to_raw_tex(\$args),\$_)
 _IGNORED_CMDS_
 
 1;				# This must be the last line

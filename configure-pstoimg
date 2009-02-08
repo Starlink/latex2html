@@ -1,10 +1,15 @@
+: # *-*-perl-*-*
+  eval 'exec perl -S  $0 "$@"'
+  if $running_under_some_shell;
+
 #!/usr/local/bin/perl -w
 #use diagnostics;
 
-$LATEX2HTMLDIR='/loc/starpc1/pdraper/latex2html/97.1';# Inserted by installation script
+#$LATEX2HTMLDIR="$ENV{'L2HMODULE'}/user"; # Inserted by installation script
+$LATEX2HTMLDIR="$ENV{'L2HMODULE'}/user"; # Inserted by installation script
 
 ###############################################################################
-# $Id$
+# $Id: configure-pstoimg 12004 2004-02-20 13:13:29Z nxg $
 #
 # Configure-Pstoimg
 #
@@ -25,11 +30,33 @@ $LATEX2HTMLDIR='/loc/starpc1/pdraper/latex2html/97.1';# Inserted by installation
 # Changes History
 #
 # $Log$
-# Revision 1.1  2004/02/20 13:13:28  nxg
+# Revision 1.1  2004/02/20 13:13:26  nxg
 # Initial import
 #
-# Revision 1.1  1998/08/20 15:49:14  pdraper
-# *** empty log message ***
+# Revision 1.18  1998/05/06 22:33:14  latex2html
+# -- fixed bug in parsing of output of "gs -h". Thanks Christoph Wutzke.
+#
+# Revision 1.17  1998/05/03 08:20:56  latex2html
+#  --  added name of Ghostscript executable for OS/2 (thanks Uli Wortmann)
+#  --  change use of &substitute_var_val  by Fabrice Popineau
+#
+# Revision 1.16  1998/04/28 10:41:25  latex2html
+#  --  removed some debugging messages, sorry
+#
+# Revision 1.15  1998/04/28 10:39:02  latex2html
+# 	implemented Fabrice Popineau's changes, for Win32 compatibility
+#
+#  --  uses a function &find_executable  defined in Override.pm
+#  --  allows different name for the Ghostscript executable
+#  --  defines $white_color and $bg_color for use with transparent images
+#  --  opens scripts to be altered, before renaming for the backup
+#  --  records both $GS_LIB and $GSLANDSCAPE into local.pm
+#
+# Revision 1.12  1997/09/27 10:37:47  JCL
+# small change regarding EOF tag
+#
+# Revision 1.11  1997/08/13 15:27:33  JCL
+# dies with message unless initialized via install-test
 #
 # Revision 1.10  1997/07/20 20:26:02  JCL
 # .
@@ -98,7 +125,13 @@ $LATEX2HTMLDIR='/loc/starpc1/pdraper/latex2html/97.1';# Inserted by installation
 ###############################################################################
 # Default names
 # You may specify alternative names via the command line, too
-$Default{'GS'}='gs';
+if ($^O =~ MSWin32) {
+    $Default{'GS'}='gswin32c';
+} elsif ($^O =~ os2) {
+    $Default{'GS'}='gsos2.exe';
+} else {
+    $Default{'GS'}='gs';
+}
 $Default{'PNMCROP'}='pnmcrop';
 $Default{'PNMFLIP'}='pnmflip';
 $Default{'PPMTOGIF'}='ppmtogif';
@@ -115,8 +148,16 @@ $Default{'GIFTOOL'}='giftool';
 @PATH = ".";
 $dd = '/';
 
+use Override qw($DEBUG getpwuid link setenv getenv symlink rename
+               getcwd syswait find_executable
+               substitute_var_val $LATEX2HTMLDIR
+               make_directory_absolute unlink $dd $envkey $image_pre);
+
 ###############################################################################
 # Parse the command line
+
+die "Please run install-test, it will start this script automatically.\n"
+    unless $LATEX2HTMLDIR;
 
 if(@ARGV) {
    foreach(@ARGV) {
@@ -258,7 +299,10 @@ _EOM_
     }
     print "Configuring for ",($configure_gif?"GIF":"PNG")," format.\n";
     print "Changing \$IMAGE_TYPE in latex2html.config...",
-	(&substitute_img_var("latex2html.config")?"succeeded\n":"\n*failed*\n");
+#	(&substitute_img_var("latex2html.config")?"succeeded\n":"\n*failed*\n");
+        (&substitute_var_val("latex2html.config", "^\\\$IMAGE_TYPE\\\s*=.*"
+		, "\$IMAGE_TYPE = '" .($configure_gif ? "gif":"png")
+		    . "';")? "succeeded\n":"\n*failed*\n");
 }
 
 
@@ -290,7 +334,7 @@ _EOM_
 
 # Try to determine path
     $gs=$user_settings{'GS'} || $Default{'GS'};
-    $GS=&find_executable($gs);
+    $GS=&find_executable($gs,@PATH);
 
     die <<"_EOM_" unless(defined $GS);
 Fatal Error: \"$gs\" not found. Pstoimg won't work.
@@ -314,7 +358,7 @@ _EOM_
         if(/Available devices/i) {
             $flag=1; # Now look for the devices
         }
-        elsif(/Search path/i) {
+        elsif(/^\s*Search path/i) {
             $flag=2; # Now look for the gs lib path
         }
         elsif ($flag == 1) {
@@ -329,7 +373,7 @@ _EOM_
 # if line starts with whitespace, then we're in the search path list
             if(/^\s+/) {
                 chop;
-                push(@gs_lib_path,split(':',$_));
+                push(@gs_lib_path,split(${envkey},$_));
             }
             else { $flag=0; } # no more path entries
         }
@@ -375,16 +419,31 @@ _EOM_
     }
     $Configuration{'GS_DEVICE'}=$GS_DEVICE;
 
-    if(!@gs_lib_path) {
-        print "Trying to guess the Ghostscript library path...\n";
-        @gs_lib_path = ('/usr/share/ghostscript','/usr/lib/ghostscript/',
-            '/usr/local/ghostscript','/usr/local/share/ghostscript',
-            '/usr/local/lib/ghostscript');
+#    if(!@gs_lib_path) {
+#        print "Trying to guess the Ghostscript library path...\n";
+#        @gs_lib_path = ('/usr/share/ghostscript','/usr/lib/ghostscript/',
+#            '/usr/local/ghostscript','/usr/local/share/ghostscript',
+#            '/usr/local/lib/ghostscript');
+    if ($^O =~ MSWin32) {
+        local($gs_dir);
+        $gs_dir = $GS;
+        $gs_dir =~ s/\\/${dd}/g;
+        $gs_dir =~ s!/[^/]*$!!;
+        @gs_lib_path = ("$gs_dir", "$gs_dir/fonts", "$gs_dir/../fonts");
+        $GS_LIB = join(";", @gs_lib_path);
+    } else {
+        if(!@gs_lib_path) {
+            print "Trying to guess the Ghostscript library path...\n";
+            @gs_lib_path = ('/usr/share/ghostscript','/usr/lib/ghostscript/',
+                '/usr/local/ghostscript','/usr/local/share/ghostscript',
+                '/usr/local/lib/ghostscript');
         }
+        $GS_LIB = join(";", @gs_lib_path);
+    }
     foreach $path (@gs_lib_path) {
         $path =~ s/^\s*(\S*)\s*$/$1/; # strip whitespace
         if(-d "$path" && -f "$path/landscap.ps") {
-            $GS_LIB = $path;
+            $GSLANDSCAPE = "$path/landscap.ps";
             print "Ghostscript library path is $path\n";
         }
     }
@@ -397,7 +456,8 @@ Warning: Couldn't determine Ghostscript library path (the path where e.g.
 
 _EOM_
     }
-    $Configuration{'GS_LIB'}=$GS_LIB;
+    $Configuration{'GS_LIB'} = $GS_LIB;
+    $Configuration{'GSLANDSCAPE'} = $GSLANDSCAPE;
 }
 
 
@@ -414,7 +474,7 @@ Netpbm/Pbmplus Configuration
 _EOM_
     if($configure_gif) {
         $ppmtogif=$user_settings{'PPMTOGIF'} || $Default{'PPMTOGIF'};
-        $PPMTOGIF=&find_executable($ppmtogif);
+        $PPMTOGIF=&find_executable($ppmtogif,@PATH);
         die <<"_EOM_" unless defined $PPMTOGIF;
 Fatal Error: \"$ppmtogif\" not found.
              Pstoimg won't be able to produce GIF images.
@@ -443,7 +503,7 @@ _EOM_
     }
     if($configure_png) {
         $pnmtopng=$user_settings{'PNMTOPNG'} || $Default{'PNMTOPNG'};
-        $PNMTOPNG=&find_executable($pnmtopng);
+        $PNMTOPNG=&find_executable($pnmtopng,@PATH);
         die <<"_EOM_" unless defined $PNMTOPNG;
 Fatal Error: \"$pnmtopng\" not found.
              Pstoimg won't be able to produce png images.
@@ -469,7 +529,7 @@ _EOM_
 #        }
     }
     $pnmcrop=$user_settings{'PNMCROP'} || $Default{'PNMCROP'};
-    $PNMCROP=&find_executable($pnmcrop);
+    $PNMCROP=&find_executable($pnmcrop,@PATH);
     die <<"_EOM_" unless defined $PNMCROP;
 Fatal Error: \"$pnmcrop\" not found.
              pstoimg won't be able to crop images.
@@ -483,7 +543,7 @@ _EOM_
     $warnings=0;
 
     $pnmflip=$user_settings{'PNMFLIP'} || $Default{'PNMFLIP'};
-    $PNMFLIP=&find_executable($pnmflip);
+    $PNMFLIP=&find_executable($pnmflip,@PATH);
     if(defined $PNMFLIP) {
         print "$pnmflip is $PNMFLIP\n";
     }
@@ -498,7 +558,7 @@ _EOM_
     $Configuration{'PNMFLIP'}=$PNMFLIP;
 
     $ppmquant=$user_settings{'PPMQUANT'} || $Default{'PPMQUANT'};
-    $PPMQUANT=&find_executable($ppmquant);
+    $PPMQUANT=&find_executable($ppmquant,@PATH);
     if(defined $PPMQUANT) {
         print "$ppmquant is $PPMQUANT\n";
     }
@@ -514,7 +574,7 @@ _EOM_
     $Configuration{'PPMQUANT'}=$PPMQUANT;
 
     $pnmfile=$user_settings{'PNMFILE'} || $Default{'PNMFILE'};
-    $PNMFILE=&find_executable($pnmfile);
+    $PNMFILE=&find_executable($pnmfile,@PATH);
 
     if(defined $PNMFILE) {
         print "$pnmfile is $PNMFILE\n";
@@ -546,7 +606,7 @@ _EOM_
 # $Configuration{'PNMTILE'}=$PNMTILE;
 
     $pnmcat=$user_settings{'PNMCAT'} || $Default{'PNMCAT'};
-    $PNMCAT=&find_executable($pnmcat);
+    $PNMCAT=&find_executable($pnmcat,@PATH);
 
     if(defined $PNMCAT) {
         print "$pnmcat is $PNMCAT\n";
@@ -562,7 +622,7 @@ _EOM_
     $Configuration{'PNMCAT'}=$PNMCAT;
 
     $pbmmake=$user_settings{'PBMMAKE'} || $Default{'PBMMAKE'};
-    $PBMMAKE=&find_executable($pbmmake);
+    $PBMMAKE=&find_executable($pbmmake,@PATH);
     if(defined $PBMMAKE) {
         print "$pbmmake is $PBMMAKE\n";
     }
@@ -610,7 +670,7 @@ _EOM_
         (!defined $HOWTO_TRANSPARENT_GIF || !defined $HOWTO_INTERLACE_GIF)) {
 
         $giftool=$user_settings{'GIFTOOL'} || $Default{'GIFTOOL'};
-        $GIFTOOL=&find_executable($giftool);
+        $GIFTOOL=&find_executable($giftool,@PATH);
         if(defined $GIFTOOL) {
             $_=join(" ",&get_stdout_stderr("$GIFTOOL -h"));
             if(/-rgb/ && !defined $HOWTO_TRANSPARENT_GIF) {
@@ -627,7 +687,7 @@ _EOM_
     }
     if($configure_gif && !defined $HOWTO_TRANSPARENT_GIF) {
         $giftrans=$user_settings{'GIFTRANS'} || $Default{'GIFTRANS'};
-        $GIFTRANS=&find_executable($giftrans);
+        $GIFTRANS=&find_executable($giftrans,@PATH);
 
         if(defined $GIFTRANS) {
             $_=(&get_stdout_stderr($GIFTRANS))[0];
@@ -664,6 +724,13 @@ _EOM_
         $Configuration{'HOWTO_TRANSPARENT_GIF'}=$HOWTO_TRANSPARENT_GIF;
         $Configuration{'HOWTO_INTERLACE_GIF'}=$HOWTO_INTERLACE_GIF;
     }
+    if ($^O =~ MSWin32) {
+        $Configuration{'white_color'} = "#ffffff";
+        $Configuration{'bg_color'} = "#bfbfbf";
+    } else {
+        $Configuration{'white_color'} = "\\#ffffff";
+        $Configuration{'bg_color'} = "\\#bfbfbf";
+    }
 }
 
 
@@ -699,7 +766,7 @@ _EOM_
     foreach(keys %Configuration) {
         $vars .= "\$$_ = '$Configuration{$_}'; # Inserted by configure-pstoimg\n";
     }
-    print OUT << "_EOF_";
+    print OUT <<"_EOF_";
 #################################################################
 # local.pm
 #
@@ -783,28 +850,31 @@ _EOM_
 
 
 ###############################################################################
-sub find_executable {
-    local($name) = $_[0];
-    if($name =~ m+^/+) {
-        if(-e "$name" && -x _ ) {
-            return "$name";
-        }
-    }
-    if($name =~ s+.*/++o) {
-        warn "Warning: Stripping invalid path from $name\n";
-    }
-    foreach(@PATH) {
-        if(-e "$_/$name") {
-            if( -x _ ) {
-                return "$_/$name";
-            }
-            else {
-                warn "Warning: $_/$name exists, but is not executable.\n";
-            }
-        }
-    }
-    return(undef);
-}
+
+#RRM: moved to Override.pm (thanks, Fabrice Popineau)
+#
+#sub find_executable {
+#    local($name) = $_[0];
+#    if($name =~ m+^/+) {
+#        if(-e "$name" && -x _ ) {
+#            return "$name";
+#        }
+#    }
+#    if($name =~ s+.*/++o) {
+#        warn "Warning: Stripping invalid path from $name\n";
+#    }
+#    foreach(@PATH) {
+#        if(-e "$_/$name") {
+#            if( -x _ ) {
+#                return "$_/$name";
+#            }
+#            else {
+#                warn "Warning: $_/$name exists, but is not executable.\n";
+#            }
+#        }
+#    }
+#    return(undef);
+#}
 
 
 ###############################################################################

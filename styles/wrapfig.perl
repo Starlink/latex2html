@@ -20,8 +20,9 @@ sub do_env_wrapfigure{
     $contents =~ s/$optional_arg_rx//o;	   # ditch [nlines]
     $contents =~ s/$next_pair_rx//o;	   # ditch {placement}
     $contents =~ s/$next_pair_rx//o;	   # ditch {width}
-    &process_environment("figure", $global{'max_id'}++);
-    }
+#   &process_environment("figure", $global{'max_id'}++);
+    &do_env_figure($_);
+}
 
 &process_commands_in_tex (<<_RAW_ARG_CMDS_);
 wrapfigure

@@ -1,4 +1,4 @@
-# $Id$
+# $Id: german.perl 12004 2004-02-20 13:13:29Z nxg $
 # GERMAN.PERL by Nikos Drakos <nikos@cbl.leeds.ac.uk> 25-11-93
 # Computer Based Learning Unit, University of Leeds.
 #
@@ -16,8 +16,19 @@
 # Revision 1.1  2004/02/20 13:13:28  nxg
 # Initial import
 #
-# Revision 1.1  1998/08/20 16:03:37  pdraper
-# *** empty log message ***
+# Revision 1.11  1998/06/26 06:07:35  RRM
+#  --  put \n before intro message
+#
+# Revision 1.10  1998/04/28 13:10:05  latex2html
+#
+# Revision 1.9  1998/04/28 13:10:04  latex2html
+#  --  added new name:  $foot_title
+#
+# Revision 1.8  1998/02/22 05:27:07  latex2html
+# revised &german|french_titles
+#
+# Revision 1.7  1998/02/20 23:27:24  latex2html
+# added $GENERIC_WORDS
 #
 # Revision 1.6  1997/06/13 13:54:50  RRM
 #     Allow  &#34;  to be translated back into  \dq{}
@@ -51,7 +62,7 @@
 
 package german;
 #JKR: print a message.
-print "german style interface for LaTeX2HTML, revised: 23 May 1997\n";
+print "\ngerman style interface for LaTeX2HTML, revised: 23 May 1997\n";
 
 # Put german equivalents here for headings/dates/ etc when
 # latex2html start supporting them ...
@@ -177,16 +188,28 @@ sub german_titles {
     $lof_title = "Abbildungsverzeichnis";
     $lot_title = "Tabellenverzeichnis";
     $idx_title = "Index";
+    $ref_title = "Literaturverzeichnis";
     $bib_title = "Literatur";
     $abs_title = "Zusammenfassung";
-    $pre_title = "Vorwort";
     $app_title = "Anhang";
+    $pre_title = "Vorwort";
+    $foot_title = "Fu&szlig;noten";
     $fig_name = "Abbildung";
     $tab_name = "Tabelle";
+    $part_name = "Teil";
+    $prf_name = "Beweis";
+    $child_name = "Unterabschnitte";
     $info_title = "&Uuml;ber dieses Dokument ...";
     @Month = ('', 'Januar', 'Februar', 'M&auml;rz', 'April', 'Mai',
 	      'Juni', 'Juli', 'August', 'September', 'Oktober',
-	      'November', 'Dezember');  
+	      'November', 'Dezember');
+
+    local($uuml,$Uuml) = (&iso_map('u','uml'),&iso_map('U','uml'));
+    $GENERIC_WORDS =
+	join('|',"aber","oder","und","doch","um","in","im","an","am","${uuml}ber",
+	     "${Uuml}ber","unter","auf","durch","der","die","das","des","dem","den",
+	     "ein","eine","eines","einem","einen","einer","vor","nach","f${uuml}r",
+	     "mit","zu","zur","zum","bei","beim","per","von","vom","aus");
 }
 
 #JKR: Replace do_cmd_today (\today) with a nicer one, which is more

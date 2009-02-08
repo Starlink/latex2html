@@ -1,5 +1,5 @@
 #
-# $Id$
+# $Id: Makefile 12004 2004-02-20 13:13:29Z nxg $
 #
 
 all: hthtml.dvi hthtml/hthtml.html

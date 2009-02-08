@@ -1,7 +1,7 @@
 #
-# $Id$
+# $Id: verbatim.perl 12004 2004-02-20 13:13:29Z nxg $
 # verbatim.perl
-#   Jens Lippmann <lippmann@cdc.informatik.th-darmstadt.de> 17-DEC-96
+#   Jens Lippmann <lippmann@cdc.informatik.tu-darmstadt.de> 17-DEC-96
 #
 # Extension to LaTeX2HTML to support the verbatim.sty LaTeX2e package.
 #
@@ -13,8 +13,11 @@
 # Revision 1.1  2004/02/20 13:13:28  nxg
 # Initial import
 #
-# Revision 1.1  1998/08/20 16:03:46  pdraper
-# *** empty log message ***
+# Revision 1.5  1998/03/22 20:52:49  latex2html
+# reviewed for 98.1, works & is testable via devel/tests/regr/verbatim/run
+#
+# Revision 1.4  1998/02/19 22:24:33  latex2html
+# th-darmstadt -> tu-darmstadt
 #
 # Revision 1.3  1996/12/23 01:33:58  JCL
 # uses now shell variable TEXINPUTS (this is set up by LaTeX2HTML before)
@@ -54,24 +57,35 @@ package main;
 
 sub do_cmd_verbatiminput {
     local($outer) = @_;
-    local($_);
+    local($_,$found,$file,$file2);
 
-    $outer =~ s/$next_pair_pr_rx//o;
-    local($file) = $2;
-    $file .= ".tex" unless $file =~ /\.tex$/;
+    $file = &missing_braces unless (
+        ($outer =~ s/$next_pair_pr_rx/$file=$2;''/eo)
+        ||($outer =~ s/$next_pair_rx/$file=$2;''/eo));
 
+    $file2 = "$file.tex";
+    if ($file !~ /\.tex$/) {
+	# 2nd choice is better than 1st - TeXnical quirk
+	($file,$file2) = ($file2,$file);
+    }
     foreach $dir ("$texfilepath", split(/:/,$ENV{'TEXINPUTS'})) { 
-	if (-f ($_ = "$dir/$file")) {
+	if (-f ($_ = "$dir/$file") || -f ($_ = "$dir/$file2")) {
+	    $found=1;
 	    #overread $_ with file contents
 	    &slurp_input($_);
 	    last;
 	}
     }
+    &write_warnings("No file <$file> for verbatim input.")
+	unless $found;
+
     # pre_process file contents
     &replace_html_special_chars;
-
+    s/\n$//;		# vertical space is contributed by </PRE> already.
+    # %verbatim not coupled to a dbm => will not work in subprocesses, but don't mind
     $verbatim{++$global{'verbatim_counter'}} = $_;
-    join('',"<BR>\n",$verbatim_mark,'verbatim',$global{'verbatim_counter'},$outer);
+    join('',"<BR><PRE>",$verbatim_mark,'verbatim',$global{'verbatim_counter'},
+	 "#</PRE>",$outer);
 }
 
-1; 		# Must be last line
+1;			# Must be last line

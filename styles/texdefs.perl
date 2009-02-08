@@ -8,18 +8,20 @@ $meta_cmd_rx =~ s/([\|\(])newcommand/$1def\|newcommand/
 sub get_body_def {
     local(*_) = @_;
     local($argn,$cmd,$body,$is_simple_def,$tmp);
-    $cmd = &get_next(2);
+    ($cmd,$tmp) = &get_next(2);
     $cmd =~ s/^\s*\\//;
+    if (/^\@/) { s/^(\@[\w\@]*)/$cmd.= $1;''/e } # @-letter
     
-    $argn = &get_next(3);
+    ($argn,$tmp) = &get_next(3);
     $argn = 0 unless $argn;
 
-    $body = &get_next(1);
+    ($body,$tmp) = &get_next(1);
     $tmp = "do_cmd_$cmd";
-    if ($is_simple_def && !defined (&$tmp))
+#    if ($is_simple_def && !defined (&$tmp))
+    if ($is_simple_def )
     { $new_command{$cmd} = join(':!:',$argn,$body,'}'); }
     undef $body;
-    $_;
+    ''; # $_;
 }
 
 ######################### Other Concessions to TeX #############################
@@ -87,8 +89,8 @@ sub do_cmd_char {
 vskip # &ignore_numeric_argument
 hskip # &ignore_numeric_argument
 kern # &ignore_numeric_argument
-bgroup
-egroup
+#bgroup
+#egroup
 _IGNORED_CMDS_
 
 

@@ -3,12 +3,13 @@
 \usepackage{html,htmllist,makeidx}
 \input{manhtml.tex}
 %
-\input{hypextra.ptr}		% Input counters and section
+\input{hypextra.ptr}    % Input counters and section
 \end{htmlonly}
 \startdocument
 %
 %\section{Hypertext Extensions to \LaTeX\label{sec:hyp}\index{special}}%
-\index{hypertext!extensions}\index{extensions!hypertext}%
+\label{sec:hyp}\index{special}
+\index{hypertext!extensions}\index{extensions!hypertext}
 
 \noindent
 This {section} describes how you can define hypertext 
@@ -297,19 +298,19 @@ Allows a URL to be specified within the \HTMLtag{BASE ...} tag
 for all the \texttt{HTML} pages produced;\html{\\}
 ignored in \LaTeX.
 %
-\item[\htmlref{\Lc{htmltracing\char123}\Meta{level}\texttt{\char125}}{verbositylevel} ]
+\item[\htmlref{\Lc{htmltracing\char123}\Meta{level}\texttt{\char125}}{cs_verbositylevel} ]
 specifies that extra tracing messages be generated, according to the \Meta{level};\html{\\}
 ignored in \LaTeX.
 \begin{latexonly}
-(See page~\pageref{verbositylevel} for levels of verbosity.)
+(See page~\pageref{cs_verbositylevel} for levels of verbosity.)
 \end{latexonly}
 %
-\item[\htmlref{\Lc{htmltracenv\char123}\Meta{level}\texttt{\char125}}{verbositylevel} ]
+\item[\htmlref{\Lc{htmltracenv\char123}\Meta{level}\texttt{\char125}}{cs_verbositylevel} ]
 same as \Lc{htmltracing} except that this command
 is evaluated in sequence with environments;\html{\\}
 ignored in \LaTeX.
 \begin{latexonly}
-(See also page~\pageref{verbositylevel}.)
+(See also page~\pageref{cs_verbositylevel}.)
 \end{latexonly}
 %
 \item[\htmlref{\Lc{HTMLset}}{HTMLset} ]
@@ -342,19 +343,19 @@ These comments apply to both the \LaTeX{} and \latextohtml{} processing.)
 
 \index{AmS-style@\AmS-style environments!listed}%
 \begin{htmllist}\htmlitemmark{RedBall}
-\item[\Lc{rawhtml...\char92endrawhtml}\label{endrawhtml} ]
+\item[\Lc{rawhtml...\char92endrawhtml} ]
 old \AmS-style variant of \env{rawhtml} \htmlref{environment}{rawhtml}.
 %
-\item[\Lc{htmlonly...\char92endhtmlonly}\label{endhtmlonly} ]
+\item[\Lc{htmlonly...\char92endhtmlonly} ]
 old \AmS-style variant of \env{htmlonly} \htmlref{environment}{htmlonly}.
 %
-\item[\Lc{latexonly...\char92endlatexonly}\label{endlatexonly} ]
+\item[\Lc{latexonly...\char92endlatexonly} ]
 old \AmS-style variant of \env{latexonly} \htmlref{environment}{latexonly}.
 %
-\item[\Lc{imagesonly...\char92endimagesonly}\label{endimagesonly} ]
+\item[\Lc{imagesonly...\char92endimagesonly} ]
 old \AmS-style variant of \env{imagesonly} \htmlref{environment}{imagesonly}.
 %
-\item[\Lc{comment...\char92endcomment}\label{endcomment} ]
+\item[\Lc{comment...\char92endcomment} ]
 old \AmS-style variant of \env{comment} \htmlref{environment}{comment}.
 %
 \end{htmllist}
@@ -546,7 +547,7 @@ So, what do think (comments please): <BR>
 %end{latexonly}
 %
 \noindent
-The result is shown \hyperref{below}{in Figure~}{}{eform}.
+The result is shown \hyperref{below}{in Figure~}{}{fig_eform}.
 
 \begin{htmlonly}
 \begin{figure}[h]
@@ -570,7 +571,7 @@ So, what do think (comments please): <BR>
 <HR>
 \end{rawhtml}
 \caption{An electronic form. 
- In the online version the form would be active.}\label{eform}
+ In the online version the form would be active.}\label{fig_eform}
 \end{figure}
 \end{htmlonly}
 %
@@ -581,7 +582,7 @@ So, what do think (comments please): <BR>
     \end{center}
   \caption{An electronic form.
   In the online version the form would be active.}
-  \label{eform}
+  \label{fig_eform}
 \end{figure}
 \end{latexonly}
 
@@ -650,22 +651,33 @@ For version 97.1 of \latextohtml\ there is a new command which provides
 an extremely flexible way to include \texttt{HTML} 3.2 tags, along with
 any values for the ``attributes'' of that tag, if desired.
 \begin{quote}
-\Lc{HTML}\verb|[|\Meta{attribs}\verb|]{|\Meta{tag}\verb|}|\label{HTMLtag}\\
-\Lc{HTML}\verb|[|\Meta{attribs}\verb|]{|\Meta{tag}\verb|}{|\Meta{contents}\verb|}|
+\Lc{HTMLcode}\verb|[|\Meta{attribs}\verb|]{|\Meta{tag}\verb|}|\label{HTMLtag}\\
+\Lc{HTMLcode}\verb|[|\Meta{attribs}\verb|]{|\Meta{tag}\verb|}{|\Meta{contents}\verb|}|
 \end{quote}
 When the \Meta{tag} also needs a closing tag (e.g \texttt{<I>...</I>})
 the \Meta{contents} \emph{must} be given, enclosed in braces.
 Both the opening and closing tags then will be placed correctly.
 
+\smallskip
+\begin{quotation}
+\textbf{Warning: } 
+In version 97.1 this command was actually called \Lc{HTML}.
+However style files may well define \Lc{HTML} to mean something else,
+like a styled version of the \texttt{HTML} acronym. 
+So in version 98.1 the name has been changed to \Lc{HTMLcode}.
+
+If no other definition of \Lc{HTML} exists, then this command \emph{will}
+be defined, to work the same as \Lc{HTMLcode}. 
+\end{quotation}
 
 An important aspect of this is that any of the \Meta{tag},
 \Meta{attribs} and \Meta{contents} may be given wholly
 by expanding a \LaTeX{} macro, or may contain arbitrary macros, 
-perhaps including other \Lc{HTML} commands.
-\hyperref{The following table}{The contents of Figure~}{}{ex:HTML} 
+perhaps including other \Lc{HTMLcode} commands.
+\hyperref{The following table}{The contents of Figure~}{}{ex:HTMLcode} 
 was constructed using this feature; its \LaTeX{} source follows.
 
-\HTML[50\% 3 noshade center]{HR}
+\HTMLcode[50\% 3 noshade center]{HR}
 
 \begin{htmlonly}
 \begin{figure}
@@ -673,20 +685,20 @@ was constructed using this feature; its \LaTeX{} source follows.
 \end{makeimage}
 \newcommand{\myalign}{center}
 \newcommand{\mylist}{UL}
-\newcommand{\myitem}[2]{\HTML[disc]{LI}{\simpletest{#1}{#2}}}
+\newcommand{\myitem}[2]{\HTMLcode[disc]{LI}{\simpletest{#1}{#2}}}
 \newcommand{\simpletest}[2]{%
- \HTML{#1}{ a simple test of ``#2'',} using \HTML{CODE}{<#1>} .}
+ \HTMLcode{#1}{ a simple test of ``#2'',} using \HTMLcode{CODE}{<#1>} .}
 \newcommand{\tableopts}{10,border=5}
 
-\newcommand{\tablelist}[4][\myalign]{\HTML[#1]{DIV}{
-\HTML[\tableopts]{TABLE}{
-\HTML[bottom]{CAPTION}{
+\newcommand{\tablelist}[4][\myalign]{\HTMLcode[#1]{DIV}{
+\HTMLcode[\tableopts]{TABLE}{
+\HTMLcode[bottom]{CAPTION}{
 #3
-}\HTML{TR}{\HTML{TD}{
-\HTML{#2}{
+}\HTMLcode{TR}{\HTML{TD}{
+\HTMLcode{#2}{
 #4
 }}}
-}}\HTML[all]{BR}}
+}}\HTMLcode[all]{BR}}
 
 \tablelist[\myalign]{\mylist}{%
 \textbf{A listing of the different text styles available in HTML 3.2}}{%
@@ -694,18 +706,18 @@ was constructed using this feature; its \LaTeX{} source follows.
 \myitem{I}{italics}
 \myitem{TT}{teletype-text}
 \myitem{U}{underlining}
-\HTML[circle]{LI}{\simpletest{STRIKE}{strikeout}}
+\HTMLcode[circle]{LI}{\simpletest{STRIKE}{strikeout}}
 \myitem{EM}{emphasis style}
 \myitem{STRONG}{strong style}
 \myitem{CODE}{code style}
 \myitem{CITE}{citation style}
 \myitem{DFN}{definition style}
-\HTML[square]{LI}{\simpletest{SAMP}{sample style}}
-\HTML[square]{LI}{\simpletest{KBD}{keyboard style}}
+\HTMLcode[square]{LI}{\simpletest{SAMP}{sample style}}
+\HTMLcode[square]{LI}{\simpletest{KBD}{keyboard style}}
 \myitem{VAR}{variable style}}
 %
  \caption{Example use of macros for raw \texttt{HTML} code.}
- \label{ex:HTML}
+ \label{ex:HTMLcode}
 \end{figure}
 \end{htmlonly}
 %
@@ -714,12 +726,12 @@ was constructed using this feature; its \LaTeX{} source follows.
 \begin{center}
   \fbox{\scalebox{.7}{\includegraphics{psfiles/HTMLtab.ps}}}
  \caption{Example use of macros for raw \texttt{HTML} code.}
- \label{ex:HTML}
+ \label{ex:HTMLcode}
 \end{center}
 \end{figure}
 \end{latexonly}
 
-\HTML[50\% 3 noshade center]{HR}
+\HTMLcode[50\% 3 noshade center]{HR}
 
 %begin{latexonly}
 \begin{small}
@@ -727,20 +739,20 @@ was constructed using this feature; its \LaTeX{} source follows.
 \begin{verbatim}
 \newcommand{\myalign}{center}
 \newcommand{\mylist}{UL}
-\newcommand{\myitem}[2]{\HTML[disc]{LI}{\simpletest{#1}{#2}}}
+\newcommand{\myitem}[2]{\HTMLcode[disc]{LI}{\simpletest{#1}{#2}}}
 \newcommand{\simpletest}[2]{%
- \HTML{#1}{ a simple test of ``#2'',} using \HTML{CODE}{<#1>} .}
+ \HTMLcode{#1}{ a simple test of ``#2'',} using \HTMLcode{CODE}{<#1>} .}
 \newcommand{\tableopts}{10,border=5}
 
-\newcommand{\tablelist}[4][left]{\HTML[#1]{DIV}{
-\HTML[\tableopts]{TABLE}{
-\HTML[bottom]{CAPTION}{
+\newcommand{\tablelist}[4][left]{\HTMLcode[#1]{DIV}{
+\HTMLcode[\tableopts]{TABLE}{
+\HTMLcode[bottom]{CAPTION}{
 #3
-}\HTML{TR}{\HTML{TD}{
-\HTML{#2}{
+}\HTMLcode{TR}{\HTMLcode{TD}{
+\HTMLcode{#2}{
 #4
 }}}
-}}\HTML[all]{BR}}
+}}\HTMLcode[all]{BR}}
 
 \tablelist[\myalign]{\mylist}{%
 \textbf{A listing of the different text styles available in HTML 3.2}}{%
@@ -748,21 +760,21 @@ was constructed using this feature; its \LaTeX{} source follows.
 \myitem{I}{italics}
 \myitem{TT}{teletype-text}
 \myitem{U}{underlining}
-\HTML[circle]{LI}{\simpletest{STRIKE}{strikeout}}
+\HTMLcode[circle]{LI}{\simpletest{STRIKE}{strikeout}}
 \myitem{EM}{emphasis style}
 \myitem{STRONG}{strong style}
 \myitem{CODE}{code style}
 \myitem{CITE}{citation style}
 \myitem{DFN}{definition style}
-\HTML[square]{LI}{\simpletest{SAMP}{sample style}}
-\HTML[square]{LI}{\simpletest{KBD}{keyboard style}}
+\HTMLcode[square]{LI}{\simpletest{SAMP}{sample style}}
+\HTMLcode[square]{LI}{\simpletest{KBD}{keyboard style}}
 \myitem{VAR}{variable style}}
 \end{verbatim}
 %begin{latexonly}
 \end{small}
 %end{latexonly}
 
-\HTML[50\% 3 noshade center]{HR}
+\HTMLcode[50\% 3 noshade center]{HR}
 
 \noindent
 The above code demonstrates many aspects of the way \Lc{HTML}
@@ -776,7 +788,7 @@ commands can be used.
 Macros can be used to specify all or part of each argument.
 %
 \item [within macros: ] 
-\Lc{HTML} commands work correctly within the expansions of other macros.
+\Lc{HTMLcode} commands work correctly within the expansions of other macros.
 %
 \item [attribute values: ]
 Information within \Meta{attribs} can be specified in a very
@@ -788,7 +800,7 @@ Indeed the horizontal rules preceding and following the table were
 specified by:
 \begin{quote}
 \begin{verbatim}
-\HTML[50\% 3 noshade center]{HR}
+\HTMLcode[50\% 3 noshade center]{HR}
 \end{verbatim}
 \end{quote}
 %
@@ -1113,14 +1125,14 @@ can be used in that document as follows:
 \emph{Is the concept of
 \hyperref
                % This will be highlighted in the hypertext version
-{conditional text}			% argument #1
+{conditional text}                      % argument #1
                % This will be shown in the printed version 
                % followed by a numeric reference ...      
-{conditional text (see Section }  	% argument #2
+{conditional text (see Section }        % argument #2
                % ... followed by this text
-{ for more information)} 		% argument #3
+{ for more information)}                % argument #3
                % This is the common label 
-{sec:cond}				% argument #4
+{sec:cond}                              % argument #4
 a good idea? }
 \end{verbatim}
 %begin{latexonly}
@@ -1307,13 +1319,11 @@ Here is an example of a bibliographic entry for the original
 \begin{small}
 %end{latexonly}
 \begin{verbatim}
-@string{curiaURL="\htmladdnormallink
-{http://curia.ucc.ie/info/TeX/menu.html}
-{http://curia.ucc.ie/info/TeX/menu.html}"}
+@string{tugURL="\htmladdnormallink
+{http://www.tug.org/}{http://www.tug.org}"}
 
-@string{fernURL="\htmladdnormallink
-{http://es-sun2.fernuni-hagen.de/info2html?(latex.info)Top}
-{http://es-sun2.fernuni-hagen.de/info2html?(latex.info)Top}"}
+@string{danteURL="\htmladdnormallink
+{http://www.dante.de/}{http://www.dante.de}"}
 
 @book{lamp:latex,
 title = "LaTeX User's Guide \& Reference Manual, 2nd edition",
@@ -1321,7 +1331,7 @@ year = 1994 ,
 author = "Leslie Lamport",
 Publisher = "Addison--Wesley Publishing Company, Inc.",
 note = "Online information on {\TeX} and {\LaTeX} is available at "
- # curiaURL # " and " # fernURL }
+ # tugURL # " and " # danteURL }
 \end{verbatim}
 %begin{latexonly}
 \end{small}
@@ -1378,7 +1388,7 @@ The allowed syntax is as follows.
 \verb|}{|\Meta{opt-LaTeX}\verb|}{|\Meta{label}\verb|}|\\
 \Lc{hypercite}\verb|[cite]{|\Meta{HTML-text}\verb|}{|\Meta{LaTeX-text}%
 \verb|}{|\Meta{opt-LaTeX}\verb|}{|\Meta{label}\verb|}|\\
-\Lc{hypercite}\Meta{HTML-text}\verb|}{|\Meta{LaTeX-text}%
+\Lc{hypercite}\verb|{|\Meta{HTML-text}\verb|}{|\Meta{LaTeX-text}%
 \verb|}{|\Meta{opt-LaTeX}\verb|}{|\Meta{label}\verb|}|\medskip
 
 \Lc{hypercite}\verb|[nocite]{|\Meta{HTML-text}\verb|}{|\Meta{LaTeX-text}%
@@ -2001,7 +2011,7 @@ and enclose point coordinates by parentheses.}:
 #
 BlockDiagram.map:       
 label1  rect    288,145 397,189
-label2  rect	307,225 377,252
+label2  rect    307,225 377,252
 label2  default
 #
 #  Define map #2
@@ -2017,7 +2027,7 @@ label4  default
 In this file, comments are denoted by a \texttt{\#}-sign in column~1.
 The line beginning with \verb|+report| states that the symbolic labels
 are to be found in the \fn{labels.pl} contained in the directory
-\path{report/ }, and that its associated URL is as stated.  Any number
+\path{report/}, and that its associated URL is as stated.  Any number
 of external \fn{labels.pl} files may be so specified.
 The block diagram image has two active regions.  The first is a rectangle
 bounded by corners (288, 145) and (397, 189), while the second is a rectangle
@@ -2026,7 +2036,7 @@ can be obtained with the aid of a program such as \fn{xv}.
 If the user clicks in the first rectangle, 
 it will cause a branch to the URL associated
 with symbolic label \texttt{label1} defined in the \fn{labels.pl} file
-found in directory \path{report/ }.  The single active region in the
+found in directory \path{report/}.  The single active region in the
 flow chart figure is a circle centred at (150, 100) and passing through
 point (200, 100).  Clicking in this region will cause a branch to
 symbolic label \texttt{label3}.  Labels \texttt{label2} and \texttt{label4}
@@ -2035,7 +2045,7 @@ regions.  If any labels are not defined in any of the \fn{labels.pl}
 files mentioned, they will be interpreted as URLs without translation.
 
 The \texttt{HTML} image-maps are generated and placed in directory
-\path{report/ } by invoking the command: \verb| makemap report.map report |.%
+\path{report/} by invoking the command: \verb| makemap report.map report |.%
 \end{changebar}\par
 \index{images!image-maps|)}
 
@@ -2135,25 +2145,25 @@ The information \Meta{type} must be one of the following:
 \index{segmentation!data about labels}%
 \item[\texttt{internals}]  
 This is the default type, which need not be
-	given.  It specifies that the
-	\htmlref{internal labels}{internallabels} from the
-	designated segment are to be input and made available
-	to the current segment.  
+        given.  It specifies that the
+        \htmlref{internal labels}{internallabels} from the
+        designated segment are to be input and made available
+        to the current segment.  
 \html{\\}%
 \index{contents!from other segments}%
 \index{segmentation!data about contents}%
 \item[\texttt{contents}]  
 The table of contents information from
-	designated segment are to be made available to the
-	current segment.
+        designated segment are to be made available to the
+        current segment.
 \html{\\}%
 \index{sections!from other segments}%
 \index{segmentation!data about sections}%
 \item[\texttt{sections}]  
 Sectioning information is to be read in.
-	Note that the segment containing the table of contents
-	requires both contents and sections information
-	from all other program segments.
+        Note that the segment containing the table of contents
+        requires both contents and sections information
+        from all other program segments.
 \html{\\}%
 \index{figures!from other segments}%
 \index{list of figures}%
@@ -2254,8 +2264,16 @@ should have the color \Meta{color}~.%
 \end{changebar}%
 \end{htmllist}\end{changebar}
 
-\subsubsection{A Segmentation Example\index{segmentation!example}}%
-%\subsection{A Segmentation Example\index{segmentation!example}}%
+\cbversion{97.2}\begin{changebar}
+The use of the segmenting commands is best illustrated by the
+\htmlref{example}{sec:segmentexample} below.
+You might want to check your segmented document for consistency using
+the \htmlref{-unsegment}{unsegment} command line option.
+\end{changebar}
+
+
+\subsubsection{A Segmentation Example\index{segmentation!example}%
+  \label{sec:segmentexample}}%
 \cbversion{96.1}\begin{changebar}%
 \noindent
 The best way to illustrate document segmentation 
@@ -2281,8 +2299,8 @@ The text of \fn{report.tex} is as follows:
 
 \internal[figure]{s1}            % Include internal information
 \internal[figure]{s2}            % from children
-\internal[sections]{s1}	
-\internal[sections]{s2}	
+\internal[sections]{s1}
+\internal[sections]{s2}
 \internal[contents]{s1}
 \internal[contents]{s2}
 \internal[index]{s1}
@@ -2292,7 +2310,7 @@ The text of \fn{report.tex} is as follows:
 \title{A Segmentation Example}
 \date{\today}
 \maketitle
-\tableofcontents	
+\tableofcontents
 \listoffigures
 
 % Process the child segments:
@@ -2408,7 +2426,7 @@ It is also usual for the information page to be suppressed by specifying
 \index{segmentation!same sub-directory}%
 \cbversion{96.1f}\begin{changebar}
 In the above example, all segments are built within the same sub-directory
-\fn{report/ } of the directory containing the \LaTeX{} source files.
+\fn{report/} of the directory containing the \LaTeX{} source files.
 This is achieved simply by using the option \Cs{dir report} with each.
 All the images and \Meta{prefix}\Meta{type}\texttt{.pl} files
 are created and stored within this directory.

@@ -2,18 +2,47 @@
 
 # This variable can be set manually or by the installation script
 # to point to the DIRECTORY where the latex2html files can be found.
-$LATEX2HTMLDIR="$ENV{'L2HMODULE'}/user";# Inserted by installation script
+#$LATEX2HTMLDIR="$ENV{'L2HMODULE'}/user"; # Inserted by installation script
+$LATEX2HTMLDIR='/usr/local/share/latex2html'; # Inserted by installation script
 
-$dd = "/";  # directory delimiter character; change if necessary !
+if ($] >= 5 ) {# we have Perl 5.0 or later...
 
-# $Id$
+# All operating system depended stuff should be defined in
+# Override.pm before being used in the code.
+# See export.pm on how to do this
+# This path is set to where the Override module can be found.
+#use lib "$ENV{'L2HMODULE'}/user"; # Inserted by installation script
+use lib "/usr/local/share/latex2html"; # Inserted by installation script
+
+use Cwd;
+
+use Override qw($DEBUG getpwuid link setenv getenv symlink rename
+               getcwd syswait find_executable
+               substitute_var_val $LATEX2HTMLDIR
+               make_directory_absolute unlink $dd $envkey $image_pre);
+
+} else {
+    print "\n*** could not configure automatically using Override.pm ***";
+    print "\n*** so assuming standard Unix conventions apply ***\n";
+
+# With Perl 5 these should have been set already, within  Override.pm
+
+# The key, which delimts expressions defined in the environment
+# depends on the operating system.
+    $envkey=':' unless ($envkey);
+
+# $dd is the directory delimiter character
+    $dd = '/' unless ($dd);
+}
+
+# $Id: pstoimg_nopipes 12004 2004-02-20 13:13:29Z nxg $
 #
-# pstoimg V97.1
+# pstoimg V98.2
 #
 # originally by Nikos Drakos <nikos@cbl.leeds.ac.uk>
 # Computer Based Learning Unit, University of Leeds.
 #
-# Accompanies LaTeX2HTML Version 97.1
+# Accompanies LaTeX2HTML Version 98.1
 #
 # Script to convert an arbitrary PostScript image to a cropped GIF or PNG
 # image suitable for incorporation into HTML documents as inlined images
@@ -23,7 +52,6 @@ $dd = "/";  # directory delimiter character; change if necessary !
 # by Doug Crabill dgc@cs.purdue.edu
 #
 # Please note the following:
-
 # - The -density argument has no effect unless the 
 #   color depth (set with the -depth argument) is equal to 1.
 # - Valid arguments for -depth are 1,8, or 24.
@@ -34,11 +62,81 @@ $dd = "/";  # directory delimiter character; change if necessary !
 # Computer Based Learning Unit, University of Leeds.
 #
 # $Log$
-# Revision 1.1  2004/02/20 13:13:28  nxg
+# Revision 1.1  2004/02/20 13:13:26  nxg
 # Initial import
 #
-# Revision 1.1  1998/08/20 15:49:31  pdraper
-# *** empty log message ***
+# Revision 1.20  1998/06/21 17:28:20  MRO
+# -- Changes to make l2h run smoothly on Win95: shave.msg in pstoimg and
+#    some minor things in install-test and Override.pm
+#
+# Revision 1.19  1998/06/20 10:53:56  RRM
+#  --  removed inappropriate $TMP prefixes
+#  --  updated the help-message to say V98.2
+#  --  many cosmetic edits
+#
+# Revision 1.18  1998/06/19 10:38:49  RRM
+#  --  inhibit the GS> prompt and a "\n"
+#  --  small cosmetic change
+#
+# Revision 1.17  1998/06/18 10:29:54  RRM
+#  --  fixed the $TMP mechanism when called from the command-line
+#  --  looks for  /home/tmp  /usr/tmp  /tmp  in that order
+#  --  only removes  $TMP$outfile  when  $DESTDIR isn't $TMP
+#  --  changed the .tmp.tmp suffix to  _.tmp  (thanks, Daniel Taupin)
+#  --  some cosmetic changes to reduce the diffs with  pstoimg
+#
+# Revision 1.16  1998/06/05 00:41:45  latex2html
+# -- added changes to achieve compatibility with Win95. Major change:
+#    $dd is now '\' in Override.pm for MsWin32
+#
+# Revision 1.15  1998/05/04 12:53:11  latex2html
+#  --  renumbered to V98.2
+#  --  use  &getcwd() not  &getcwd  --- thanks Uli Wortmann
+#
+# Revision 1.14  1998/05/03 09:21:30  latex2html
+#  --  remove some unnecessary cdirectory checks
+#  --  use anti-aliasing of text, whenever Ghostscript supports it
+#  --  fix the 'bop' substitution with  -white
+# 	formerly it only worked on the 1st page
+#
+# Revision 1.13  1998/04/28 10:20:22  latex2html
+# 	implemented Fabrice Popineau's suggested changes, for Win32
+#
+#  --  more things are done from  Override.pm
+#  --  uses $white_color and $bg_color
+#  --  Win32 sets the GS_LIB environment variable
+#
+# Revision 1.12  1998/04/21 03:54:30  latex2html
+#  --  fixed error: $GIFTOOL -rgb  (Thanks Louis Emery <emery@aps.anl.gov>)
+#  --  fixed the return values from  &cp
+#  --  changed STDERR messages to STDOUT
+#  --  other cosmetic changes, to reduce diffs with  pstoimg
+#
+# Revision 1.11  1998/04/20 18:51:41  latex2html
+# added small patch by Luc Maisonobe <Luc.Maisonobe@cnes.fr>
+#
+# Revision 1.10  1998/02/26 10:41:58  latex2html
+#  --  implemented a  -white  switch, to make gray backgrounds into white
+#     otherwise transparent backgrounds need not work
+#
+# Revision 1.9  1998/02/26 02:50:37  latex2html
+#  --  removed the use of full pathnames with GS
+#  --  some small cleaning-up
+#
+# Revision 1.8  1998/02/19 11:08:40  latex2html
+#  --  some messages are only printed with $DEBUG
+#
+# Revision 1.7  1998/02/13 13:05:59  latex2html
+#  --  defined &cp to making copying file platform-independent
+#
+# Revision 1.6  1998/02/12 06:43:43  latex2html
+#  --  fixed the error when $TMP is a relative directory
+#
+# Revision 1.5  1998/02/10 02:49:00  latex2html
+# 	updated for V98.1 and the changes in pstoimg
+#
+# Revision 1.4  1997/12/10 00:45:15  RRM
+#  --  bringing the nopipes version into line with the main pstoimg script
 #
 # Revision 1.3  1997/07/03 07:30:08  RRM
 #  -   Fixed up the  $/  for the  %%Papersize search
@@ -144,7 +242,7 @@ $dd = "/";  # directory delimiter character; change if necessary !
 ###############################################################################
 $| =1;
 
-$prompt = "pstoimg:";
+$prompt = "pstoimg_nopipes:";
 
 ### pstoimg is now automatically configured by configure-pstoimg
 ### there should be no need to change any settings by hand,
@@ -166,7 +264,10 @@ $REDUCE_COLOR=$PPMQUANT . ' 256' if ($PPMQUANT);
  
 # This gives the location of the file landscap.ps
 # only needed for &choose_paper
-$GSLANDSCAPE = "$GS_LIB${dd}landscap.ps";
+# $GSLANDSCAPE = "$GS_LIB${dd}landscap.ps";
+if ($^O =~ MSWin32) {
+    $ENV{'GS_LIB'} = $GS_LIB;
+}
 
 ###############################################################################
 # Default settings
@@ -189,7 +290,7 @@ $SCALE = $ENV{'SCALE'}; # No default value
 
 $PAPERSIZE = $ENV{'PAPERSIZE'}; # No default value;
 
-$DEBUG = $ENV{'DEBUG'} || 0 unless $DEBUG ;
+$DEBUG = $ENV{'DEBUG'} || 0 unless $DEBUG;
 
 $DISCARD = $ENV{'DISCARD_PS'} || 0;
 
@@ -215,9 +316,9 @@ $TOP_JUSTIFY=0; # No right justifying by default
 
 $SHORE_UP=0; # No pixel alignment by default
 
-$BASE = $FILE = undef;
+$WHITE=0; # Don't change the background to white
 
-#$DEBUG = 1;
+$BASE = $FILE = undef;
 
 ######################################################################
 
@@ -239,6 +340,9 @@ while ($ARGV[0] =~ /^-/o) {
     elsif ("-antialias" =~ /^$_/) {
         $AALIAS=1;
         }
+    elsif ("-white" =~ /^$_/) {
+        $WHITE=1;
+        }
     elsif ("-multipage" =~ /^$_/) {
         $MULTIPLEPAGES=1;
         }
@@ -259,6 +363,9 @@ EOF
         die <<"EOF" if $OUTFILE =~ /^-/;
 $prompt Fatal Error: Outfile musn't begin with a `-'
 EOF
+        }
+    elsif ("-tmp" =~ /^$_/) {
+        $TMP = shift @ARGV;
         }
     elsif ("-depth" =~ /^$_/) {
         $DEPTH = shift @ARGV;
@@ -393,7 +500,7 @@ EOF
     elsif ("-shoreup" =~ /^$_/) {
         $SHORE_UP = shift @ARGV;
         die <<"EOF" unless $SHORE_UP =~ /^[0-9.]+d?$/;
-$prompt Fatal Error: Illegal shoreup specified: \"$SHORE_UP\"
+$prompt Fatal Error: Illegal shore-up specified: \"$SHORE_UP\"
          Value must be numeric, or <num>d
 EOF
         do {
@@ -411,8 +518,9 @@ EOF
 $FILE = $ARGV[0];
 die "$prompt Error: No input file specified\n" unless ($FILE);
 $BASE = $FILE;
-# remove a trailing suffix the same way a shell would do it
+# remove a trailing suffix and a leading path in shell-like way
 $BASE =~ s/\.[^.]*$//;
+$BASE =~ s/.*\Q$dd\E([^$dd$dd]*)$/$1/;
 die "$prompt Cannot find file $FILE: $!\n" unless (-f "$FILE");
 die "$prompt Error: No output image type specified\n" unless ($IMAGE_TYPE);
 
@@ -420,11 +528,16 @@ if (defined $SCALE) {
     $DENSITY = int($SCALE * $DENSITY + .5)
     } else { $SCALE = 1; }
 
-$aalias = ''; # DEFAULT
+# anti-alias text, if possible...
+if ($GS_LIB =~ /(ghostscript|gs).*(\d\.\d+)\b/i) {
+    $aalias = '-dTextAlphaBits=4 ' if ($2 > 4.01)
+} else {
+    $aalias = '';
+}
 
+# ...but anti-alias graphics only upon request
 if (($AALIAS)&&($GS_DEVICE =~ /p(p|n|g)+mraw/io)) {
     $GS_DEVICE = 'ppmraw';
-#    $GS_DEVICE = 'pgnmraw';
     if ($DEPTH == 1) {
         $REDUCE_COLOR= $PPMQUANT . " -floyd 256";
         $aalias = '-dTextAlphaBits=4 ';
@@ -436,58 +549,112 @@ if (($AALIAS)&&($GS_DEVICE =~ /p(p|n|g)+mraw/io)) {
     }
 } elsif ((!$AALIAS)&&($GS_DEVICE =~ /p(p|n|g)+mraw/io)) {
     if ($DEPTH == 1) {
+	$aalias = '';
         $REDUCE_COLOR=$PPMQUANT ." 2 " if ($PPMQUANT);
     } elsif ($DEPTH == 24) {
         $REDUCE_COLOR="";
     }
 }
 
+local($DESTDIR);
+
+# LaTeX2HTML may supply a directory: .../tmp/<pid>/
+if ($TMP =~ /\Q$dd\E\w*\d+\Q$dd\E$/) {
+    $BASE =~ s/\Q$TMP//;
+    $DESTDIR = &getcwd();
+    $DESTDIR .= $dd;
+    print STDOUT "\ncurrent directory is $DESTDIR ...\n" if $DEBUG;
+    print STDOUT "\ntemp directory is $TMP ...\n" if $DEBUG;
+} else { $BASE =~ s/^(\Q$dd\Etmp)\Q$dd\E/$TMP=$1;''/e }
+
+# If l2h already uses a temp dir, the input file is located within it.
+$FILE =~ /()/;# clears $`
+$FILE =~ /\Q$dd\E[^$dd$dd]*$/o;
+$TMP = $` unless $TMP; # get leading path or empty
 
 if (!($TMP)) {
-    if (-d "${dd}tmp") { $TMP = "${dd}tmp${dd}"}
-    elsif (-d "${dd}usr${dd}tmp") { $TMP = "${dd}usr${dd}tmp$dd"}
-    else { print "\nCannot find a ${dd}tmp directory" }
-} elsif ($TMP =~ /$dd$/) {
-} else { $TMP .= $dd }
+    # l2h uses no temp dir, let's see if we can find one.
+    if (( -d "${dd}home${dd}tmp")&&( -w "${dd}home${dd}tmp")) {
+	$TMP = "${dd}home${dd}tmp${dd}"
+    } elsif ((-d "${dd}usr${dd}tmp")&&(-w "${dd}usr${dd}tmp")) {
+	$TMP = "${dd}usr${dd}tmp$dd"
+    } elsif (( -d "${dd}tmp")&&( -w "${dd}tmp")) {
+	$TMP = "${dd}tmp${dd}"
+    } else {
+	print "\nCannot find a ${dd}tmp directory, using current..."
+    }
+} elsif ($TMP =~ /\Q$dd\E$/) {
+} else { $TMP .= $dd; }
 
-local($DESTDIR);
-if ($TMP) {
-    open(SO, ">&STDOUT");
-    open(STDOUT, ">${TMP}foo$$");
-    select(STDOUT); $| = 1;
-    system("pwd");
-    close(STDOUT);
-    open(STDOUT, ">&SO");
-    open(FOO,"<${TMP}foo$$");
-    $DESTDIR = <FOO>;
-    close(FOO);
-    unlink "${TMP}foo$$";
-    chop $DESTDIR;
-    $DESTDIR .= $dd;
-    print STDERR "\ncurrent directory is $DESTDIR ...\n";
+
+#RRM: The checks commented below should be unnecessary using LaTeX2HTML.
+# They were intended for using  pstoimg  as stand-alone.
+if ($TMP && !($DESTDIR)) {
+#   open(SO, ">&STDOUT");
+#   open(STDOUT, ">${TMP}foo$$");
+#   select(STDOUT); $| = 1;
+#   system("pwd");
+#   close(STDOUT);
+#   open(STDOUT, ">&SO");
+#   open(FOO,"<${TMP}foo$$");
+#   $DESTDIR = <FOO>;
+#   close(FOO);
+#   unlink "${TMP}foo$$";
+#   chop $DESTDIR;
+#   $DESTDIR .= $dd;
+    $DESTDIR = &getcwd() . $dd;
+    print STDOUT "\ncurrent directory is $DESTDIR ..." if $DEBUG;
+    print STDOUT "\ntemp directory is $TMP ...\n" if $DEBUG;
 }
-if (!(($TMP)&&($DESTDIR))) {  $TMP = '' }
+if (!(($TMP)&&($DESTDIR))) { $TMP = '' }
+
+
+sub cp {                        # Marcus Hennecke  6/3/96
+    local($src, $dest) = @_;
+    return 1 unless (-f $src);
+    if ( -d $dest ) {
+        $src =~ /[^$dd$dd]*$/o;
+        $dest .= $dd . $&;
+        $dest =~ s|(\Q$dd\E){2,}|$dd|g;
+    }
+    open(IN, $src) || return(); binmode(IN);
+    open(OUT, ">$dest") || return(); binmode(OUT);
+    local($/) = undef;
+    print OUT <IN>;
+    close(OUT); close(IN); 1;
+}
+
 
 # Main program
 
 $outfile = $OUTFILE || "$BASE.$IMAGE_TYPE";
 open(STDERR, ">${dd}dev${dd}null") unless $DEBUG;
 
+$gs_input = $FILE;
+if ($TMP && $DESTDIR &&(-f "$TMP/$BASE.ps")) {
+    print STDOUT "...switching to $TMP\n" unless  chdir("$TMP");
+    local($extn); if ($FILE =~ /\.(\w+)$/) {$extn = $1};
+    $gs_input = "$BASE.$extn";
+    undef $extn;
+}
+
 # Invoke Ghostscript
 &convert;
 
-if (-f "$TMP$BASE.ppm") {
-    # switch to a /tmp directory, if there is one
-    if (($TMP)&&($DESTDIR)) {
-       print STDERR "...switching to $TMP\n" unless  chdir("$TMP");
+if ((-f "$BASE.ppm")||(-f "$TMP$BASE.ppm")) {
+    # switch to a /tmp directory, if there is one and it's not current
+    if ($TMP && $DESTDIR) {
+	print STDOUT "...switching to $TMP\n"
+	    unless ((-f "$BASE.ppm")||! chdir("$TMP"));
     } else { $TMP = '' }
     &crop_scale_etc("$BASE.ppm", $outfile);
     ++$done if(-s $outfile);
-    if ($TMP) {
-        if (system("cp $outfile $DESTDIR$outfile")) {
-            print "\nOutput image is in file: $TMP$outfile\n";
-        } else { unlink $outfile }
-#        chdir("$DESTDIR");
+    if ( $TMP && $DESTDIR && !($TMP eq $DESTDIR)) {
+	if ( &cp("$outfile", "$DESTDIR$outfile")) {
+	    unlink "$outfile" unless $DEBUG;
+	} else {
+	    print STDOUT "\nOutput image is in file: $TMP$outfile\n";
+	}
     }
 } else {
     @list = <$TMP$BASE.[1-9]*.ppm>;
@@ -501,7 +668,7 @@ if (-f "$TMP$BASE.ppm") {
         }
     }
     else {
-        print "$prompt Couldn't find ppm output of $FILE\n";
+        print STDERR "$prompt Couldn't find ppm output of $FILE\n";
     }
 }
 &cleanup($BASE);
@@ -511,22 +678,21 @@ exit(($done) ? 0 : 1 );
 sub crop_scale_etc {
     local($in, $out) = @_;
     local($tmp) = $in . ".tmp";
-    local($_,$cmd,$type,$width,$height,$just,$overfull);
+    local($_,$cmd,$type,$width,$height,$just);
     open(STDERR, ">${dd}dev${dd}null") unless $DEBUG;
 
-    if($RIGHT_JUSTIFY || $TOP_JUSTIFY || $CENTER || $EXTRA_CROP || $SHORE_UP) {
-        # Crop the image right away
+    if ($RIGHT_JUSTIFY || $TOP_JUSTIFY || $CENTER || $EXTRA_CROP || $SHORE_UP) {
+	# Crop the image right away
 	$cmd = "$PNMCROP < $in ";
 	    print "Running $cmd > $tmp\n" if $DEBUG;		# no_pipes
 	if (system("$cmd > $tmp")) {
-	    $overfull = 1;
 	    &cleanup($BASE);
 	    die ("Cropping failed; image too large?")
 	}
-	rename ($tmp,$in);	                                # no_pipes
-	$cmd ="";      					        # no_pipes
+	rename ($tmp,$in);	                                	# no_pipes
+	$cmd ="";      					# no_pipes
 
-        # RRM: Remove justification bars
+	# RRM: Remove justification bars
 #	$cmd .= "| $PNMCROP -r | $PNMCROP -l " if($EXTRA_CROP =~ /v/i );
 	$EXTRA_CROP =~ s/h/bt/g;
 	$EXTRA_CROP =~ s/v/rl/g; 
@@ -538,82 +704,87 @@ sub crop_scale_etc {
 		$cmd = "$PNMCROP < $in " if ($edge =~ /a/);	# no_pipes
 		print "Running $cmd > $tmp 2>&-\n" if $DEBUG;	# no_pipes
 		rename ($tmp,$in) unless system("$cmd > $tmp 2>&-");	# no_pipes
-       	    } elsif ($edge =~ /s/) {
+	    } elsif ($edge =~ /s/) {
 		#RRM: shave at most 1 row of white from the bottom
 		$cmd = "$PNMCROP -bot < $in ";
-                print "Running $cmd > $tmp 2>shave.msg\n" if $DEBUG;
-                local($shave) = system("$cmd > $tmp 2>shave.msg");
+		# MRO: This STDERR handling is portable on Win95
+		open(SAVEERR,'>&STDERR'); # remember STDERR handle
+		open(STDERR,'>shave.msg'); # redirect STDERR to file
+		print "Running $cmd > $tmp (STDERR redirected)\n" if $DEBUG;
+		local($shave) = system("$cmd > $tmp");
+		close(STDERR); # close file
+		open(STDERR,'>&SAVEERR'); # restore previous setting of STDERR
 		if (!$shave) {
-		    open (MSG,"<shave.msg");
-		    while (<MSG>) {
-			last if (/rows off the bottom/);
-		    }
-		    rename ($tmp,$in) unless (/rows off the bottom/);
-		    close (MSG);
+		    local $/ = undef; # clear record separator
+		    open (MSG,'<shave.msg');
+		    local $msg = <MSG>;
+		    close(MSG);
+		    print "Message on STDERR was:\n$msg" if($DEBUG);
+		    rename ($tmp,$in) unless ($msg =~ /rows off the bottom/);
 		}
-		unlink ("shave.msg");
+		unlink ('shave.msg');
 	    }
-	    $cmd = "";
+	    $cmd = '';
 	}
 #	if ($EXTRA_CROP =~ /v/i ) {
-#            $cmd = "$PNMCROP -r < $in ";			# no_pipes
-#            print "Running $cmd > $tmp\n" if $DEBUG;		# no_pipes
-#            rename ($tmp,$in) unless system("$cmd > $tmp");	# no_pipes
-#            $cmd = "$PNMCROP -l < $in ";			# no_pipes
-#            print "Running $cmd > $tmp\n" if $DEBUG;		# no_pipes
-#            rename ($tmp,$in) unless system("$cmd > $tmp");	# no_pipes
-#	    $cmd ="";						# no_pipes
+#	    $cmd = "$PNMCROP -r < $in ";			# no_pipes
+#	    print "Running $cmd > $tmp\n" if $DEBUG;		# no_pipes
+#	    rename ($tmp,$in) unless system("$cmd > $tmp");	# no_pipes
+#	    $cmd = "$PNMCROP -l < $in ";			# no_pipes
+#	    print "Running $cmd > $tmp\n" if $DEBUG;		# no_pipes
+#	    rename ($tmp,$in) unless system("$cmd > $tmp");	# no_pipes
+#	    $cmd ="";					# no_pipes
 #	}
-#        if($EXTRA_CROP =~ /(h|b)/i) {
+#	if ($EXTRA_CROP =~ /(h|b)/i) {
 #	    $cmd .= "| $PNMCROP -bot ";
-#		$cmd = "$PNMCROP -bot  < $in ";			# no_pipes
-#		print "Running $cmd > $tmp\n" if $DEBUG;	# no_pipes
-#		rename ($tmp,$in) unless system("$cmd > $tmp");	# no_pipes
-#		$cmd ="";					# no_pipes
+#	    $cmd = "$PNMCROP -bot  < $in ";			# no_pipes
+#	    print "Running $cmd > $tmp\n" if $DEBUG;		# no_pipes
+#	    rename ($tmp,$in) unless system("$cmd > $tmp");	# no_pipes
+#	    $cmd ="";					# no_pipes
 #	    $cmd .= "| $PNMCROP -top " if($EXTRA_CROP =~ /h/i );
-#	if($EXTRA_CROP =~ /h/i ) {				# no_pipes
-#		$cmd = "$PNMCROP -top < $in ";			# no_pipes
-#		print "Running $cmd > $tmp\n" if $DEBUG;	# no_pipes
-#		rename ($tmp,$in) unless system("$cmd > $tmp");	# no_pipes
-#		$cmd ="";					# no_pipes
+#	if ($EXTRA_CROP =~ /h/i ) {				# no_pipes
+#	    $cmd = "$PNMCROP -top < $in ";			# no_pipes
+#	    print "Running $cmd > $tmp\n" if $DEBUG;		# no_pipes
+#	    rename ($tmp,$in) unless system("$cmd > $tmp");	# no_pipes
+#	    $cmd ="";					# no_pipes
 #        }
 #    }
 #	$cmd .= "| $PNMFLIP -$GS_UNROTATE " if($GS_ROTATE);
-	if($GS_ROTATE) {
+	if ($GS_ROTATE) {
 	    $cmd = "$PNMFLIP -$GS_UNROTATE  < $in ";		# no_pipes
 	    print "Running $cmd > $tmp\n" if $DEBUG;		# no_pipes
 	    rename ($tmp,$in) unless system("$cmd > $tmp");	# no_pipes
-	    $cmd ="";						# no_pipes
+	    $cmd ="";					# no_pipes
 	}
 #        $cmd .= "| $PNMFLIP -$FLIP " if $FLIP;
-	if($FLIP) {
-	    $cmd = "$PNMFLIP -$FLIP  < $in ";		 # no_pipes
+	if ($FLIP) {
+	    $cmd = "$PNMFLIP -$FLIP  < $in ";		# no_pipes
 	    print "Running $cmd > $tmp\n" if $DEBUG;		# no_pipes
 	    rename ($tmp,$in) unless system("$cmd > $tmp");	# no_pipes
-	    $cmd ="";						# no_pipes
+	    $cmd ="";					# no_pipes
 	}
 #	print "Running $cmd > $tmp\n" if $DEBUG;
 #	rename ($tmp,$in) unless system("$cmd > $tmp");
-        $cmd="";
+	$cmd="";
     } else {
-        # Start command pipe
+	# Start command pipe
 	$cmd = "$PNMCROP < $in ";
 	    print "Running $cmd > $tmp\n" if $DEBUG;		# no_pipes
 	    rename ($tmp,$in) unless system("$cmd > $tmp");	# no_pipes
-	    $cmd ="";						# no_pipes
+	    $cmd ="";					# no_pipes
 #        $cmd .= "| $PNMFLIP -$GS_UNROTATE " if($GS_ROTATE);
-	if($GS_ROTATE) {
+	if ($GS_ROTATE) {
 	    $cmd = "$PNMFLIP -$GS_UNROTATE  < $in ";		# no_pipes
 	    print "Running $cmd > $tmp\n" if $DEBUG;		# no_pipes
 	    rename ($tmp,$in) unless system("$cmd > $tmp");	# no_pipes
-	    $cmd ="";						# no_pipes
+	    $cmd ="";					# no_pipes
 	}
 #        $cmd .= "| $PNMFLIP -$FLIP " if($FLIP);
-	if($FLIP) {
-	    $cmd = "$PNMFLIP -$FLIP  < $in ";			# no_pipes
+	if ($FLIP) {
+	    $cmd = "$PNMFLIP -$FLIP  < $in ";		# no_pipes
 	    print "Running $cmd > $tmp\n" if $DEBUG;		# no_pipes
 	    rename ($tmp,$in) unless system("$cmd > $tmp");	# no_pipes
-	    $cmd ="";						# no_pipes
+	    $cmd ="";					# no_pipes
 	}
     }
     # Get bitmap type and dimensions
@@ -621,140 +792,142 @@ sub crop_scale_etc {
     s/(P[BGP]M)[^0-9]*(\d+)\s*by\s*(\d+)/$type=$1;$width=$2;$height=$3/eo;
     print "Image is $type, ${width}x$height\n" if $DEBUG;
 
-    if($RIGHT_JUSTIFY || $CENTER) {
-        if($RIGHT_JUSTIFY) {
+    if ($RIGHT_JUSTIFY || $CENTER) {
+	if ($RIGHT_JUSTIFY) {
 	    $just=int(($RIGHT_JUSTIFY-$width));
-        } else { # CENTER
+	} else { # CENTER
 	    $just=int(($CENTER-$width) / 2);
-        }
-        # Start new command pipe
-#        $cmd = "$PBMMAKE -white $just 1 | $PNMCAT -white -lr - $in " if ($just > 0);
-	if($just > 0) {
-	    local($tmp2) = $tmp.".tmp";				# no_pipes
+	}
+	# Start new command pipe
+#	$cmd = "$PBMMAKE -white $just 1 | $PNMCAT -white -lr - $in " if ($just > 0);
+	if ($just > 0) {
+	    local($tmp2) = $tmp.".tmp";			# no_pipes
 	    $cmd = "$PBMMAKE -white $just 1  < $in ";		# no_pipes
 	    print "Running $cmd > $tmp2\n" if $DEBUG;		# no_pipes
 	    system("$cmd > $tmp2");				# no_pipes
 	    $cmd = "$PNMCAT -white -lr $tmp2 $in ";		# no_pipes
 	    print "Running $cmd > $tmp\n" if $DEBUG;		# no_pipes
 	    rename ($tmp,$in) unless system("$cmd > $tmp");	# no_pipes
-	    $cmd ="";						# no_pipes
+	    $cmd ="";					# no_pipes
 	}
-        $width += $just;
+	$width += $just;
     }
 
-    if($TOP_JUSTIFY) {
-        if($TOP_JUSTIFY =~ /^x([0-9.]+)/io) {
-            $just = $1 * $height;
-        } else { $just = $TOP_JUSTIFY - $height }
-        $just = int($just + 0.99); # Assumes $adjust is positive!
-        if($just > 0) {
-            if($cmd) {
-                # only if also right-justify is active
-                print "Running $cmd > $tmp\n" if $DEBUG;
-                rename ($tmp,$in) unless system("$cmd > $tmp");
-            }
+    if ($TOP_JUSTIFY) {
+	if ($TOP_JUSTIFY =~ /^x([0-9.]+)/io) {
+	    $just = $1 * $height;
+	} else { $just = $TOP_JUSTIFY - $height }
+	$just = int($just + 0.99); # Assumes $adjust is positive!
+	if ($just > 0) {
+	    if ($cmd) {
+		# only if also right-justify is active
+		print "Running $cmd > $tmp\n" if $DEBUG;
+		rename ($tmp,$in) unless system("$cmd > $tmp");
+	    }
 #	    $cmd="$PBMMAKE -white 1 $just | $PNMCAT -white -tb $in - ";
-	    local($tmp2) = $tmp.".tmp";				# no_pipes
+	    local($tmp2) = $tmp.".tmp";			# no_pipes
 	    $cmd = "$PBMMAKE -white 1 $just  < $in ";		# no_pipes
 	    print "Running $cmd > $tmp2\n" if $DEBUG;		# no_pipes
 	    system("$cmd > $tmp2");				# no_pipes
 	    $cmd = "$PNMCAT -white -tb $in $tmp2 ";		# no_pipes
 	    print "Running $cmd > $tmp\n" if $DEBUG;		# no_pipes
 	    rename ($tmp,$in) unless system("$cmd > $tmp");	# no_pipes
-	    $cmd ="";						# no_pipes
+	    $cmd ="";					# no_pipes
 	}
 	$height += $just;
     }
     if ($SHORE_UP) { # RRM: make height and width an exact multiple of $SHORE_UP
 	if ($cmd) {
-            print "Running $cmd > $tmp\n" if $DEBUG;
-            rename ($tmp,$in) unless system("$cmd > $tmp");
+	    print "Running $cmd > $tmp\n" if $DEBUG;
+	    rename ($tmp,$in) unless system("$cmd > $tmp");
 	}
-        # We have a correct SHORE_UP value
+	# We have a correct SHORE_UP value
 	local($hextra) = 0;
-        $hextra = 1 if ($SHORE_UP =~ s/d//);  # when image needs `depth'
-        local($extra) = int(int($height/$SHORE_UP + 0.9)*$SHORE_UP) - $height;
+	$hextra = 1 if ($SHORE_UP =~ s/d//);  # when image needs `depth'
+	local($extra) = int(int($height/$SHORE_UP + 0.9)*$SHORE_UP) - $height;
 	local($cnt)=0;
 	while (int(($height+$extra)/$SHORE_UP) - ($height+$extra)/$SHORE_UP < 0) 
 	    { $extra++; $cnt++; last if ($cnt>5) }
-        if($extra) {
-	    local($tmp2) = $tmp.".tmp";				# no_pipes
+	if ($extra) {
+	    local($tmp2) = $tmp;				# no_pipes
+	    $tmp2 =~ s/(\.)/_$1/;				# no_pipes
 	    if ($hextra) {     # place half the extra space underneath
 		$hextra = int($extra/2);
 		$extra -= $hextra;
-#	        $cmd="$PBMMAKE -white 1 $hextra | $PNMCAT -white -tb $in - ";
-	        $cmd = "$PBMMAKE -white 1 $hextra  < $in ";	# no_pipes
-	        print "Running $cmd > $tmp2\n" if $DEBUG;	# no_pipes
-	        system("$cmd > $tmp2");				# no_pipes
-	        $cmd = "$PNMCAT -white -tb $in $tmp2 ";		# no_pipes
-                print "Running $cmd > $tmp\n" if $DEBUG;
-                rename ($tmp,$in) unless system("$cmd > $tmp");
+#		$cmd="$PBMMAKE -white 1 $hextra | $PNMCAT -white -tb $in - ";
+		$cmd = "$PBMMAKE -white 1 $hextra  < $in ";	# no_pipes
+		print "Running $cmd > $tmp2\n" if $DEBUG;	# no_pipes
+		system("$cmd > $tmp2");			# no_pipes
+		$cmd = "$PNMCAT -white -tb $in $tmp2 ";	# no_pipes
+		print "Running $cmd > $tmp\n" if $DEBUG;
+		rename ($tmp,$in) unless system("$cmd > $tmp");
 	    }
 #	    $cmd="$PBMMAKE -white 1 $extra | $PNMCAT -white -tb - $in ";
-	    $cmd = "$PBMMAKE -white 1 $extra  < $in ";		# no_pipes
+	    $cmd = "$PBMMAKE -white 1 $extra  < $in ";	# no_pipes
 	    print "Running $cmd > $tmp2\n" if $DEBUG;		# no_pipes
 	    system("$cmd > $tmp2");				# no_pipes
 	    $cmd = "$PNMCAT -white -tb $tmp2 $in ";		# no_pipes
-            print "Running $cmd > $tmp\n" if $DEBUG;
-            rename ($tmp,$in) unless system("$cmd > $tmp");
-	    $cmd ="";						# no_pipes
-        }
-        $extra = int(int($width/$SHORE_UP+0.9)*$SHORE_UP) - $width;
-        local($cnt)=0;
-        while (int(($width+$extra)/$SHORE_UP) - ($width+$extra)/$SHORE_UP < 0)
-            { $extra++; $cnt++; last if ($cnt>5) }
-        if($extra) {
-            local($rextra) = int($extra/2);
-            $extra -= $rextra;
-            if($extra) {
+	    print "Running $cmd > $tmp\n" if $DEBUG;
+	    rename ($tmp,$in) unless system("$cmd > $tmp");
+	    $cmd ="";					# no_pipes
+	}
+	$extra = int(int($width/$SHORE_UP+0.9)*$SHORE_UP) - $width;
+	local($cnt)=0;
+	while (int(($width+$extra)/$SHORE_UP) - ($width+$extra)/$SHORE_UP < 0)
+	    { $extra++; $cnt++; last if ($cnt>5) }
+	if ($extra) {
+	    local($rextra) = int($extra/2);
+	    $extra -= $rextra;
+	    if ($extra) {
 #		$cmd="$PBMMAKE -white $extra 1 | $PNMCAT -white -lr - $in ";
 		local($tmp2) = $tmp.".tmp";			# no_pipes
 		$cmd = "$PBMMAKE -white $extra 1  < $in ";	# no_pipes
 		print "Running $cmd > $tmp2\n" if $DEBUG;	# no_pipes
-		system("$cmd > $tmp2");				# no_pipes
-		$cmd = "$PNMCAT -white -lr $tmp2 $in ";		# no_pipes
-                print "Running $cmd > $tmp\n" if $DEBUG;
-                rename ($tmp,$in) unless system("$cmd > $tmp");
+		system("$cmd > $tmp2");			# no_pipes
+		$cmd = "$PNMCAT -white -lr $tmp2 $in ";	# no_pipes
+		print "Running $cmd > $tmp\n" if $DEBUG;
+		rename ($tmp,$in) unless system("$cmd > $tmp");
 		$cmd ="";					# no_pipes
 	    }
-            if($rextra) {
+	    if ($rextra) {
 #		$cmd="$PBMMAKE -white $rextra 1 | $PNMCAT -white -lr $in - ";
 		local($tmp2) = $tmp.".tmp";			# no_pipes
 		$cmd = "$PBMMAKE -white $rextra 1  < $in ";	# no_pipes
 		print "Running $cmd > $tmp2\n" if $DEBUG;	# no_pipes
-		system("$cmd > $tmp2");				# no_pipes
-		$cmd = "$PNMCAT -white -lr $in $tmp2 ";		# no_pipes
-                print "Running $cmd > $tmp\n" if $DEBUG;
-                rename ($tmp,$in) unless system("$cmd > $tmp");
+		system("$cmd > $tmp2");			# no_pipes
+		$cmd = "$PNMCAT -white -lr $in $tmp2 ";	# no_pipes
+		print "Running $cmd > $tmp\n" if $DEBUG;
+		rename ($tmp,$in) unless system("$cmd > $tmp");
 		$cmd ="";					# no_pipes
 	    }
 	}
-        $cmd = '';
+	$cmd = '';
     }
 
-    if($IMAGE_TYPE eq "gif") { $PNMTOIMG = $PPMTOGIF; }
-    if($IMAGE_TYPE eq "png") { $PNMTOIMG = $PNMTOPNG; }
+    if ($IMAGE_TYPE eq "gif") { $PNMTOIMG = $PPMTOGIF; }
+    if ($IMAGE_TYPE eq "png") { $PNMTOIMG = $PNMTOPNG; }
 
-    if($INTERLACE) { # use netpbm if possible
-        do {
-            $PNMTOIMG .= " -interlace";
-            $INTERLACE=0;
+    if ($INTERLACE) { # use netpbm if possible
+	do {
+	    $PNMTOIMG .= " -interlace" unless ($height < 8);
+	    $INTERLACE=0;
 	} unless ($IMAGE_TYPE eq "gif" && 
-                $HOWTO_INTERLACE_GIF !~ /netpbm/io);
+	    $HOWTO_INTERLACE_GIF !~ /netpbm/io);
     }
-    if($TRANSPARENT) { # use netpbm if possible
-        do {
-            $PNMTOIMG .= " -trans '#ffffff'";
-            $TRANSPARENT=0;
+    if ($TRANSPARENT) { # use netpbm if possible
+	do {
+#	    $PNMTOIMG .= " -trans '#ffffff'";
+	    $PNMTOIMG .= " -trans $white_color";
+	    $TRANSPARENT=0;
 	} unless ($IMAGE_TYPE eq "gif" &&
-                $HOWTO_TRANSPARENT_GIF !~ /netpbm/io);
+	    $HOWTO_TRANSPARENT_GIF !~ /netpbm/io);
     }
     # run ppmquant only on color/gray images
-    if($cmd) {
-	# This shouldn't happen without pipes		# no_pipes
-        $cmd .= "| $REDUCE_COLOR "
+    if ($cmd) {
+	# This shouldn't happen without pipes	# no_pipes
+	$cmd .= "| $REDUCE_COLOR "
 	    if(($type =~ /(ppm|pgm)/io)&&($REDUCE_COLOR));
-        $cmd .= "| $PNMTOIMG ";
+	$cmd .= "| $PNMTOIMG ";
 	$cmd ="";					# no_pipes
     } elsif (( $type =~ /(ppm|pgm)/io)&&($REDUCE_COLOR)) {
 #	$cmd = "$REDUCE_COLOR < $in | $PNMTOIMG ";
@@ -766,28 +939,30 @@ sub crop_scale_etc {
 	$cmd = "$PNMTOIMG < $in ";
     }
     print "Running $cmd > $out\n" if $DEBUG;
-    if(system("$cmd > $out")) {
-        print "$prompt Conversion failed: $!\n";
-        unlink $out unless $DEBUG;
+    if (system("$cmd > $out")) {
+	print "$prompt Conversion failed: $!\n";
+	unlink $out unless $DEBUG;
     } else {
-        print "Writing $out\n";
-        if($IMAGE_TYPE =~ /^gif/ &&
-            $INTERLACE && $HOWTO_INTERLACE_GIF =~ /giftool/i) {
-            $cmd = "$GIFTOOL -B -i ";
-            if($TRANSPARENT) {
-                $cmd .= "-rgb ff,ff,ff ";
-                $TRANSPARENT = 0;
+	print "Writing $out\n";
+	if ($IMAGE_TYPE =~ /^gif/ &&
+	    $INTERLACE && $HOWTO_INTERLACE_GIF =~ /giftool/i) {
+	    $cmd = "$GIFTOOL -B -i ";
+	    if ($TRANSPARENT) {
+		$cmd .= "-rgb ff,ff,ff ";
+		$TRANSPARENT = 0;
 	    }
-            print "Running $cmd $out\n" if $DEBUG;
-            system("$cmd $out");
+	    print "Running $cmd $out\n" if $DEBUG;
+	    system("$cmd $out");
 	}
-        if($IMAGE_TYPE =~ /^gif/ && $TRANSPARENT) {
-            if($HOWTO_TRANSPARENT_GIF =~ /giftrans/i) {
-                print "Running $GIFTRANS -t '#ffffff' -B '#bfbfbf' $out > $tmp\n" if $DEBUG;
-		rename($tmp,$out) unless system("$GIFTRANS -t '#ffffff' -B '#bfbfbf' $out > $tmp");
+	if ($IMAGE_TYPE =~ /^gif/ && $TRANSPARENT) {
+	    if ($HOWTO_TRANSPARENT_GIF =~ /giftrans/i) {
+#		print "Running $GIFTRANS -t '#ffffff' -B '#bfbfbf' $out > $tmp\n" if $DEBUG;
+		print "Running $GIFTRANS -t $white_color -B $bg_color $out > $tmp\n" if $DEBUG;
+		rename($tmp,$out) unless system("$GIFTRANS -t $white_color -B $bg_color $out > $tmp");
+#		rename($tmp,$out) unless system("$GIFTRANS -t '#ffffff' -B '#bfbfbf' $out > $tmp");
 	    } elsif ($HOWTO_TRANSPARENT_GIF =~ /giftool/i) {
-                print "Running $GIFTOOL -B -rgb ff,ff,ff $out > $tmp\n" if $DEBUG;
-                rename($tmp,$out) unless system("$GIFTOOL -B rgb ff,ff,ff $out > $tmp");
+		print "Running $GIFTOOL -B -rgb ff,ff,ff $out > $tmp\n" if $DEBUG;
+		rename($tmp,$out) unless system("$GIFTOOL -B -rgb ff,ff,ff $out > $tmp");
 	    }
 	}
     }
@@ -802,42 +977,41 @@ sub convert {
     local($epsf,$have_geometry) = (0,0);
 
     # Parse postscript file for information
-    open (PS, "$FILE");
+    open (PS, "$gs_input");
     $_ = <PS>;
     if ( /^%!.*EPSF/ ) {
-        # we're in a EPSF file
-        $epsf = 1;
+	# we're in a EPSF file
+	$epsf = 1;
     }
- 
     if ($GEOMETRY || $epsf) {
-        while (<PS>) {
-            # Look for bounding box comment
-            if ($epsf == 1 &&
-                /^%%BoundingBox:\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)/) {
-                $bbx = 0 - $1;    $bby = 0 - $2;
-                $bbw = $3 + $bbx; $bbh = $4 + $bby;
-                if(($bbw > 0) && ($bbh > 0)) { # we have a valid bounding box
-                    print "$prompt EPSF dimensions are ${bbw}x$bbh\n" if $DEBUG;
-                    # this overrides the -geometry switch
-                    if ( $DENSITY ) { # scale the output
-                        local($scale) = $DENSITY/72;
-                        $bbw = int($bbw * $scale + 0.99);
-                        $bbh = int($bbh * $scale + 0.99);
+	while (<PS>) {
+	    # Look for bounding box comment
+	    if ($epsf == 1 &&
+		/^%%BoundingBox:\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)/) {
+		$bbx = 0 - $1;    $bby = 0 - $2;
+		$bbw = $3 + $bbx; $bbh = $4 + $bby;
+		if(($bbw > 0) && ($bbh > 0)) { # we have a valid bounding box
+		    print "$prompt EPSF dimensions are ${bbw}x$bbh\n" if $DEBUG;
+		    # this overrides the -geometry switch
+		    if ( $DENSITY ) { # scale the output
+			local($scale) = $DENSITY/72;
+			$bbw = int($bbw * $scale + 0.99);
+			$bbh = int($bbh * $scale + 0.99);
 		    }
-                    $size = "-g${bbw}x${bbh}";
-                    $have_geometry = 1;
-                    last;
+		    $size = "-g${bbw}x${bbh}";
+		    $have_geometry = 1;
+		    last;
 		} else {  # i.e. when dvips gives an empty box
 		    $epsf = 2; # don't look for EPSF stuff any further
 		}
 	    }
-            # Look for page size information
-            elsif ($GEOMETRY && /TeXDict\s+begin\s+(\d+)\s+(\d+)\s+/) {
-                $PAGE_WIDTH  = int($1 / 65536*72/72.27 +.5);
-                $PAGE_HEIGHT = int($2 / 65536*72/72.27 +.5);
-                print "$prompt Page dimensions are ${PAGE_WIDTH}x$PAGE_HEIGHT\n" if $DEBUG;
-                # we don't have to look further for EPSF stuff at this point
-                last;
+	    # Look for page size information
+	    elsif ($GEOMETRY && /TeXDict\s+begin\s+(\d+)\s+(\d+)\s+/) {
+		$PAGE_WIDTH  = int($1 / 65536*72/72.27 +.5);
+		$PAGE_HEIGHT = int($2 / 65536*72/72.27 +.5);
+		print "$prompt Page dimensions are ${PAGE_WIDTH}x$PAGE_HEIGHT\n" if $DEBUG;
+		# we don't have to look further for EPSF stuff at this point
+		last;
 	    } elsif (!$GEOMETRY && (/^%%EndComments/ || --$max_lines == 0)) {
 		last;
 	    }
@@ -851,72 +1025,94 @@ sub convert {
 	$GEOMETRY =~ /\s*([0-9.]+)x([0-9.]+)/;
 	$bbw = $1 + 10;  # allow for the side-bars
 	$bbh = $2;
-#        $bby = int($bbh - $bby + 5); # allow small margin for error
 	$bby = int($bbh - $bby + 8); # allow small margin for error
 	$bbx = int(-$bbx + 5);       # allow small margin for error
 	if ( $DENSITY ) {
-            local($scale) = $DENSITY/72;
-            $bbw = int($scale * $bbw + .99);
-            $bbh = int($scale * $bbh + .99);
-            }
+	    local($scale) = $DENSITY/72;
+	    $bbw = int($scale * $bbw + .99);
+	    $bbh = int($scale * $bbh + .99);
+	}
 	$bbw += 10;  # add a 5pt margin for safety
 	$bbh += 40;  # add a 20pt margin for safety
 	$GEOMETRY = $bbw . "x" . $bbh;
-        # use this if -g option works properly...
+	# use this if -g option works properly...
 	$size = "-g$GEOMETRY ";
-        # RRM: use these next lines if -g option is broken
-        # $size = "-sPAPERSIZE=". &choose_paper($GEOMETRY);
+	# RRM: use these next lines if -g option is broken
+	# $size = "-sPAPERSIZE=". &choose_paper($GEOMETRY);
 	# $have_geometry = 0;
     }
     if ($have_geometry) {
 	# Remove any Postscript commands concerning Papersize if -g switch is used
 	# thanks to  Axel Ramge for identifying the problem and for this code
-	open(PS,"<$FILE");
+	$* = 1;    # Multiline matching ON
+	$saveRS = $/; undef $/;
+	open(PS,"<$gs_input");
 	$_ = <PS>;
-	$saveRS = $/; undef $/; $* = 1;
-	local($change) = s/\n%%BeginPaperSize.*%%EndPaperSize.*?\n//;
+	local($change) = s/\n%%BeginPaperSize.*%%EndPaperSize.*?\n//s;
 	close(PS);
 	if ($change) {
-	    open(PS,">$FILE");
+	    open(PS,">$gs_input");
 	    do {
 		close(PS); $* = 0; $/ = $saveRS;
-		die "\n\n***file $FILE contains %%Papersize comments"
-		    . "\n these must be removed else GS will fail.\n";
+		die "\n\n***file $gs_input  contains %%Papersize comments"
+		    . "\nany contents of these must be removed else GS will fail.\n";
 	    } unless print PS;
-	    close(PS); $/ = $saveRS; $* = 0;
+	    close(PS);
 	}
+	$/ = $saveRS; $* = 0;    # Multiline matching OFF
+    }
+    if ($WHITE) {
+	$* = 1;    # Multiline matching ON
+	$saveRS = $/; undef $/;
+	open(PS,"<$gs_input");
+	$_ = <PS>;
+	# change the color-setting command just after the  bop  operator
+	local($bop_str) = " TeXcolorgray clippath fill grestore";
+	local($change)=s/(\n\d+ \d+ bop gsave) \d*\.\d+$bop_str/$1 1$bop_str/s;
+
+	close(PS);
+	if ($change) {
+	    open(PS,">$gs_input");
+	    do {
+		close(PS); $* = 0; $/ = $saveRS;
+		die "\n\n*** image $outfile may have gray background, change to white failed\n"
+	    } unless print PS;
+	    close(PS);
+	}
+	$/ = $saveRS; $* = 0;    # Multiline matching OFF
     }
 
     local($basename) = $BASE . ($MULTIPLEPAGES ? ".%d" : '');
     local($quiet) = "-q -dNOPAUSE -dNO_PAUSE ";
-    local($outfile) = "-sOutputFile=$TMP$basename.ppm";
+    local($outfile) = "-sOutputFile=$basename.ppm";
+    local($no_out) = '> /dev/null';
+    if ($^O =~ /Win|DOS/i) { $no_out = '> nul:' }
+
     if ( $DEBUG ) {
-        print "Running $GS $quiet -sDEVICE=$GS_DEVICE $size $density $aalias $outfile\n";
-        print "GS>$GSROTATE " if ($GSROTATE);
-        print "GS>$bbx $bby translate\n" if ($have_geometry);
-        print "GS>($FILE) run\n";
-        print "GS>showpage\n" if ($epsf);
-        print "GS>quit\n";
+	print "Running $GS $quiet -sDEVICE=$GS_DEVICE $size $density $aalias $outfile $no_out\n";
+	print "GS>$GSROTATE " if ($GSROTATE);
+	print "GS>$bbx $bby translate\n" if ($have_geometry);
+	print "GS>($gs_input) run\n";
+	print "GS>showpage\n" if ($epsf);
+	print "GS>quit\n";
     }
-    open (GS, "|$GS $quiet -sDEVICE=$GS_DEVICE $size $density $aalias $outfile");
+    open (GS, "|$GS $quiet -sDEVICE=$GS_DEVICE $size $density $aalias $outfile $no_out");
     print GS "$GSROTATE " if ($GSROTATE);
     print GS "$bbx $bby translate " if ($have_geometry);
-    print GS "($FILE) run ";
+    print GS "($gs_input) run ";
     print GS "showpage " if ($epsf);
     print GS "quit\n";
     close GS;
-    print "\n";
-    }
+}
 
 sub choose_paper {
     local($_) = @_;
     local($size, $height, $width) = ('','','');
     s/^(\d*)\s*x\s*(\d*)$/$width=$1;$height=$2/eo;
     if ($width > $height) { 
-        $GSROTATE= "($GSLANDSCAPE) run ";
-        ($width, $height) = ($height, $width);
-        }
-    else { $GSROTATE=''; }
+	$GSROTATE= "($GSLANDSCAPE) run ";
+	($width, $height) = ($height, $width);
+    } else { $GSROTATE=''; }
     if (($width < 74)&&($height < 105)) { $size = "a10" }
     elsif (($width < 105)&&($height < 148)) { $size = "a9" }
     elsif (($width < 148)&&($height < 210)) { $size = "a8" }
@@ -935,25 +1131,23 @@ sub choose_paper {
     elsif (($width < 2380)&&($height < 3368)) { $size = "a0" }
     else { $size = "b0" }
     $size;
-    }
+}
   
 sub cleanup {
-    unlink <$BASE[0-9.]*ppm> unless ($DEBUG || $overfull);
+    unlink <$BASE[0-9.]*ppm> unless $DEBUG;
     unlink <$BASE[0-9.]*ppm.tmp> unless $DEBUG;
-    unlink <$BASE[0-9.]*ppm.tmp.tmp> unless $DEBUG;
+    unlink <$BASE[0-9.]*ppm_.tmp> unless $DEBUG;
     chdir("$DESTDIR") if ($TMP);
-#    unlink <$FILE> if($DISCARD && # (!$DEBUG)&&
-    unlink <$FILE> if($DISCARD && (!$DEBUG)&&
-		      ($FILE =~ /^[0-9]+_image[0-9]{3}\.ps$/));
+    unlink "$FILE" if ($DISCARD && (!$DEBUG));
 }
 
 sub usage {
     print <<"EOF";
-This is pstoimg V97.1. Accompanies LaTeX2HTML V97.1.
+This is pstoimg V98.2. Accompanies LaTeX2HTML V98.2.
 
 Usage: pstoimg [-help] [-debug] [-gif|-png] [-out <output file>] [-multipage]
                [-color <color depth 1, 8 or 24>] [-depth <color depth 1, 8 or 24>] 
-	       [-density <pixel density>] [-geometry <width>x<height>] 
+	      [-density <pixel density>] [-geometry <width>x<height>] 
                [-discard] [-transparent] [-interlaced] [-antialias]
                [-rightjustify <width>] [-topjustify <align>] [-center <width>]
                [-flip <Flip_code>] [-crop <code>] [-shoreup <pixel>]

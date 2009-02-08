@@ -1,8 +1,8 @@
 
 ########################################################################
-# $Id$
+# $Id: CJK.perl 12004 2004-02-20 13:13:29Z nxg $
 # CJK.perl
-#   Jens Lippmann <lippmann@cdc.informatik.th-darmstadt.de>,
+#   Jens Lippmann <lippmann@cdc.informatik.tu-darmstadt.de>,
 #   Boy Yang <yangboy@math.ntu.edu.tw>,
 #   Werner Lemberg <xlwy01@uxp1.hrz.uni-dortmund.de>
 #
@@ -18,8 +18,8 @@
 # Revision 1.1  2004/02/20 13:13:28  nxg
 # Initial import
 #
-# Revision 1.1  1998/08/20 16:03:28  pdraper
-# *** empty log message ***
+# Revision 1.3  1998/02/19 22:24:26  latex2html
+# th-darmstadt -> tu-darmstadt
 #
 # Revision 1.2  1996/12/17 17:11:41  JCL
 # typo

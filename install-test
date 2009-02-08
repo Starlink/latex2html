@@ -1,7 +1,10 @@
+: # *-*-perl-*-*
+  eval 'exec perl -S  $0 "$@"'
+  if $running_under_some_shell;
 #!/usr/local/bin/perl
 
-# $Id$
-# LaTeX2HTML Version 96.2 : install_test
+# $Id: install-test 12004 2004-02-20 13:13:29Z nxg $
+# LaTeX2HTML Version 98.1 : install-test
 
 $dd = '/';  # directory delimiter;
 
@@ -19,13 +22,16 @@ $dd = '/';  # directory delimiter;
 #     source files.
  
 # 
-# Uncomment the following statement if your Linux system requires it.
-# use GDBM_File;
+use AnyDBM_File;
+use Override qw($DEBUG getpwuid link setenv getenv symlink rename
+               getcwd syswait find_executable
+               substitute_var_val $LATEX2HTMLDIR $TEMPDIR
+               make_directory_absolute unlink $dd $envkey $image_pre);
 
 
 print<<"#EOM";
 
-This is install-test for LaTeX2HTML V97.1
+This is install-test for LaTeX2HTML V98.1
 =========================================
 
 #EOM
@@ -40,43 +46,76 @@ close TMP;
 unlink "TEST.TMP";
 
 # Read latex2html.config to get the value of $LATEX2HTML
-&read_config_file;
+open(TMP,"<latex2html.config") ||
+    die "Cannot open latex2html.config!\n";
+while (<TMP>) {
+    if (/^\s*\$LATEX2HTMLDIR\s*=(.*)$/) {
+	$LATEX2HTMLDIR = eval($1);
+	last;
+    }
+}
+close TMP;
 
 if ($LATEX2HTMLDIR eq "/user" || !$LATEX2HTMLDIR) {
     print <<"#EOM";
-Your LaTeX2HTML release needs a directory for installation.
-This is defined in LATEX2HTMLDIR in latex2html.config, and will be used to find
-perl modules, LaTeX styles, programs, etc.
-Before we set this, make sure that everything of LaTeX2HTML is there and you
-are in that directory.
-The latex2html script itself must not reside here, you can place it elsewhere
-after install-test succeeded.
-#EOM
-    print "Continue?\n";
-    <STDIN>;
+\$LATEX2HTMLDIR of latex2html.config is not set up, we can do this now.
+\$LATEX2HTMLDIR will be used to host the release of LaTeX2HTML you unpacked
+and is defined at the top of latex2html.config.
+Before we continue, make sure that everything of LaTeX2HTML is there and that
+you are *in* that directory.
 
-    local($pwd) = `pwd`; chop $pwd;
-    print "What is the LaTeX2HTML directory [$pwd]: ";
+Note: the latex2html script itself need not reside here, you can place it
+elsewhere (e.g. in /usr/local/bin ) after install-test completes successfully.
+#EOM
+
+#    local($pwd) = `pwd`; chop $pwd;
+    local($pwd) = &getcwd();
+    print "\nWhat is the LaTeX2HTML directory?\n [$pwd]: ";
     $_ = <STDIN>; chop;
     if (/(\S+)/) {
 	$LATEX2HTMLDIR = $1;
     }
     else {
 	$LATEX2HTMLDIR = $pwd;
+        $LATEX2HTMLDIR =~ s/\\/${dd}/g;
     }
     print "\$LATEX2HTMLDIR will be \"$LATEX2HTMLDIR\"\n";
 
     print "changing LaTeX2HTML directory in latex2html.config was " .
-	(&substitute_dir_var("latex2html.config") ? "" : "not ") .
+	(&substitute_dir_var(0,"latex2html.config") ? "" : "not ") .
 	    "successful.\n";
 }
 
 
-# Substitute the variable $LATEX2HTMLDIR
-print "\nMain script installation was " .
-    (&substitute_dir_var("latex2html") ? "" : "not ") .
-    "successful.\n";
+# Require contents of latex2html.config.
+&read_config_file;
 
+
+# Substitute the variable $LATEX2HTMLDIR
+print STDERR "\nMain script installation was... ";
+print STDERR (&substitute_dir_var(-1,"latex2html") ? "" : "not ")
+	. "successful.\n";
+
+if (&find_executable('kpsewhich')) {
+#    &substitute_var_val("latex2html.config", Web2C, 1);
+    &substitute_var_val("latex2html.config"
+	, "^\\\s*\\\$Web2C\\\s*=.*\$", "\$Web2C = 1;");
+    print "Web2C found, using it\n";
+}
+
+if ($^O =~ MSWin32) {
+    print "Specific Win32 configuration...\n";
+#    &substitute_var_val("latex2html.config", NOFORK, 1)
+    &substitute_var_val("latex2html.config"
+	, "^\\\s*\\\$NOFORK\\\s*=.*\$", "\$NOFORK = 1;")
+	|| print "\$NOFORK not found\n";
+# These are perl scripts and under Win32 ;
+# ... so  perl  must be called explicitly
+    &substitute_var_val("latex2html.config", "^\\\$PSTOIMG\\\s*=.*\$",
+                       "\$PSTOIMG = \"perl \$LATEX2HTMLDIR${dd}pstoimg\"; ");
+    &substitute_var_val("latex2html.config", "^\\\$TEXEXPAND\\\s*=.*\$",
+                       "\$TEXEXPAND = \"perl \$LATEX2HTMLDIR${dd}texexpand\"; ");
+}
 
 print "Testing availability of external programs...\n";
 &test_external_programs;
@@ -94,28 +133,34 @@ sub read_config_file {
 # to
 # $LATEX2HTMLDIR = <current value of $LATEX2HTMLDIR> 
 sub substitute_dir_var {
-    local($file) = @_;
-    local($SUCCESS) = 0;
+    local($SUCCESS, $file) = @_;
 
     if ( (-f "$LATEX2HTMLDIR${dd}$file") ||
 	die "\nCannot find $LATEX2HTMLDIR${dd}$file\nPlease check the value of \$LATEX2HTMLDIR in latex2html.config\n") {
-	open(IN, "<$LATEX2HTMLDIR${dd}$file")
-	    || die "Cannot open $LATEX2HTMLDIR${dd}$file";
-	rename("$LATEX2HTMLDIR${dd}$file","$LATEX2HTMLDIR${dd}$file.bak");
+	&rename("$LATEX2HTMLDIR${dd}$file","$LATEX2HTMLDIR${dd}$file.bak")
+	    || die "Cannot rename $LATEX2HTMLDIR${dd}$file: $!";
+	open(IN, "<$LATEX2HTMLDIR${dd}$file.bak")
+	    || die "Cannot open $LATEX2HTMLDIR${dd}$file.bak: $!";
 	open(OUT, ">$LATEX2HTMLDIR${dd}$file")
-	    || die "Cannot open $LATEX2HTMLDIR${dd}$file";
+	    || die "Cannot open $LATEX2HTMLDIR${dd}$file: $!";
 	chmod(0755, "$LATEX2HTMLDIR${dd}$file")
-	    unless $file =~ /.config$/;
+	    if -x "$LATEX2HTMLDIR${dd}$file.bak";
+
 	while (<IN>) {
-	    s/\$LATEX2HTMLDIR\s*=.*$/
-		do {$SUCCESS = 1;
-		    "\$LATEX2HTMLDIR='$LATEX2HTMLDIR';" .
-			"# Inserted by installation script"}/eo;
+#	    s/\$LATEX2HTMLDIR\s*=.*$/
+#		do {$SUCCESS = 1;
+#		    "\$LATEX2HTMLDIR='$LATEX2HTMLDIR';"
+	    s/^\s*(\$LATEX2HTMLDIR\s*=|use lib ).*$/
+		do {$SUCCESS += 1; print STDERR $SUCCESS." ";
+		    (($1 =~ m|use lib|)? "use lib '$LATEX2HTMLDIR';"
+			: "\$LATEX2HTMLDIR='$LATEX2HTMLDIR';")
+			. " # Inserted by installation script"}/eg;
 	    print OUT;
 	}
 	close IN;
 	close OUT;
     }
+    print STDERR "...";
     $SUCCESS;
 }
 
@@ -130,15 +175,24 @@ sub test_external_programs {
     # Perl
     $ver = $] * 1.0;
     $vers = sprintf("%4.3f", $ver);
-    if ($ver < 4.036) {
+    if ($ver < 5.000) {
 	print "\n*** ERROR: You are using Perl version $vers\n".
 	    "\nThis may cause problems." .
-		"Please upgrade to version 4 at patch level 36\n";}
+		"Please upgrade to version 5 at patch level 3 or higher\n";}
+    elsif ($ver < 5.003) {print "Perl version $vers is OK for most things. \n"
+	    ."However upgrading to v5.003 or later is advisable.\n"}
     else {print "Perl version $vers is OK. \n"}
 
-    print "\n*** ERROR: Will not be able to run latex2html: ".
-	"Cannot find texexpand.\n"
-	    if ($nolatex2html = &look_for($TEXEXPAND, "exec", "texexpand"));
+#    $nolatex2html = &look_for($TEXEXPAND, "exec", "texexpand");
+    $nolatex2html = &look_for($TEXEXPAND, "perl", "texexpand");
+    if ($nolatex2html) {
+	print "\n*** ERROR: Will not be able to run latex2html: ".
+	    "Cannot find texexpand.\n"}
+    else {
+	print STDERR "Setting up texexpand script...";
+	print STDERR (&substitute_dir_var(0,"texexpand") ? "succeeded\n" : "\n*failed*\n");
+    }
+#           if ($nolatex2html = &look_for($TEXEXPAND, "perl", "texexpand"));
 
     print "Checking for availability of DBM or NDBM (Unix DataBase Management)...\n";
     if ((! eval 'dbmopen(%array, "DBM.tst",0755)') && $@) {
@@ -192,7 +246,7 @@ sub test_external_programs {
 
     $version=undef;
     $_ = &get_first_line_of_stderr("$DVIPS -f DUMMY");
-    s/dvipsk?\s*([\d\.]+)/$version = $1;/eo;
+    s/dvips(k|\(k\))?\s*([\d\.]+)/$version = $2;/eo;
     $patch = $version;
     if ($patch && ($patch < 5.516)) {
 	$nopic = 1;
@@ -208,16 +262,17 @@ sub test_external_programs {
 		    "\nVersion 5.516 or higher is OK.".
 			"\nI was unable to verify your version.\n";}
     else {
-	print "DVIPS version $version is OK.\n"}
+	print "DVIPS version $version is OK.\n"
+    }
 
-    $nopic = &look_for($PSTOIMG,"util", "pstoimg");
+    $nopic = &look_for($PSTOIMG,"perl", "pstoimg");
 
 # Substitute the variable $LATEX2HTMLDIR in pstoimg
     if (!$nopic) {
-	print "Setting up pstoimg script...",
-	    (&substitute_dir_var("pstoimg") ? "succeeded\n" : "\n*failed*\n");
-	print "Setting up configure-pstoimg script...",
-	    (&substitute_dir_var("configure-pstoimg") ? "succeeded\n" : "\n*failed*\n");
+	print "Setting up pstoimg script...";
+	print (&substitute_dir_var(-1,"pstoimg") ? "succeeded\n" : "\n*failed*\n");
+	print "Setting up configure-pstoimg script...";
+	print (&substitute_dir_var(0,"configure-pstoimg") ? "succeeded\n" : "\n*failed*\n");
     }
 
     $tmp = &look_for($LATEX, "util", $LATEX);
@@ -248,14 +303,36 @@ sub look_for {
 	    $fail = "Error: Could not make $what executable.\n";
 	}
     }
+    elsif ($type eq "perl") {
+       if (! ($what =~ m"^perl\s+([\w:\\/-]*)")) {
+           if (! -f $what) {
+               $fail = "Error: Could not find $what perl script.\n";
+           }
+           else {
+               $what = "perl $what";
+           }
+       }
+       elsif (! -f $1) {
+           $fail = "Error: Could not find $1 perl script.\n";
+       }
+    }
     elsif (($type eq "util") && (! -f $what)) {
 	print "Looking for $name...\n";
-	$_ = `sh -c "type  $what"`;
-	chop;
-	if ((/no /) || (/not found/) || (/^\s*$/)) {
-	    $fail = "Warning: $name was * NOT * found.\n";}
-	else {
-	    $what = $_;}
+#	$_ = `sh -c "type  $what"`;
+#	chop;
+#	if ((/no /) || (/not found/) || (/^\s*$/)) {
+#	    $fail = "Warning: $name was * NOT * found.\n";}
+        if ($^O =~ MSWin32) {
+            $what = &find_executable($what);
+        } else {
+            $_ = `sh -c "type  $what"`;
+            chop;
+            if ((/no /) || (/not found/) || (/^\s*$/)) {
+                $fail = "Warning: $name was * NOT * found.\n";
+            } else {
+               $what = $_;
+            }
+        }
     }
     elsif (($type eq "dir") && (! -d $what)) {
 	$fail = "Error: directory $name was * NOT * found.\n";
@@ -271,6 +348,7 @@ sub get_first_line_of_stderr {
     open(SE, ">&STDERR");
 
     open(STDOUT, ">${dd}tmp${dd}foo$$");
+    open(STDOUT, ">${TEMPDIR}${dd}foo$$");
     open(STDERR,">&STDOUT");
 
     select(STDERR); $| = 1;
@@ -285,6 +363,7 @@ sub get_first_line_of_stderr {
     open(STDERR, ">&SE");
 
     open(FOO,"<${dd}tmp${dd}foo$$");
+    open(FOO,"<${TEMPDIR}${dd}foo$$");
     $_ = <FOO> ;
     close(FOO);
     $_;

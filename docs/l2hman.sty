@@ -43,12 +43,14 @@
 \def\cb@iii{96.1g}
 \def\cb@iv{96.1h}
 \def\cb@v{97.1}
-\def\cbversion#1{\def\tmp{#1}\ifx\tmp\cb@i\def\tmp{1pt}%
-  \else\ifx\tmp\cb@v\def\tmp{2pt}\else\def\tmp{1pt}\fi\fi
+\def\cb@vi{98.1}
+\def\cbversion#1{\def\tmp{#1}\ifx\tmp\cb@v\def\tmp{1pt}%
+  \else\ifx\tmp\cb@vi\def\tmp{2pt}\else\def\tmp{0pt}\fi\fi
   \expandafter\setlength\expandafter\changebarwidth\expandafter{\tmp}}
 \ifx\undefined\changebarwidth\def\cbversion#1{}%
  \typeout{*** No version control,  changebar.sty  was not loaded.}
 \fi
 
+\def\smiley{\hbox{\rlap{$\bigcirc$}\kern1.3pt$\scriptstyle\ddot\smile$}}
 
 \endinput

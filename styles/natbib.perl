@@ -1,19 +1,70 @@
-# $Id$
+# $Id: natbib.perl 12004 2004-02-20 13:13:29Z nxg $
 # natbib.perl - LaTeX2HTML support for the LaTeX2e natbib package
 #  (flexible author-year citations)
 # Martin Wilck, 20.5.1996 (martin@tropos.de)
 #
 # Change Log:
-# jcl = Jens Lippmann <lippmann@cdc.informatik.th-darmstadt.de>
+# jcl = Jens Lippmann <lippmann@cdc.informatik.tu-darmstadt.de>
 # mwk = Martin Wilck
 # rrm = Ross Moore <ross@mpce.mq.edu.au>
+# jab = James A. Bednar <jbednar@cs.utexas.edu>
 #
 # $Log$
 # Revision 1.1  2004/02/20 13:13:28  nxg
 # Initial import
 #
-# Revision 1.1  1998/08/20 16:03:44  pdraper
-# *** empty log message ***
+# Revision 1.17  1998/06/29 05:13:11  RRM
+#  --  loads the new  babelbst.perl  module as well
+#
+# Revision 1.16  1998/06/18 11:39:24  RRM
+#  --  removed a looping problem, with empty citations
+#  --  cosmetic edits
+#
+# Revision 1.15  1998/06/05 05:23:57  latex2html
+#  --  allow redefinition of names (e.g. \bibname ) and counter-outputs
+#     (e.g. \theequation, \thesection etc.)
+#
+# Revision 1.14  1998/06/01 07:52:35  latex2html
+#  --  fixed the memory problem due to recursion in do_env_bibliography
+#  	thanks to Uli Wortmann for the test-file
+#  --  properly implemented use of &bibitem_style and $BIBITEM_STYLE
+#  --  removed the redundant  $has_punct
+#
+# Revision 1.13  1998/05/24 05:56:27  latex2html
+#  --  fixed \citet  so that it works as in LaTeX now
+#  --  cosmetic changes so that this file's code is more easily readable
+#  --  changed a use of local($_) which grew memory !
+# 	was this the cause of Uli's problem ?
+#
+# Revision 1.12  1998/05/23 13:33:51  latex2html
+#  --  James Bednar's modifications/simplifications
+#  --  also \citeauthor \citeyear etc. working with multiple citations
+# from James Bednar: <jbednar@cs.utexas.edu>
+#  --  consolidated all non-Harvard cite commands except \cite and
+#      \cite* into one-line calls to a single function do_cite_common
+#      to ensure uniform processing of optional arguments
+#  --  fixed \citep -- had $cite_year_mark instead of $cite_par_mark
+#  --  changed do_cite_keys to always include every optional argument
+#  --  made \citeauthor, \citeauthor*, and \citefullauthor ignore
+#      whether mode is numeric (i.e., they should never get any parens)
+#  --  made \citealp act like \citealt (temporary)
+#
+# Revision 1.11  1998/04/29 10:11:07  latex2html
+#  --  use the &bibitem_style function, which can be user-defined
+#
+# Revision 1.10  1998/02/19 22:24:30  latex2html
+# th-darmstadt -> tu-darmstadt
+#
+# Revision 1.9  1997/10/07 06:59:44  RRM
+#  --  moved the code to  do_cmd_citestar  up to just after do_cmd_cite
+#  --  implemented \citep*  (oops, forgot it last time)
+#  --  fixed \harvardurl to work properly and without html.sty
+# 	thanks to James A. Bednar <jbednar@cs.utexas.edu> for noticing
+#
+# Revision 1.8  1997/09/19 10:57:44  RRM
+#      Updated for compatibility with natbib.sty v6.6
+#  --  all \cite... commands have a *-version and 2 optional arguments
+#  --  Harvard emulation is now automatic
 #
 # Revision 1.7  1997/07/11 11:28:52  RRM
 #  -  replace  (.*) patterns with something allowing \n s included
@@ -85,28 +136,40 @@ $HARVARD=0 unless defined ($HARVARD);
 
 # Instead of $cite_mark, different markers for different manners
 # of citation 
+
 # Jones et al. (1990)
 $cite_mark = '<tex2html_cite_mark>';
 # Jones, Baker, and Williams (1990)
 $cite_full_mark = '<tex2html_cite_full_mark>';
+
 # (Jones et al., 1990)
 $cite_par_mark = '<tex2html_cite_par_mark>';
 # (Jones, Baker, and Williams, 1990)
 $cite_par_full_mark = '<tex2html_cite_par_full_mark>';
+
+# Jones et al. [21]
+$citet_mark = '<tex2html_citet_mark>';
+# Jones, Baker, and Williams [21]
+$citet_full_mark = '<tex2html_citet_full_mark>';
+$citet_ext_mark = '<tex2html_citet_ext_mark>';
+
+# Jones et al., 1990
+$citealp_mark = '<tex2html_citealp_mark>';
+# Jones, Baker, and Williams, 1990
+$citealp_full_mark = '<tex2html_citealp_full_mark>';
+
+# Jones et al. 1990
+$citealt_mark = '<tex2html_citealt_mark>';
+# Jones, Baker, and Williams 1990
+$citealt_full_mark = '<tex2html_citealt_full_mark>';
+
 # Jones et al.
 $cite_author_mark = '<tex2html_cite_author_mark>';
 # Jones, Baker, and Williams
 $cite_author_full_mark = '<tex2html_cite_author_full_mark>';
 # 1990
 $cite_year_mark = '<tex2html_cite_year_mark>';
-# Jones et al. [21]
-$citet_mark = '<tex2html_citet_mark>';
-# Jones, Baker, and Williams [21]
-$citet_full_mark = '<tex2html_citet_full_mark>';
-# Jones et al. 1990
-$citealt_mark = '<tex2html_citealt_mark>';
-# Jones, Baker, and Williams 1990
-$citealt_full_mark = '<tex2html_citealt_full_mark>';
+
 # marker for multiple citations
 $cite_multiple_mark = '<tex2html_cite_multiple_mark>';
 
@@ -142,14 +205,34 @@ sub do_cmd_cite {
     s/$next_pair_pr_rx//o;
     if ($cite_key = $2) {
 	local ($br_id)=$1;
-	$_ = join('',
+	$_ = join(''
 # Second argument of &do_cite_keys set to TRUE in numeric mode 
 # -> surround citation with parentheses
-	    &do_cite_keys($br_id,($has_optional || $NUMERIC),
-		$optional1,$optional2,$c_mark,$cite_key), $_); 
+	    , &do_cite_keys($br_id,($has_optional || $NUMERIC)
+		,$optional1,$optional2,$c_mark,$cite_key )
+	    , $_); 
     } else {print "Cannot find citation argument\n";}
     $_;
 }
+
+sub do_cmd_citestar {
+# Same as do_cmd_cite, but uses full author information
+    local($_) = @_;
+    local($cite_key, @cite_keys);
+    local($has_optional,$optional1,$optional2)=&cite_check_options;
+    local ($c_mark) = ($has_optional ? $cite_par_full_mark : $cite_full_mark);
+    $c_mark = $cite_par_mark if ($NUMERIC);
+    s/^\s*\\space//o;           # Hack - \space is inserted in .aux
+    s/$next_pair_pr_rx//o;
+    if ($cite_key = $2) {
+        local ($br_id)=$1;
+        $_ = join('',
+            &do_cite_keys($br_id,($has_optional || $NUMERIC)
+                ,$optional1,$optional2,$c_mark,$cite_key), $_);
+    } else {print "Cannot find citation argument\n";}
+    $_;
+}
+
 
 # The following are Harvard-specific, but generally defined,
 # since they don't conflict with natbib syntax
@@ -343,214 +426,107 @@ sub do_cmd_harvardparenthesis {
     $_;
 }
 
-# special subroutine definition for Harvard emulation
-if ($HARVARD) {
+## special subroutine definition for Harvard emulation
+#if ($HARVARD) {
+#
+#print "\nnatbib.perl: Operating in Harvard emulation mode.\n";
 
-print "\nnatbib.perl: Operating in Harvard emulation mode.\n";
+sub do_cmd_citeyear    {
+# "1990a"
+    do_cite_common(($HARVARD || $NUMERIC ),$cite_par_mark,$cite_year_mark,@_) }
 
-sub do_cmd_citeyear {
+sub do_cmd_citeyearpar {
 # "(1990a)"
-    local($_) = @_;
-    local($cite_key, @cite_keys);
-    $HARVARD && do { local($optional1,$dummy)=&get_next_optional_argument };
-    s/^\s*\\space//o;		# Hack - \space is inserted in .aux
-    s/$next_pair_pr_rx//o;
-    if ($cite_key = $2) {
-	local ($br_id)=$1;
-	$_ = join('', 
-	    &do_cite_keys($br_id,($HARVARD || $NUMERIC),$optional1,'',				
-		($NUMERIC ? $cite_par_mark : $cite_year_mark)
-		,$cite_key),$_);
-    }
-    else {print "Cannot find citation argument\n";}
-    $_;
-}
+    do_cite_common(1,$cite_par_mark,$cite_year_mark,@_) }
 
+# Does this command even exist?
 sub do_cmd_citeyearstar {
 # "1990a"
-    local($_) = @_;
-    local($cite_key, @cite_keys);
-    local($optional1,$dummy)=&get_next_optional_argument;
-    s/^\s*\\space//o;		# Hack - \space is inserted in .aux
-    s/$next_pair_pr_rx//o;
-    if ($cite_key = $2) {
-	local ($br_id)=$1;
-	$_ = join('', 
-	    &do_cite_keys($br_id,$NUMERIC,$optional1,'',				
-		($NUMERIC ? $cite_par_mark : $cite_year_mark)
-		,$cite_key),$_);
-    }
-    else {print "Cannot find citation argument\n";}
-    $_;
-}
+    do_cite_common($NUMERIC,$cite_par_mark,$cite_year_mark,@_) }
 
-#End of special HARVARD definitions
-} else { 
-# citeyear syntax differs between natbib and harvard
-print "\nnatbib.perl: Operating in natbib mode.\n";
+# Does this command even exist?
+sub do_cmd_citeyearparstar {
+# "(1990a)"
+    do_cite_common($NUMERIC,$cite_par_mark,$cite_year_mark,@_) }
 
-};
+
+##End of special HARVARD definitions
+#} else { 
+## citeyear syntax differs between natbib and harvard
+#print "\nnatbib.perl: Operating in natbib mode.\n";
+#
+#};
 
 # Citation commands specific for natbib
-sub do_cmd_citet {
-# Special citation style in natbib 6.x: Jones et al [21]
-# no optional arguments
-# Only makes sense with a numerical bibliography style.
-# Otherwise, acts like \cite (-> same marker)
-# In numeric mode, uses $cite_mark
-    local($_) = @_;
-    local($cite_key, @cite_keys);
-    s/^\s*\\space//o;		# Hack - \space is inserted in .aux
-    s/$next_pair_pr_rx//o;
-    if ($cite_key = $2) {
-	local ($br_id)=$1;
-	$_ = join('',
-# First argument to &do_cite_keys always empty ->
-# no parens, not even in numeric mode
-	    &do_cite_keys($br_id,'','','',$cite_mark,$cite_key), $_);
-    } else {print "Cannot find citation argument\n";}
-    $_;
-}
 
-sub do_cmd_citetstar {
+sub do_cmd_citet { 
+# Special citation style in natbib 6.x: Jones et al [21]
+# Except in numeric mode, acts like \cite (-> same marker)
+# In numeric mode, uses $cite_mark
+    do_cite_common('',$cite_mark,$citet_mark,@_) }
+
+sub do_cmd_citetstar { 
 # Special citation style in natbib 6.x: Jones, Baker, and Williams [21]
-# no optional arguments
-    local($_) = @_;
-    local($cite_key, @cite_keys);
-    s/^\s*\\space//o;		# Hack - \space is inserted in .aux
-    s/$next_pair_pr_rx//o;
-    if ($cite_key = $2) {
-	local ($br_id)=$1;
-	$_ = join('',
-	    &do_cite_keys($br_id,'','','',$cite_full_mark,$cite_key), $_);
-    } else {print "Cannot find citation argument\n";}
-    $_;
-}
+    do_cite_common('',$cite_full_mark,$citet_full_mark,@_) }
 
 sub do_cmd_citep {
 # Shortcut for parenthetical citation
-# no optional arguments
-    local($_) = @_;
-    local($cite_key, @cite_keys);
-    s/^\s*\\space//o;		# Hack - \space is inserted in .aux
-    s/$next_pair_pr_rx//o;
-    if ($cite_key = $2) {
-	local ($br_id)=$1;
-	$_ = join('',
-# First argument of &do_cite_keys set to 1 for parenthetical citation
-	    &do_cite_keys ($br_id,1,'','',
-		($cite_par_mark),
-		$cite_key), $_);
-    } else {print "Cannot find citation argument\n";}
-    $_;
-}
-
-sub do_cmd_citestar {
-# Same as do_cmd_cite, but uses full author information
-    local($_) = @_;
-    local($cite_key, @cite_keys);
-    local($has_optional,$optional1,$optional2)=&cite_check_options;
-    local ($c_mark) = ($has_optional ? $cite_par_full_mark : $cite_full_mark);
-    $c_mark = $cite_par_mark if ($NUMERIC);
-    s/^\s*\\space//o;		# Hack - \space is inserted in .aux
-    s/$next_pair_pr_rx//o;
-    if ($cite_key = $2) {
-	local ($br_id)=$1;
-	$_ = join('',
-	    &do_cite_keys($br_id,($has_optional || $NUMERIC),
-		$optional1,$optional2,$c_mark,$cite_key), $_); 
-    } else {print "Cannot find citation argument\n";}
-    $_;
-}
+    do_cite_common(1,$cite_par_mark,$cite_par_mark,@_) }
 
 sub do_cmd_citepstar {
 # Shortcut for full parenthetical citation
-# no optional arguments
-    local($_) = @_;
+    do_cite_common(1,$cite_par_mark,$cite_par_full_mark,@_) }
+
+sub do_cmd_citealt {
+# Alternative form of citation: No punctuation between author and year
+#    i.e. "Jones et al. 1990"
+# First argument = $NUMERIC (In numeric mode, always use parentheses)
+# Same in the next subroutine
+    do_cite_common($NUMERIC,$cite_par_mark,$citealt_mark,@_) }
+
+sub do_cmd_citealtstar {
+# Full alternative citation, i.e. "Jones, Baker, and Williams 1990"
+    do_cite_common($NUMERIC,$cite_par_mark,$citealt_full_mark,@_) }
+
+sub do_cmd_citealp {
+# Alternative form of citation: like citep without parentheses
+#    i.e. "Jones et al., 1990"
+    do_cite_common(0,$cite_par_mark,$citealp_mark,@_) }
+
+sub do_cmd_citealpstar {
+# Full alternative citation, i.e. "Jones, Baker, and Williams, 1990"
+    do_cite_common(0,$cite_par_mark,$citealp_full_mark,@_) }
+
+sub do_cmd_citeauthor {
+# "Jones et al."
+    do_cite_common(0,$cite_author_mark,$cite_author_mark,@_) }
+
+sub do_cmd_citeauthorstar {   &do_cmd_citefullauthor(@_); }
+
+sub do_cmd_citefullauthor {
+# "Jones, Baker, and Williams"
+    do_cite_common(0,$cite_author_full_mark,$cite_author_full_mark,@_) }
+
+sub do_cite_common {
+# Common interface for citation commands taking two optional
+# arguments, except for \cite and \cite* which have special behavior
+# when no optional arguments are present
+    local($has_parens,$num_mark,$norm_mark,$_) = @_;
     local($cite_key, @cite_keys);
+    local($has_optional,$optional1,$optional2)=&cite_check_options;
     s/^\s*\\space//o;		# Hack - \space is inserted in .aux
-    s/$next_pair_pr_rx//o;
-    if ($cite_key = $2) {
+    if (s/$next_pair_pr_rx//) {
+	$cite_key = $2;
 	local ($br_id)=$1;
-	$_ = join('',
-	    &do_cite_keys($br_id,1,'','',
-		($NUMERIC ? $cite_par_mark :$cite_par_full_mark),
-		$cite_key), $_);
+	$_ = join(''
+	    , &do_cite_keys ($br_id, $has_parens, $optional1, $optional2
+		,($NUMERIC ? $num_mark : $norm_mark)
+		,$cite_key)
+	    , $_);
     } else {print "Cannot find citation argument\n";}
     $_;
 }
 
-sub do_cmd_citealt {
-# Alternative form of citation: No punctuation between author an year
-#    i.e. "Jones et al. 1990"
-    local($_) = @_;
-    local($cite_key, @cite_keys);
-    s/^\s*\\space//o;		# Hack - \space is inserted in .aux
-    s/$next_pair_pr_rx//o;
-    if ($cite_key = $2) {
-	local ($br_id)=$1;
-	$_ = join('', 
-# First argument of &do_cite_keys = $NUMERIC
-# (In numeric mode, always use parentheses)
-# Same in the next subroutines
-	    &do_cite_keys($br_id,$NUMERIC,'','',
-		($NUMERIC ? $cite_par_mark : $citealt_mark)
-		,$cite_key),$_);
-    }
-    else {print "Cannot find citation argument\n";}
-    $_;
-}
-
-sub do_cmd_citealtstar {
-# Full alternative citation, i.e. "Jones, Baker, and Williams 1990"
-    local($_) = @_;
-    local($cite_key, @cite_keys);
-    s/^\s*\\space//o;		# Hack - \space is inserted in .aux
-    s/$next_pair_pr_rx//o;
-    if ($cite_key = $2) {
-	local ($br_id)=$1;
-	$_ = join('', 
-	    &do_cite_keys($br_id,$NUMERIC,'','',				
-		($NUMERIC ? $cite_par_mark : $citealt_full_mark)
-		,$cite_key),$_);
-    }
-    else {print "Cannot find citation argument\n";}
-    $_;
-}
-
-sub do_cmd_citeauthor {
-# "Jones et al."
-    local($_) = @_;
-    local($cite_key, @cite_keys);
-    s/^\s*\\space//o;		# Hack - \space is inserted in .aux
-    s/$next_pair_pr_rx//o;
-    if ($cite_key = $2) {
-	local ($br_id)=$1;
-	$_ = join('', 
-	    &do_cite_keys($br_id,$NUMERIC,'','',
-		($NUMERIC ? $cite_par_mark : $cite_author_mark)
-		,$cite_key),$_);
-    }
-    else {print "Cannot find citation argument\n";}
-    $_;
-}
-
-sub do_cmd_citefullauthor {
-# "Jones, Baker, and Williams"
-    local($_) = @_;
-    local($cite_key, @cite_keys);
-    s/^\s*\\space//o;		# Hack - \space is inserted in .aux
-    s/$next_pair_pr_rx//o;
-    if ($cite_key = $2) {
-	local ($br_id)=$1;
-	$_ = join('', 
-	    &do_cite_keys($br_id,$NUMERIC,'','',
-		($NUMERIC ? $cite_par_mark :$cite_author_full_mark)
-		,$cite_key),$_);
-    }
-    else {print "Cannot find citation argument\n";}
-    $_;
-}
 
 sub cite_check_options {
 # Check if there's an optional argument (even if it's empty)
@@ -567,10 +543,12 @@ sub cite_check_options {
         local($opt1,$dummy)= &get_next_optional_argument;
         local($opt2,$dummy)= &get_next_optional_argument;
 # If optional Nr. 2 is present, exchange 1 and 2
-        if ($opt2) {
-            local($hopt)=$opt1;
-	    $opt1=$opt2;
-	    $opt2=$hopt;
+        if ($dummy) {
+	    ($opt1,$opt2) = ($opt2,$opt1);
+#        if ($opt2) {
+#            local($hopt)=$opt1;
+#	    $opt1=$opt2;
+#	    $opt2=$hopt;
         };
         ($hasopt,$opt1,$opt2)
    }
@@ -580,7 +558,7 @@ sub do_cite_keys{
 # $hasopt indicates that citations should be enclosed in parentheses
     local($br_id,$hasopt,$first,$second,$c_mark,$cite_key) = @_;
     local(@cite_keys) = (split(/,/,$cite_key));
-    local ($multiple,$cite_anchor,$key);
+    local ($multiple,$cite_anchor,$key,$extra);
 # Create index entries if desired
     if (($CITEINDEX) && (! $NUMERIC)) {
 	foreach $key (@cite_keys) {$cite_anchor=&make_cite_index("$br_id",$key);};};
@@ -588,23 +566,38 @@ sub do_cite_keys{
 # If yes, the multiple citations are enclosed by $cite_multiple_mark's
     if ($#cite_keys > 0){ $multiple = $cite_multiple_mark;}
     else { $multiple = '';};
-    local($citauth)=($c_mark =~ /($cite_author_mark|$cite_full_author_mark)/);
+    local($citauth)=($c_mark =~ /($cite_author_mark|$cite_author_full_mark)/);
     $first = "$POST_NOTE $first" if ($first && !($HARVARD && $citauth));
     grep ( do { &cite_check_segmentation($_);
 # MW: change 25.6.: throw out the reference to $bbl_mark.
 # The second pair of # remains empty unless we are in HARVARD mode
 # and have a single citation with optional text
-	$_ = "#$_#$c_mark#".(($HARVARD && (!$hasopt) && (!$multiple))? $first: "")."#";}, @cite_keys);
+	if (($first && !$multiple) &&
+		(($HARVARD &&!$hasopt)||($c_mark =~ /citet/))) {
+	    $extra = $first; $first = '';
+	} else { $extra = '' } 
+	$_ = "#$_#$c_mark#". $extra ."#";}
+#	$_ = "#$_#$c_mark#".(($HARVARD && (!$hasopt) && (!$multiple))? $first: "")."#";}
+	    , @cite_keys);
     # Add parentheses and delimiters as appropriate 
     #
     $second .= ' ' if ($second); 
+    local($this_cite);
     if ($hasopt) { 
-	local($_)=join('', $CITE_OPEN_DELIM, $second,$multiple,
-	    join($CITE_ENUM,@cite_keys),$multiple, $first, $CITE_CLOSE_DELIM );
+	$this_cite = join('', $CITE_OPEN_DELIM, $second,$multiple
+	        , join($CITE_ENUM,@cite_keys)
+		, (($first&&($c_mark =~/^($citet_mark|$citet_full_mark)$/))?
+			$first.'#'.$citet_ext_mark.$multiple : $multiple.$first)
+		, $CITE_CLOSE_DELIM
+		);
     } else { 
-	local($_)=join ('',$multiple,join($CITE_ENUM,@cite_keys),$multiple); 
+	$this_cite = join ('',$second,$multiple
+		, join($CITE_ENUM,@cite_keys)
+		, (($first&&($c_mark =~/^($citet_mark|$citet_full_mark)$/))?
+			$first.'#'.$citet_ext_mark.$multiple : $multiple.$first)
+		); 
     }
-    join ('',$cite_anchor,$_);
+    join ('',$cite_anchor,$this_cite);
 }
 
 
@@ -616,8 +609,8 @@ sub make_cite_index {
     if (defined  &named_index_entry ) {
 	&named_index_entry($br_id,"$sort_key\@$index_key") }
     elsif ($br_id > 0) {
-	&do_cmd_index("<\#$br_id\#>$index_key<\#$br_id\#>") }
-    else { $name++; &do_cmd_index("<\#$name\#>$index_key<\#$name\#>") }
+	&do_cmd_index("$OP$br_id$CP$index_key$OP$br_id$CP") }
+    else { $name++; &do_cmd_index("$OP$name$CP$index_key$OP$name$CP") }
 }
 
 
@@ -637,9 +630,12 @@ sub do_cmd_bibitem {
     if (! $NUMERIC) { $year =~ s/[\(\)]//g; }
     else { $label=++$bibitem_counter; };
 # Throw out brackets that may stem from 1990{\em a} or similar
-    $year =~ s/<#\d+#>//g;
+    $year =~ s/($O|$OP)\d+($C|$CP)//g;
+
 # The compulsory argument is the LaTeX label
-    s/$next_pair_pr_rx//o;
+    $cite_key = &missing_braces unless (
+	(s/$next_pair_pr_rx/$cite_key=$2;''/eo)
+	||(s/$next_pair_rx/$cite_key=$2;''/eo));
     $cite_key = &translate_commands($2);
     if ($cite_key) {
 # remove tags resulting from excess braces
@@ -647,11 +643,11 @@ sub do_cmd_bibitem {
 	$_ = $short;
 	s/$next_pair_pr_rx//o;
 	if (!($2 eq $cite_key)) 
-	    {$short =$2; $short =~ s/<\#[^\#>]*\#>//go; };
+	    {$short =$2; $short =~ s/$OP[^\#>]*$CP//go; };
 	$_ = $long;
 	s/$next_pair_pr_rx//o;
 	if (!($2 eq $cite_key))
-	    {$long = $2; $long =~ s/<\#[^\#>]*\#>//go; };
+	    {$long = $2; $long =~ s/$OP[^\#>]*$CP//go; };
 	$_ = "$tmp";
 # Three hashes are used to store the information for text citations
 	if ($supported) {
@@ -659,7 +655,8 @@ sub do_cmd_bibitem {
 	    $cite_year{$cite_key} = &translate_commands($year);
 	    $cite_long{$cite_key} = &translate_commands($long)}
 	else {
-	    &write_warnings("\n\\bibitem label format not supported, using \\bibcite information!");
+	    &write_warnings(
+	"\n\\bibitem label format not supported, using \\bibcite information!");
 	}
 # Update the $ref_file entry, if necessary, making sure changes are saved.
 	if (!($ref_files{'cite_'."$cite_key"} eq $CURRENT_FILE)) {
@@ -669,8 +666,10 @@ sub do_cmd_bibitem {
 # Create an anchor around the citation
 	$_=&make_cite_reference ($cite_key,$_);
     } else {
+	#RRM: apply any special styles
+	$label = &bibitem_style($label) if (defined &bibitem_style);
 	print "Cannot find bibitem labels: $label\n";
-	$_=join('',"\n<DT><STRONG>$label</STRONG>\n<DD>", $_);
+	$_=join('',"\n<DT>$label\n<DD>", $_);
     }
     $_;
 }
@@ -705,28 +704,53 @@ sub make_cite_reference {
     $_ = $next_lines.$after_lines;
 
     if ($NUMERIC) {
-	join('',"\n<DT><A NAME=\"$cite_key\"><STRONG>$label</STRONG></A>\n<DD>",$_);
+	#RRM: apply any special styles
+	if (defined &bibitem_style) {
+	    $label = &bibitem_style($label);
+	} else {
+	    $label = '<STRONG>'.$label.'</STRONG>';
+	};
+	join('',"\n<DT><A NAME=\"$cite_key\">$label</A>\n<DD>",$_);
     } else {
 # For Author-year citation: Don't print the label to the bibliography
 # Use the first line of the bib entry as description title instead
 # First line ends with \newblock or with the next \bibitem  command
 #	$found = /\\newblock/o;	# these have been converted to  <BR>s
 	$found = /\<BR\>/o;
+	local($nbefore,$nafter) = ($`,$');
 	if ($found) {
-	    join('',"\n<DT><A NAME=\"$cite_key\"><STRONG>",
-		 &translate_commands($`),"</STRONG></A>\n<DD>", 
-# No call to &translate_commands on $': Avoid recursion
-		    $');
+	    if (defined &bibitem_style) {
+		$nbefore = &bibitem_style($nbefore); 
+	    } elsif ($nbefore =~/\\/) {
+		$nbefore = &translate_commands($nbefore);
+	    } else {
+		$nbefore = join('','<STRONG>',$nbefore,'</STRONG>');
+	    }
+	    join('',"\n<DT><A NAME=\"$cite_key\">", $nbefore
+		 , "</A>\n<DD>", &translate_commands($nafter));
 	} else {
 	    $found= /(\\bibitem|\\harvarditem)/o;
 	    if ($found) {
-		join('',"\n<DT><A NAME=\"$cite_key\"><STRONG>",
-		    &translate_commands($`),"</STRONG></A>\n<DD>",
+		local($nbefore,$nafter) = ($`,$');
+		if (defined &bibitem_style) {
+		    $nbefore = &bibitem_style($nbefore);
+		} elsif ($nbefore =~/\\/) {
+		    $nbefore = &translate_commands($nbefore);
+		} else {
+		    $nbefore = join('','<STRONG>',$nbefore,'</STRONG>');
+		}
+		join('',"\n<DT><A NAME=\"$cite_key\">", $nbefore
+		    ,"</A>\n<DD>", $nafter );
 # No call to &translate_commands on $': Avoid recursion
-		    $');
 	    } else {
-		join('',"\n<DT><A NAME=\"$cite_key\"><STRONG>",
-		     &translate_commands($_),"</STRONG></A>\n<DD>",' ');
+		if (defined &bibitem_style) {
+		    $_ = &bibitem_style($_);
+		} elsif ($_ =~ /\\/) {
+		    $_ = &translate_commands($_);
+		} else {
+		    $_ = join('','<STRONG>',$_,'</STRONG>');
+		}
+		join('',"\n<DT><A NAME=\"$cite_key\">", $_,"</A>\n<DD>",' ');
 	    };
 	};
     }
@@ -772,6 +796,8 @@ sub do_cmd_harvarditem {
 	$citefiles{$cite_key} = $CURRENT_FILE;
 	&make_harvard_reference ($cite_key,$year,$_);
     } else {
+	#RRM: apply any special styles
+	$label = &bibitem_style($label) if (defined &bibitem_style);
 	print "Cannot find bibitem labels: $label\n";
 	join('',"\n<DT><STRONG>$label</STRONG>\n<DD>", $_);
     }
@@ -805,6 +831,8 @@ sub make_harvard_reference {
     $indexdata = '';
     $_ = $next_lines.$after_lines;
     if ($NUMERIC) {
+	#RRM: apply any special styles
+	$label = &bibitem_style($label) if (defined &bibitem_style);
 	join('',"\n<DT><A NAME=\"$cite_key\"><STRONG>$label</STRONG></A>\n<DD>",$_);
     } else {
 # For Author-year citation: Don't print the label to the bibliography
@@ -853,12 +881,19 @@ sub do_cmd_harvardyearright {
     &translate_commands("$CITE_CLOSE_DELIM".$_[0]);
 }
 sub do_cmd_harvardurl{ 
-    if (defined &do_cmd_htmladdnormallink) { 
-	&translate_commands("\\htmladdnormallink".$_[0]);}
-    else {
-	print STDERR "\n\nload the html.perl package for  \\harvardurl\n\n";
-	&translate_commands("\\texttt".$_[0]);
-    }
+    local($_) = @_;
+    local($text, $url, $href);
+    local($name, $dummy) = &get_next_optional_argument;
+    $url = &missing_braces unless (
+	(s/$next_pair_pr_rx/$url = $2;''/eo)
+	||(s/$next_pair_rx/$url = $2;''/eo));
+    $url = &translate_commands($url) if ($url=~/\\/);
+    $text = "<b>URL:</b> ".$url;
+    if ($name) { $href = &make_named_href($name,$url,$text) }
+    else { $href = &make_href($url,$text) }
+    print "\nHREF:$href" if ($VERBOSITY > 3);
+    $_ =~ s/^[ \t]*\n?/\n/;
+    join ('',$href,$_);
 }
 
 sub do_cmd_bibcite {
@@ -940,13 +975,17 @@ sub replace_cite_references_hook {
 # Handle multiple citations first!
     if (/$cite_multiple_mark/) {&replace_multiple_cite_references };
     &replace_nat_cite_references if 
-/$cite_mark|$cite_full_mark|$cite_year_mark|$cite_par_mark|$cite_par_full_mark|$cite_author_mark|$cite_author_full_mark|$citealt_mark|$citealt_full_mark/;
+/$cite_mark|$cite_full_mark|$cite_year_mark|$cite_par_mark|$cite_par_full_mark|$cite_author_mark|$cite_author_full_mark|$citealt_mark|$citealt_full_mark|$citealp_mark|$citealp_full_mark|$citet_mark|$citet_full_mark/;
 }
 
 sub replace_multiple_cite_references {
 # Look for $cite_multiple_mark pairs
-    while 
-	(s/$cite_multiple_mark(.*?)$cite_multiple_mark/&do_multiple_citation($1)/se) {;};
+    local($saved) = $_ ;
+    while (s/$cite_multiple_mark(.*?)$cite_multiple_mark/&do_multiple_citation($1)/se) {
+	last if ($_ eq $saved);
+	$saved = $_;
+    };
+    undef $saved;
 }
 
 sub do_multiple_citation {
@@ -954,19 +993,19 @@ sub do_multiple_citation {
     local($before_year,$after_year);
     local($author,$thisyear,$lastyear,$lastauth,$theauth,$year);
     local($thetext,$lasttext,$thekey,$lastkey);
-    local($mark,$key,$extra,%second,@sorted);
+    local($mark,$key,$extra,$citet_ext,%second,@sorted);
 # Clear arrays & hash tables
     undef %second;
     undef @sorted;
 # Construct hash table with the labels of the multiple citation as keys
 # (Values of hash %second are actually unimportant)
-    while 
-#	($cit =~ s/#(\w+)#($cite_mark|$cite_par_mark|$cite_full_mark|$cite_par_full_mark|$citealt_mark|$citealt_full_mark)#([^#]*)#($CITE_ENUM)?//) {
-	($cit =~ s/#([^#]+)#($cite_mark|$cite_par_mark|$cite_full_mark|$cite_par_full_mark|$citealt_mark|$citealt_full_mark)#([^#]*)#($CITE_ENUM)?//) {
+    while ($cit =~
+	s/#([^#]+)#(<tex2html_cite\w*_mark>)#([^#]*)#($CITE_ENUM)?(($OP|$CP|[^#]+)*#$citet_ext_mark)?//) {
 	$mark=$2;
 	$extra=$3;
+	$citet_ext = $6 if (($mark eq $citet_mark)||($mark eq $citet_full_mark));
 	($key=$1) =~ s/[\s]//g;
-	%second=(%second,$key,$3);
+	%second=(%second,$key,$extra.$citet_ext);
      };
 	
     if ($NUMERIC) {
@@ -983,35 +1022,56 @@ sub do_multiple_citation {
 # Different punctuation for parenthetical, normal, and alternative
 # Author-year citation
 # citations (\cite[] or \citep, \cite, and \citealt resp. starred versions)
+
       SWITCH:	{
-# Parenthetical type (\cite[],\citep)
+	# Parenthetical type (\cite[],\citep)
  	  $mark =~ /^$cite_par_mark|$cite_par_full_mark/ && do {
 	      ($before_year,$after_year)=($BEFORE_PAR_YEAR,'');
 	      last SWITCH;};
-# normal type (\cite)
+
+	# normal type (\cite)
 	  $mark =~ /^$cite_mark|$cite_full_mark/ && do {
 	      ($before_year,$after_year)=
 		  (" $CITE_OPEN_DELIM","$CITE_CLOSE_DELIM");
 	      last SWITCH;};
-# alternative type (\citealt)
-	  ($before_year,$after_year)=(' ','');}
+
+	# normal-t type (\citet)
+	# optional arg goes inside parens; how to do this ?
+          $mark =~ /^$citet_mark|$citet_full_mark/ && do {
+              ($before_year,$after_year) = 
+		  (" $CITE_OPEN_DELIM","$CITE_CLOSE_DELIM");
+              last SWITCH;};
+
+	# alternative type (\citealp)
+          $mark =~ /^$citealp_mark|$citealp_full_mark/ && do {
+              ($before_year,$after_year)=($BEFORE_PAR_YEAR,'');
+              last SWITCH;};
+
+	# alternative type (\citealt)
+	  ($before_year,$after_year)=(' ','');
+	}
+
 # Reference $author is set to %cite_long if full author name citation is
 # requested, to  %cite_short otherwise
-	if ($mark =~ /^$cite_par_full_mark|$cite_full_mark|$citealt_full_mark/) 
+	if ($mark =~
+    /^$cite_par_full_mark|$cite_full_mark|$citet_full_mark|$citealt_full_mark|$citealp_full_mark|$cite_author_full_mark/) 
 	{$author=\%cite_long;} else {$author=\%cite_short;};
 # Sort the citation list according to author and year fields
 #   => only subsequent entries must be compared afterwards.
 # The citations are always sorted in ascending alphabetic order!
 # DO WE REALLY WANT THIS ??
 	@sorted = sort 
-	{$$author{$a}.$cite_year{$a} cmp $$author{$b}.$cite_year{$b}} 
-	(keys (%second));
+		{$$author{$a}.$cite_year{$a} cmp $$author{$b}.$cite_year{$b}} 
+		(keys (%second));
 # First entry
 	$lastkey=shift(@sorted);
 	($lastauth,$lastyear)=($$author{$lastkey},$cite_year{$lastkey});
-	$lasttext=join('',$$author{$lastkey},
-		       $before_year,
-		       $cite_year{$lastkey});
+	$lasttext=join(''
+		, (($mark =~ /$cite_year_mark/)? '' : $$author{$lastkey})
+		, (($mark =~ /$cite_author_mark|$cite_author_full_mark/)? ''
+			: $before_year . $cite_year{$lastkey})
+		, $second{$lastkey}
+		);
 	$_='';
 # The text for the entry can only be written to $_ AFTER the next entry
 # was analyzed (different punctuation whether next entry has the same authors
@@ -1047,8 +1107,12 @@ sub do_multiple_citation {
 # This character should go into the anchor text.
 		$lasttext=$lasttext.$after_year;
 # The new entry will be printed out completely
-		$thetext=join('',
-			      $theauth,$before_year,$theyear);
+		$thetext=join(''
+                , (($mark =~ /$cite_year_mark/)? '' : $$author{$thekey})
+                , (($mark =~ /$cite_author_mark|$cite_author_full_mark/)? ''
+                        : $before_year . $cite_year{$thekey})
+		, $second{$thekey}
+                );
 # Write the preceding entry
 		$_=join('',
 			$_,
@@ -1074,6 +1138,7 @@ sub replace_nat_cite_references {
 # Creates hyperrefs EXCLUSIVELY by calling &make_href
 # Note that %citefile is indexed by the latex label ($1) rather than $bbl_nr ($2)
 # MW 25.6.96: second pair of #'s may now be empty!
+    local($savedRS) = $/; $/='';
     if ($NUMERIC) {
 	s/#([^#]+)#$cite_par_mark#([^#]*)#/&make_named_href(""
 		,"$citefiles{$1}#$1",$cite_info{$1})/ge;
@@ -1086,8 +1151,7 @@ sub replace_nat_cite_references {
 # MW 25.6.96: use $2 eventually as optional text for harvard citations
 	s/#([^#]+)#$cite_mark#([^#]*)#/&make_named_href("","$citefiles{$1}#$1"
 		,"$cite_short{$1} ". "$CITE_OPEN_DELIM$cite_year{$1}$2$CITE_CLOSE_DELIM")/ge;
-	s/#([^#]+)#$cite_full_mark#([^#]*)#/&make_named_href("",
-		"$citefiles{$1}#$1"
+	s/#([^#]+)#$cite_full_mark#([^#]*)#/&make_named_href("","$citefiles{$1}#$1"
 		,"$cite_long{$1} "."$CITE_OPEN_DELIM$cite_year{$1}$2$CITE_CLOSE_DELIM")/ge;
         if ($HARVARD) {
 # in HARVARD mode, $citealt_mark stands for \possessivecite commands
@@ -1102,6 +1166,26 @@ sub replace_nat_cite_references {
 	   s/#([^#]+)#$citealt_full_mark#([^#]*)#/&make_named_href("",
                 "$citefiles{$1}#$1","$cite_long{$1} $cite_year{$1}")/ge
         }
+	s/#([^#]+)#$citealp_mark#([^#]*)#/&make_named_href("",
+		"$citefiles{$1}#$1","$cite_short{$1}$BEFORE_PAR_YEAR$cite_year{$1}")/ge;
+	s/#([^#]+)#$citealp_full_mark#([^#]*)#/&make_named_href("",
+		"$citefiles{$1}#$1","$cite_long{$1}$BEFORE_PAR_YEAR$cite_year{$1}")/ge;
+	s/#([^#]+)#$citet_mark#([^#]*)#(($OP|$CP|[^#\n]+)*#$citet_ext_mark)?/
+	    &make_named_href(""
+		, "$citefiles{$1}#$1"
+		, join(''
+		    ,"$cite_short{$1} $cite_year{$1}"
+		    , ($3 ? $BEFORE_PAR_YEAR.$4 : ''))
+	 	)
+	    /ge;
+	s/#([^#]+)#$citet_full_mark#([^#]*)#(($OP|$CP|[^#\n]+)*#$citet_ext_mark)?/
+	    &make_named_href(""
+		, "$citefiles{$1}#$1"
+		, join(''
+		    ,"$cite_long{$1} $cite_year{$1}"
+		    , ($3 ? $BEFORE_PAR_YEAR.$3 : ''))
+		)
+	    /ge;
 	s/#([^#]+)#$cite_par_mark#([^#]*)#/&make_named_href("",
 		"$citefiles{$1}#$1","$cite_short{$1}$BEFORE_PAR_YEAR$cite_year{$1}")/ge;
 	s/#([^#]+)#$cite_par_full_mark#([^#]*)#/&make_named_href("",
@@ -1113,6 +1197,7 @@ sub replace_nat_cite_references {
 	s/#([^#]+)#$cite_author_full_mark#([^#]*)#/&make_named_href("","$citefiles{$1}#$1"
 		,"$cite_long{$1}".($2? " $CITE_OPEN_DELIM$2$CITE_CLOSE_DELIM": ""))/ge;
     }
+    $/ = $savedRS;
 }
 
 sub cite_check_segmentation {
@@ -1138,17 +1223,33 @@ sub do_env_thebibliography {
     $citefiles{$bbl_nr} = $citefile;
     s/$next_pair_rx//o;
     $* = 1;			# Multiline matching ON
-    s/^\s*$//g;	# Remove empty lines (otherwise will have paragraphs!)
-    s/\n//g;	# Remove all \n s --- we format the HTML file ourselves.
-    s/\\newblock/\n\<BR\>/g;	# break at each \newblock
+#    s/^\s*$//g;	# Remove empty lines (otherwise will have paragraphs!)
+#    s/\n//g;	# Remove all \n s --- we format the HTML file ourselves.
+#    $* = 0;			# Multiline matching OFF
+    s/\\newblock/\<BR\>/g;	# break at each \newblock
     $* = 0;			# Multiline matching OFF
-    s/(\\bibitem|\\harvarditem)//o;	# skip to the first bibliography entry
-    $_ = $&.$';
-    $citations = join('',"\n<DL COMPACT>",
-		      &translate_commands(&translate_environments($_)),"\n</DL>");
+
+    local($this_item,$this_kind, $title);
+    # skip to the first bibliography entry
+    s/\\(bibitem|harvarditem)/$this_kind=$1;''/eo;
+    $_ = $';
+#    $citations = join('',"\n<DL COMPACT>",
+#		&translate_commands(&translate_environments($_)),"\n</DL>");
+    local(@bibitems) = split(/\\(bib|harvard)item/, $_);
+    while (@bibitems) {
+	$this_item = shift (@bibitems);
+	$this_item = &translate_environments("\\$this_kind $this_item\\newblock");
+	$citations .= &translate_commands($this_item);
+	last unless  (@bibitems);
+	$this_kind = shift (@bibitems).'item';
+    }
+    $citations = join('',"\n<DL COMPACT>",$citations,"\n</DL>");
     $citations{$bbl_nr} = $citations;
+    if (defined &do_cmd_bibname) {
+	$title = &translate_commands('\bibname');
+    } else { $title = $bib_title }
     $_ = join('','<P>' , "\n<H2><A NAME=\"SECTIONREF\">"
-	      , "$bib_title</A>\n</H2>\n$bbl_mark#$bbl_nr#");
+	      , "$title</A>\n</H2>\n$bbl_mark#$bbl_nr#");
     $bbl_nr++ if $bbl_cnt > 1;
     $_;
 }
@@ -1204,6 +1305,9 @@ sub do_cmd_citationstyle {
     &do_cmd_citestyle 
 }
 
+print "\nLoading $LATEX2HTMLSTYLES/babelbst.perl"
+    if (require "$LATEX2HTMLSTYLES/babelbst.perl");
+
 &ignore_commands ( <<_IGNORED_CMDS_);
 bibsection # {}
 bibfont # {}
@@ -1214,19 +1318,4 @@ harvardyearparenthesis # {}
 _IGNORED_CMDS_
 
 1;                              # This must be the last line
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

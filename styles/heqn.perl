@@ -45,6 +45,7 @@ sub do_env_equation {
    local ($eqn_number, $equation_id, $image_id, $step_id, $eqnstr);
    local($attribs, $border);
    if (s/$htmlborder_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
+   elsif (s/$htmlborder_pr_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
    $equation_id = $global{'max_id'}++;
    $image_id = $equation_id + 1;
    $step_id = ++$global{'max_id'};
@@ -72,6 +73,7 @@ sub do_env_eqnarray {
    local ($eqn_number, $image_id1, $image_id2, $pre);
    local($attribs, $border);
    if (s/$htmlborder_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
+   elsif (s/$htmlborder_pr_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
 #
 #  First, put leqno into the preamble, if it's not already there.
 #

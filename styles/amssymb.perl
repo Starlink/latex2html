@@ -36,6 +36,11 @@ sub do_euscript_mathscr {
 _IGNORED_CMDS_
 
 
+&process_commands_in_tex (<<_RAW_ARG_CMDS_);
+mathbb # {}
+_RAW_ARG_CMDS_
+
+
 &process_commands_inline_in_tex (<<_RAW_ARG_CMDS_);
 _RAW_ARG_CMDS_
 

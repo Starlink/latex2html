@@ -1,3 +1,4 @@
+
 # LaTeX2HTML by Nikos Drakos <nikos@cbl.leeds.ac.uk>
 # **************************************************
 # Change Log ***************************************
@@ -74,12 +75,15 @@
 # jfr = J. Freeman <jfreeman@ms.com>
 # mer = Michael Ernst <mernst@cs.rice.edu>
 # rrm = Ross Moore <ross@mpce.mq.edu.au>
-# jcl  = Jens Lippmann <lippmann@cs.uni-sb.de>
+# jcl = Jens Lippmann <lippmann@cdc.informatik.tu-darmstadt.de>
 # dtp = D. Taupin <taupin@lps.u-psud.fr>
 # mwk = Martin Wilck <martin@kassandra.tropos.de>
 # mcm = Barry McMullin <McMullin@EENG.DCU.IE>
-# tak  = Takashi Tomokiyo <tomokiyo@trc.rwcp.or.jp>
+# tak = Takashi Tomokiyo <tomokiyo@trc.rwcp.or.jp>
 # mro = Marek Rouchal <marek@saftsack.fs.uni-bayreuth.de>
+#  bv = Boris Veytsman <boris@plmsc.psu.edu>
+#  kr = Keith Refson <Keith.Refson@earth.ox.ac.uk>
+#  uw = Uli Wortmann <uli12@bonk.ethz.ch>
 #
 #
 #------------------- Test Suite Manifest ----------------------------------
@@ -99,6 +103,431 @@
 # tests/jcl-verb.tex	See log.
 #
 #--------------------------------------------------------------------------
+#
+#		CHANGE LOG FOR THE LATEX2HTML RELEASE
+#
+# What is recorded here are changes to any file of the LaTeX2HTML release
+# *meaningful to the user*, such as new options or files, important bug
+# fixes etc.
+# A more detailed log history can be found within the particular files, near
+# the top.
+#
+#
+#--------- v98.1 (compiled by jcl)
+#
+#	Changes in the top-level directory:
+#
+#	rrm	latex2html.config
+#	jcl	- New section header strings in &english_titles (corresponding
+#		  entries also in german.perl, french.perl):
+#		   $ref_title - this text heads the References section
+#		   $pre_title - for preface
+#		   $child_name - this text heads the table of child links
+#		   $prf_name - for proofs
+#		- added variables for tex and initex  for use with the -ldump
+#		  feature
+#		  The -ldump switch will help to speed up image generation
+#		  with *subsequent* runs on your document.
+#		- added command line option -unsegment and $UNSEGMENT
+#		  Use latex2html -unsegment, or texexpand -unsegment, or set
+#		  $UNSEGMENT to 1 in latex2html.config
+#		  (see texexpand changes)
+#		- added defaults for bolder images of gray background
+#		- provide optional value for $TMP --- location of a  tmp  directory
+#		- provide default for $GENERIC_WORDS to be omitted from filenames
+#		  when using the  -long_titles  switch
+#		  (see also german.perl, french.perl)
+#
+#	rrm	latex2html
+#	(uw)	- patch for -no_subdir bug, reported by Thomas Anders dta@dsapp2.hmi.de
+#	(jcl)	- &cleanup deletes ${PREFIX}images.dvi
+#		- fixed bug whereby \item s were combined --- lack of unique brace id
+#		- fixed missing-space bug that killed math-images
+#		- implemented scheme to allow alternative address formats
+#		- address-data default is ISO conformant
+#		- added translation of \institute as part of the title page settings
+#		- change to -link so that  -link +<num>  puts mini-TOC on leaf pages
+#		  and  -link <num>  puts no mini-TOC on these lowest-level pages;
+#		  Alternatively, set $MAX_LINK_DEPTH to be negative for these mini-TOCs
+#		- new switch  -ldump  to use ldump.sty when making images,
+#		  this speeds up processing on the 2nd and subsequent runs;
+#		- fully implemented dependency of counters;
+#		- implemented \expandafter and \noexpand with special care concerning
+#		  case-changing macros;
+#		- fixed bug whereby `0' in math was getting lost;
+#		- allow alternative source for icons, using $ALTERNATIVE_ICONS
+#		- implemented on-the-fly \renewcommand
+#		- \renewcommand meta-commands are now wrapped, so that they are
+#		  re-processed *before* there replacement text is processed.
+#		  Otherwise bad LaTeX code can get into images.tex
+#		  (Thanks to  Michael Hall for an example of this.)
+#		- \newcommand both warns *and* replaces existing macros
+#		- more care over \limits  macro
+#		- fixed a bug whereby some macro-expansions didn't work correctly
+#		- fixed printing of \the<counter> macros, with dependent counters
+#		- NEW: implementation of document-classes and styles
+#		  allows file for classes and options and option-class pairs
+#		- implemented $INFO-page options
+#		- fixed error with minipage footnote numbering
+#		- implemented \numberwithin (from AMS-packages)
+#		- fixed error in DTD declaration
+#		- implemented \nobreakspace  and  \nonbreakingspace  (AMS-packages)
+#		- Added support for Override.pm to latex2html
+#		- added command line option -unsegment and $UNSEGMENT
+#		  Use latex2html -unsegment, or texexpand -unsegment, or set $UNSEGMENT
+#		  to 1 in latex2html.config (see texexpand Changes)
+#		- **major**
+#		  introduced a font/size state-stack concept to handle nesting
+#		  of tags altering size and font-face within text-level data.
+#		  It also affects macros which create block-level tags.
+#		  The @open-tags list has to be cleared, tags inserted,
+#		  then @open-tags recovered for the new paragraph, say.
+#		- font/size-changing commands are declared as `deferred'
+#		  so as to be processed in sequence with environments
+#		  \par \bigskip \medskip etc. are similarly `deferred'
+#		- the switch  -tmp 0  uses /tmp as a tmp-directory
+#		- special characters can be `escaped' in macros that construct
+#		  {rawhtml} environments
+#		- \newcommand \newenvironment \def definitions are more efficient
+#		  macro substitution is *much* faster, using an array mechanism
+#		- support for HTML 4.0, including style-sheets
+#		- faster processing on user-defined macro replacements
+#		- faster processing of .aux files
+#		- improvments to ensure validity of the HTML code, wrt DTDs
+#		- many LaTeX macros use an extra indirection, so that it
+#		  becomes much easier to cope with tag-balancing and styles;
+#		  this also shortens the code somewhat.
+#		- the declared environments are similarly handled indirectly.
+#		- processing of the .aux file and user-defined macros handle
+#		  smaller chunks of text, rather than the whole document;
+#		  for the .aux file, each line is handled separately
+#		  for macro-replacement, a \par command serves as a delimiter
+#		  (since it is illegal within most (La)TeX macros).
+#		- other parts of the processing are done using arrays, to lessen
+#		  the length of strings that might otherwise be copied.
+#		- when $USING_STYLES is set, a CSS style-sheet is generated,
+#		  indicating the style used in each environment, and providing
+#		  a unique ID to such environments. This CSS style-sheet can be
+#		  subsequently edited, if desired.
+#		- \label and \index commands in section-headings work better,
+#		  (the anchor is placed before the heading tag)
+#		  also a forward-search is now conducted for these.
+#		- handling of charsets and input encodings is much improved.
+#		- moved some variables to establish defaults before .config or -init
+#		  files are read.
+#		- introduced variables  $image_pre  and  $IMAGE_PREFIX  to control names
+#		  used for the intermediate files created by  dvips  and  pstoimg
+#		- implemented \textsc fully --- now 8-bit characters are case-folded too
+#		- create images anti-aliased against a gray background. Characters are
+#		  bolder, without (almost) white edges against gray.
+#		  new variables $LOAD_LATEX_COLOR  and $LATEX_COLOR control this.
+#		- new switch  -numbered_footnotes  setting  $NUMBERED_FOOTNOTES
+#		- \begin/endgroup  and $b/egroup commands write directly into images.tex
+#		- defined &do_cmd_footnote* since \footnote*{...} is a common in TeX
+#		- defined &do_cmd_MF  for the Metafont logo
+#		- support for pre-processors when making images of non-latin script
+#		  code for generating images is placed into file:  images.pre
+#		  pre-processor commands are placed into file:  preproc
+#		  preproc  is run as a script, producing:  images.tex
+#		  image generation then proceeds as normal.
+#		- pseudo-environments for font/styles are given better support
+#		  and TeX's \font command is implemented
+#		  e.g. {\bf  ... }   {\wncyr .... }
+#		  the control-sequence is found and the grouping is treated as an
+#		  environment, rather than waiting to handle it as a command.
+#		- theorem commands and styles are implemented;
+#		  covers the {theorem} and {amsthm} packages.
+#		- footnotes have hyperlink back into the main text.
+#		- footnotes can have images in the footnote marker `word'
+#		- section numbering is rationalised to be more in-step with LaTeX
+#		  the HTML numbering is unchanged, via  @curr_sec_id
+#		  in-text macros, like \value \setcounter \thesection get their
+#		  number from $global{'section'} etc.
+#		  \section advances both counters, but \section* only the HTML one.
+#		- changed the $NO_ACCENT_IMAGES variable instance to $ACCENT_IMAGES
+#		- added %numbered_section hash for initialising $global counters
+#		  in  &initialise_sections
+#		- some name changes of auxiliary files usage of temporary directories
+#		  to get it running on DOS (thanks to Daniel Taupin)
+#		- implemented \theoremstyle , \theorembodyfont , etc.
+#		- added to the TeX code in images.tex for finer control with accents
+#		- inserted  binmode(IMAGE)  when scanning bitmaps for size
+#		  (thanks, Daniel Taupin)
+#		- changes to the way captions are found and handled
+#		- new switch: -iso_language  to get the correct DTD with mixed-languages
+#		- minipage environments can capture a caption, when inside figure/table
+#		- implemented \eqref (from AMS-TeX)
+#		- implemented \topcaption \bottomcaption \middlecaption commands
+#		- implemented use of 2 temp directories:
+#		  $TEMPDIR for image-processing, usually subdir of /tmp
+#		  TMP subdir of working directory, for the (formerly) TMP_ files
+#		- sectioning commands in expansions of \newcommand work properly now
+#		  (thanks to Azat Badretdinov for finding the cause)
+#		- improved the handling of simple math generally
+#		- changed name \HTML to \HTMLcode ; \HTML remains as an alias
+#		- minor changes in images.tex to avoid some `cropping bars' remaining
+#		- itemize works properly, with explicit \item[...]
+#		  bullets implemented as images, for other \item s
+#		- \tag is recognised in equation environments, with all math modes
+#		- \authorURL make the \author information into a hyperlink
+#		- \email adds to the title-page info
+#		- made \large and \small use <FONT SIZE....> tags
+#		- added declarations for  \smaller and \larger
+#		- change to  &do_cmd_mbox  so that it doesn't try to make an image
+#		  of the code that may already have an image_marker
+#		  This allows \mbox{$...$} to be used with macro-replacements
+#		- improvements to &make_long_title to cope with accents, etc.
+#		- implemented  -no_fork switch for  $NOFORK  variable
+#		- replaced system `cat` command with a platform-independent version
+#		- implemented \usecounter use within {list} environments
+#		- long-titles are restricted to 27 characters +(.html) = 32 chars
+#		- suppressed warning messages for `array` and `theorem` packages
+#		- use $BODYTEXT with the footnotes page (thanks Andreas Otte)
+#		- figure/table captions aren't also included in images
+#
+# NEW		Override.pm
+#		This file is intended to hold OS-specific definitions that
+#		the latex2html or other scripts may require during runtime.
+#		Thanks go to Marcus Hennecke, Axel Ramge, Uli Wortmann and
+#		many others who helped with their suggestions.
+#		This is a step towards an operating system independent
+#		LaTeX2HTML which is currently under work.
+#
+#	jcl	configure-pstoimg
+#		- safer renaming of substitute files to .bak (lost files reported)
+#		- dies with message unless initialized via install-test
+#
+#	jcl	install-test
+#	rrm	- some revisions for 98.1, see log of that file
+#
+#	rrm	pstoimg, pstoimg_nopipes
+#	uw	- adjusted to use the  Override.pm  module with Perl5
+#	jcl	- removed the PaperSize bug
+#		- handles absolute file names and temp dirs correctly
+#
+#	jcl	texexpand
+#	rrm	- small fix to &interprete, \input|include now doesn't loose the
+#	uw	  comment if merging fails
+#		- added command line option -unsegment and $UNSEGMENT
+#		  Use latex2html -unsegment, or texexpand -unsegment, or set
+#		  $UNSEGMENT to 1 in latex2html.config.
+#		  This will force a segmented document to expand its segment
+#		  files, so that it may be processed as a whole with LaTeX2HTML.
+#		  Use this feature to test a segmented document or whenever a
+#		  document needs to be fully expanded.
+#		- Added support for Override.pm to texepand.
+#		- generalised pattern for matching verbatim-like environments
+#
+#	NEW packages:
+#
+#	IndicTeX-HTML/
+#	rrm	provided IndicTeX-HTML, a collection of Perl and LaTeX styles
+#		to translate IndicTeX documents (see README)
+#
+#	foilhtml/
+#	bv	provided FoilHTML, a package for translating FoilTeX documents
+#		(see readme.v12)
+#
+#	Changes in the styles/ directory:
+#
+#	rrm	alltt.perl
+#		reimplemented the {alltt} to use <TT> rather than <PRE> now
+#		style changes can be handled properly, with valid tag nesting
+#
+# NEW	rrm	amsart.perl, amsbook.perl
+#		New files --- support AMS document class
+#
+#	rrm	amsfonts.perl
+#		pass \mathbb commands to LaTeX
+#
+#	rrm	amsmath.perl, amstex.perl
+#		various changes (see log history in that files)
+#
+#	rrm	babel.perl
+#		 -  parametrised the loading-mechanism:
+#			a single line now suffices for each new language
+#		 -  added such lines for `french' and `francais' (NB. Michel Goossens)
+#		--   fixed error in file-loading
+#
+# NEW	rrm	article.perl, book.perl, letter.perl, report.perl, slides.perl
+#		Document-class emulation file
+#		-- adjusts the \the<counter> macros for sectioning commands
+#		-- suppresses warnings for standard class-options
+#
+# NEW	kr	chemsym.perl
+#		There may be some problems with accents, whose TeX macro names
+#		correspond to chemical symbols, as defined here --- there is no
+#		compensation provided within this implementation.
+#
+#	rrm	latex2html.config, francais.perl, french.perl
+#	jcl	german.perl, germanb.perl
+#		- with -long_titles, use $GENERIC_WORDS list to shorten the title.
+#		- brought &german/french_titles up to date with &english_titles
+#
+#	rrm	graphics.perl, graphicx.perl
+#		 -  modified \graphicspath to parse a list of directories (Axel Ramge)
+#		 -  rewritten the &do_cmd_graphicspath subroutine
+#		    works correctly and allows multiple use, outside the preamble
+#		 -  handle \DeclareGraphicsRule  and  \DeclareGraphicsExtension
+#		 -  \graphicspath  works correctly in the preamble now
+#
+#	rrm	heqn.perl
+#		recognise \htmlborder and \htmlimage also in processed environments
+#
+#	rrm	html.perl
+#		\htmlmeta defined, for inserting <META...> tags
+#
+# NEW	rrm	inputenc.perl
+#		Implements the  inputenc  package, allowing the character encoding
+#		to be specified from within the document.
+#		Supports latin1, latin2, latin3, latin4, latin5, latin6, Unicode.
+#		This uses files latin1.pl to latin6.pl and unicode.pl
+#		in the versions/ directory.
+#
+#	rrm	makeidx.perl
+#		 --  fixed problem with sub-item keys printing multiply
+#		 --  \index commands within section-heads now work correctly
+#
+# NEW	rrm	more_amsmath.perl
+#		That part of  amstex.perl and amsmath.perl that needs the `math'
+#		extension has been split-off into  more_amsmath.perl .
+#		This is loaded automatically with switches:
+#		 -no_math -html_version ...,math
+#
+#	rrm	natbib.perl
+#		Updated for compatibility with natbib.sty v6.6
+#		 - all \cite... commands have a *-version and 2 optional arguments
+#		 - Harvard emulation is now automatic
+#		 - implemented \citep*
+#		 - fixed \harvardurl to work properly and without html.sty
+#		   thanks to James A. Bednar <jbednar@cs.utexas.edu> for noticing
+#
+# NEW	rrm	seminar.perl
+#		implements seminar.sty by:
+#		making \newslide into a sectioning-command, with its own numbering
+#		other commands are recognised and largely ignored
+#		text of `notes' are gobbled
+#
+#	rrm	supertabular.perl
+#		implemented the \tablehead \tabletail etc. commands
+#
+#	rrm	xy.perl
+#		- allow for optional argument to  \newxycolor  and  \newgraphescape
+#		- recognise \htmlborder and \htmlimage also in processed environments
+#
+#	Changes in the versions/ directory:
+#
+#	jcl	html2_1.pl, html2_2.pl, html3_0.pl, html3_1.pl, html3_2.pl
+#		renamed html*.*.pl files, for DOS
+#
+#	rrm	html2_2.pl (equal to table.pl)
+#		{tabular} environments could pick up caption from previous {table}
+#
+#	rrm	html3_1.pl (equal to math.pl)
+#		with $NO_SIMPLE_MATH, force images of \...matrix environments
+#		- fixed bug which affected the code for image-making
+#		- fixed bug not handling \lefteqn in {eqnarray}s
+#		- allow Netscape's VALIGN="BASELINE" for {eqnarray} rows
+#		- correctly writes {eqnarray*}, not {eqnarraystar} to images.tex
+#		- recognises \le (as well as \leq) without warning (thanks Michel)
+#		- automatic recognition of the differential `d' after \int
+#		- significant additions to math-parsing
+#		  additions:
+#		  \mathop,\mathrel,\mathbin, etc. recognised;
+#		  sup/subscripts handled a little differently;
+#		  array-like environments need to have delimiters protected,
+#		  when they occur as sub-environments of other array-like envs;
+#		  get equation-number from \\theequation  not  &do_cmd_....
+#		  equation-numbers can have variable delimiters, not just (..);
+#		  some AMS commands implemented always
+#		  \text trated as \mbox --- not best, only temporary
+#		- fixed spacing/line-break problems
+#		- implemented \text properly, within math
+#		- fixed `missing 0' error with sup/subscripts
+#		- adapted for $USING_STYLES ; e.g. with HTML 4.0
+#		- adapted to allow use of Unicode entities for math-symbols
+#		- allow some fractions to be given as named entities; e.g. frac12
+#		- font styles/faces are now supported with properly nested tags
+#		- support for \strut and \vrule and \hrule
+#		- use the MATH and BOLDMATH classes when $USING_STYLES
+#		- always make images of some math operators
+#		- always make image of variable-sized operators
+#		- catch fractions via  \frac  \tfrac  \dfrac
+#		- use a specified WIDTH="10%" for equation-numbering cells
+#		- made all numbering environments have WIDTH="100%"
+#		- introduced variables  $math_start_rx  and  $math_end_rx .
+#		  (looking ahead to the possibility of allowing $ to be non-math.)
+#		- fixed problem with superscripts: ' (\prime) missing from images
+#		- \mathbf , \mathcal etc. seem to be correct now
+#		- fixed bug causing some fractions to be in \textstyle, not displayed
+#		- fixed some string tests that incorrectly treated 0 as ''
+#		- recognise \htmlimage and \htmlborder in processed environments also
+#		... and various other changes (see log history of that file)
+#
+#	rrm	html3_2.pl
+#		- Implemented {tabular*} environment, to be same as {tabular}
+#		  i.e. does not recognise a fixed width
+#		- the \extracolsep macro is recognised, but ignored
+#		- sub-environments of {tabular}s are processed first;
+#		  this allows {tabular}s to be nested
+#		- \multicolumn now implemented
+#		- cells containing `0' now show it, rather than being empty
+#		- {eqnarray} math-style bug fixed
+#		- allow Netscape's VALIGN="BASELINE" for {eqnarray} rows
+#		- removed unnecessary <BIG> tags, when {eqnarray} cell is an image
+#		- reworked the handling of @-expressions in tabular specs.
+#		- remove &simple_math_env acting twice on the same math --- Ugh!
+#		- implemented the extra tabular declarations from  array.sty
+#		- ignore and \PreserveBackslash commands
+#		  these extensions are **untested**
+#		- adapted the alignment environments to work as instances of
+#		  &declared_env   which respects the font/size state-stack.
+#		- adapted some environment-like commands to work with style-sheets
+#		- fixed migrating captions error; thanks to Keith Andrews
+#		- use a specified WIDTH="10%" for equation-numbering cells
+#		- made all numbering environments have WIDTH="100%"
+#		- improvements to {eqnarray} environments:
+#		  each field is handled separately, equation-numbering works
+#		  eqn-numbering aligned OK now;
+#		- VALIGN on rows in {tabular} is not used, unless $NETSCAPE_HTML
+#		- introduced \mathon and \mathoff for use in tabular-specs
+#		- implemented \tablehead  and \tabletail (from supertabular.sty)
+#		- implemented the @{...} and !{...} column-specs as separate columns
+#		  without slots for filling from the table-data.
+#		- \tag and \notag now work correctly in normal math-mode
+#		- fixed some string tests that incorrectly treated 0 as ''
+#		- recognise \htmlimage and \htmlborder in processed environments also
+#		- make sure math within do_math_env is properly delimited
+#		- p{<width>} in a {tabular}'s col-spec causes VALIGN="TOP"
+#
+# NEW	rrm	html4_0.pl
+#		Implements output specific for HTML 4.0
+#		This requires LaTeX2HTML v97.2 (alpha) or later version.
+#		The variable  $USING_STYLES  is set, to enable automatic creation
+#		of a CSS style-sheet.
+#		To use a UTF-7 or UTF-8 Unicode charset, the  unicode extension
+#		needs to be loaded also; else the Latin-1 charset is used.
+#
+# NEW	rrm	lang.pl
+#		contains the language codes, from i18n.pl
+#
+#	Changes in the versions/ directory:
+#
+#	rrm	html.sty
+#		- uses Robin Fairbairns' code for ignored environments,
+#		  replacing the previous  comment.sty  stuff.
+#		- extensions to the \tableofchildlinks command
+#		- extensions to the \htmlinfo command
+#		- allow the dummy {tex2html_nowrap} environment in LaTeX
+#		  use it to make its contents be evaluated in environment order
+#		- implemented an optional argument to \begin for style-sheet info.
+#		- modified use of an optional argument with sectioning-commands
+#
+# NEW	rrm	ldump.sty
+#		ldump.sty  ---  LaTeX package which allows format dumps to be used.
+#		use the new  -ldump  switch to make use of this feature/package.
+#
+#
 #
 #--------- v97.1 (compiled mostly by rrm  and also jcl)
 #       incorporating the changes of v96.2 (not officially released) by mro
@@ -1592,3 +2021,4 @@
 #  29-JUL-93  nd - Changed the format of inlined images coming back from latex
 #                  from GIF to XBM (suggested by ab)
 #  26-JUL-93  nd  - Created
+

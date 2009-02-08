@@ -1,7 +1,7 @@
 #
-# $Id$
+# $Id: verbatimfiles.perl 12004 2004-02-20 13:13:29Z nxg $
 # verbatimfiles.perl
-#   Jens Lippmann <lippmann@cdc.informatik.th-darmstadt.de> 6-FEB-96
+#   Jens Lippmann <lippmann@cdc.informatik.tu-darmstadt.de> 6-FEB-96
 #
 # Extension to LaTeX2HTML to support verbatim.sty/verbatimfiles.sty.
 #
@@ -13,8 +13,11 @@
 # Revision 1.1  2004/02/20 13:13:28  nxg
 # Initial import
 #
-# Revision 1.1  1998/08/20 16:03:47  pdraper
-# *** empty log message ***
+# Revision 1.4  1998/03/22 20:52:50  latex2html
+# reviewed for 98.1, works & is testable via devel/tests/regr/verbatim/run
+#
+# Revision 1.3  1998/02/19 22:24:34  latex2html
+# th-darmstadt -> tu-darmstadt
 #
 # Revision 1.2  1996/12/23 01:36:50  JCL
 # o added some informative comments and log history
@@ -56,58 +59,34 @@
 
 package main;
 
+&do_require_package("verbatim");
+
 sub do_cmd_verbatimfile {
-    local($outer) = @_;
-    local($_);
-
-    $outer =~ s/$next_pair_pr_rx//o;
-    local($file) = $2;
-    $file .= ".tex" unless $file =~ /\.tex$/;
-
-    foreach $dir ("$texfilepath", split(/:/,$ENV{'TEXINPUTS'})) { 
-	if (-f ($_ = "$dir/$file")) {
-	    #overread $_ with file contents
-	    &slurp_input($_);
-	    last;
-	}
-    }
-    # pre_process file contents
-    &replace_html_special_chars;
-
-    $verbatim{++$global{'verbatim_counter'}} = $_;
-    join('',"<BR>\n",$verbatim_mark,'verbatim',$global{'verbatim_counter'},$outer);
+    &do_cmd_verbatiminput;
 }
 
 sub do_cmd_verbatimlisting {
-    local($outer) = @_;
-    local($_);
+    local($_,$outer);
     local($counter) = 0;
 
-    $outer =~ s/$next_pair_pr_rx//o;
-    local($file) = $2;
-    $file .= ".tex" unless $file =~ /\.tex$/;
+    # Read in file, get markup ready.
+    $outer = &do_cmd_verbatiminput;
 
-    foreach $dir ("$texfilepath", split(/:/,$ENV{'TEXINPUTS'})) { 
-	if (-f ($_ = "$dir/$file")) {
-	    #overread $_ with file contents
-	    &slurp_input($_);
-	    last;
-	}
-    }
-    # pre_process file contents
-    &replace_html_special_chars;
+    # Postprocess verbatim content.
+    $_ = $verbatim{$global{'verbatim_counter'}};
 
     #insert numbers for every line
     #but not the first line if it's empty (LaTeX'ism?)
-    s/^([ \t]+\n)//;
-    local($first) = $1;
+    local($firstemptyline);
+    $firstemptyline = $1 if s/^([ \t]+\n)//;
+
     #and not the last end of line
     s/\n$//;
     s/(^|\n)/$1.sprintf("%4d ",++$counter)/ge;
 
     #add the stuff from the first(if empty) and last line also
-    $verbatim{++$global{'verbatim_counter'}} = $first.$_."\n";
-    join('',"<BR>\n",$verbatim_mark,'verbatim',$global{'verbatim_counter'},$outer);
+    $verbatim{$global{'verbatim_counter'}} = $first.$_;
+    $outer;
 }
 
 1; 		# Must be last line

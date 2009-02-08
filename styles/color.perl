@@ -1,4 +1,4 @@
-# $Id$
+# $Id: color.perl 12004 2004-02-20 13:13:29Z nxg $
 # color.perl by Michel Goossens <goossens@cern.ch>  01-14-96
 #
 # Extension to LaTeX2HTML V 96.2 to support color.sty
@@ -17,8 +17,27 @@
 # Revision 1.1  2004/02/20 13:13:28  nxg
 # Initial import
 #
-# Revision 1.1  1998/08/20 16:03:32  pdraper
-# *** empty log message ***
+# Revision 1.15  1998/06/26 07:16:37  RRM
+#  --  simplified reading of crayola.txt fro CMYK colors
+#
+# Revision 1.14  1998/05/19 11:35:43  latex2html
+#  --  \textcolor inside math needs to pass $color_env back outside.
+#
+# Revision 1.13  1998/05/15 12:46:40  latex2html
+#  --  color is used with more environments, so need $color_env to be
+#     a local variable
+#
+# Revision 1.12  1998/04/28 13:13:23  latex2html
+#  --  fixed \color and \textcolor so that the tags nest correctly when
+#      used in a non-trivial way
+#  --  sets $color_env variable, so that color can be included with the
+#      code used for images; hence colored math expressions work correctly
+#
+# Revision 1.11  1997/12/08 12:45:17  RRM
+#  --  updated the color macros for style-sheets
+#
+# Revision 1.10  1997/11/05 10:35:29  RRM
+#  --  added "..." around color attribute values
 #
 # Revision 1.9  1997/06/06 12:02:44  RRM
 #  -  Changed some VERBOSITY levels
@@ -89,17 +108,17 @@ sub read_rgb_colors {
     foreach $dir (split(/:/,$LATEX2HTMLSTYLES)) {
 	if (-f "$dir/$file") {
             if (open(COLORFILE,"<$dir/$file")) {
-		print STDERR "\n(reading colors from $file" if $DEBUG;
+		print STDOUT "\n(reading colors from $file" if $DEBUG;
 		$* = 0;	# Multiline matching OFF
 		while (<COLORFILE>) {
 	s/^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\w+(\s\w+)*)\s*/
 	    ($r,$g,$b,$name)=($1,$2,$3,$4);
 	    $named_color{$name} = &encode_rgbcolor($r,$g,$b);
-	    print STDERR "\n$name = $named_color{$name}" if ($VERBOSITY > 5);
+	    print STDOUT "\n$name = $named_color{$name}" if ($VERBOSITY > 5);
 		/e;
 		}
 		close(COLORFILE);
-		print STDERR ")\n" if $DEBUG;
+		print STDOUT ")\n" if $DEBUG;
 		last
 	    } else { 
 		print STDERR "$file could not be opened:$dir\n";
@@ -113,25 +132,31 @@ sub read_rgb_colors {
 sub read_cmyk_colors {
     local($file) = @_;
     local($prev) = $*;
-    local($c,$m,$y,$k,$name,$dir);
+    local($c,$m,$y,$k,$name,$dir,@colors);
+    local($num_rx) = "(\\d|\\d\\.\\d*)";
     foreach $dir (split(/:/,$LATEX2HTMLSTYLES)) {
 	if (-f "$dir/$file") {
-            if (open(COLORFILE,"<$dir/$file")) {
-		print STDERR "\n(reading colors from $file";
+	    if (open(COLORFILE,"<$dir/$file")) {
+		print STDOUT "\n(reading colors from $file";
 		$* = 0;			# Multiline matching OFF
-		while (<COLORFILE>) {
-		    s/\s*$//g;
-  s/^\s*(\w+)\s+(\d|\d\.\d*)\s+(\d|\d\.\d*)\s+(\d|\d\.\d*)\s+(\d|\d\.\d*)$/
-	    ($name,$c,$m,$y,$k)=($1,$2,$3,$4,$5);
-	    if ($named_color{$name}) {
-		print STDERR "***$name = \#$named_color{$name}\n"
-		    if ($VERBOSITY > 5);}
-	    $named_color{$name} = &get_cmyk_color($c,$m,$y,$k);
-	    print STDERR "$name = \#$named_color{$name}\n" if ($VERBOSITY > 5);
-			/oe; }
-		close(COLORFILE);
-		print STDERR ")\n";
-		last
+		@colors = (<COLORFILE>);
+		foreach (@colors) {
+		    next if (/^\s*$/);
+#  s/^\s*(\w+)\s+(\d|\d\.\d*)\s+(\d|\d\.\d*)\s+(\d|\d\.\d*)\s+(\d|\d\.\d*)\s*$/
+		    s/^\s*(\w+)\s+$num_rx\s+$num_rx\s+$num_rx\s+$num_rx\s*$/
+			($name,$c,$m,$y,$k)=($1,$2,$3,$4,$5);
+			if ($named_color{$name}) {
+			    print STDOUT "***$name = \#$named_color{$name}\n"
+		   		if ($VERBOSITY > 3);
+			}
+			$named_color{$name} = &get_cmyk_color($c,$m,$y,$k);
+			print STDOUT "$name = \#$named_color{$name}\n"
+			    if ($VERBOSITY > 3);
+		    /oe;
+		}
+		close(COLORFILE); undef @colors;
+		print STDOUT ")\n";
+		last;
 	    } else { 
 		print STDERR "$file could not be opened:$dir\n";
 	    }
@@ -309,14 +334,23 @@ sub initialise_colors {
 # \textcolor is for a `local' color-change to specified text
 
 sub do_cmd_textcolor {
-    local($color,$rest) = &find_color;
+    local($color,$_,$color_cmd) = &find_color;
     if (!($color)) {
 	$color= "000000";  # default = black
-	print STDERR "\ntext color = black\n";}
-    $_= $rest;
-    local($text);
-    s/$next_pair_pr_rx//o; $text =$2;
-    $_=join('',"<FONT color=\#$color>$text</FONT>",$_);
+	print STDERR "\ntext color = black\n";
+    }
+
+    if ($inside_math) {
+	# allow math-parsing to use this $color_env
+	$color_env = $color_cmd;
+    } else {
+	# environments will be parsed with this $color_env
+	local($color_env) = $color_cmd;
+    }
+    push (@open_tags, $color_cmd);
+    $_ = &styled_text_chunk("FONT COLOR=\"\#$color\""
+	, 'hue', 'font', 'color', "\#$color", '', $_);
+    pop (@open_tags); $_;
 }
 
 # \pagecolor is for a `global' color-change to the background;
@@ -334,16 +368,31 @@ sub do_cmd_pagecolor {
 # colorboxes use the `blink' effect; only one color can be used.
 
 sub do_cmd_colorbox {
-    local($color,$_) = &find_color;
-    s/$next_pair_pr_rx//o;
-    join('',"\n<blink><FONT color=\#$color>",$2,"</FONT></blink>\n",$_);
+    local($color,$_,$color_cmd) = &find_color;
+    local($color_env) = $color_cmd;
+    push (@open_tags, $color_cmd);
+    $_= &styled_text_chunk("BLINK><FONT COLOR=\"\#$color\""
+	, 'cbox', 'background', 'color', "\#$color", '', $_);
+    s/\/BLINK/\/FONT><\/BLINK/ unless ($USING_STYLES);
+    pop (@open_tags);
+    $_;
 }
 
 sub do_cmd_fcolorbox {
     local($_) = @_;
-    s/$next_pair_pr_rx//o;
-    &do_cmd_colorbox($_);
+    if ($USING_STYLES) { 
+	local($fcolor) = &find_color;
+	local($color,$_,$color_cmd) = &find_color;
+	push (@open_tags, $color_cmd);
+	$_ = &multi_styled_text_chunk('','fcol',"border,background"
+		,",color","solid thin \#$fcolor,\#$color",$_);
+	pop (@open_tags); $_;
+    } else {
+	(s/$next_pair_pr_rx//o||s/$next_pair_rx//o);
+	&do_cmd_colorbox($_);
+    }
 }
+
 
 # the result of a \color command depends upon where it is issued:
 #   1.  in the preamble: change the global text-color,
@@ -352,13 +401,22 @@ sub do_cmd_fcolorbox {
 #   3.  top-level, within the body: treat as a local color change,
 #	and save the color for later (sub)sections;
 #   4.  bracketed, within the body: treat as a local color change.
+#
+#RRM:  3 and 4 are not implemented properly yet
+#
 
 sub do_cmd_color {
-    local($color,$rest) = &find_color;
+    local($color,$rest,$color_cmd) = &find_color;
     if (!($color)) {
 	$color= "000000";  # default = black
 	print STDERR "black\n";
     }
+    $color_env = $color_cmd;
+#    if ($tex2html_deferred) { 
+#	$color_cmd = 'color'. $color_cmd;
+#	$declarations{$color_cmd} = "<FONT COLOR=\"\#$color\"></FONT>"
+#	    unless ($declarations{$color_cmd});
+#    }
     if (($PREAMBLE)&&($NESTING_LEVEL == 0)) { 
 	&apply_body_options("text","$color");
 	$next_section_color = $color;
@@ -366,10 +424,14 @@ sub do_cmd_color {
     } elsif ($PREAMBLE) { 
 	$rest;
     } elsif ($NESTING_LEVEL == 0) { 
+	push ( @open_tags, $color_cmd );
 	$next_section_color = $color;
-	join('',"\n<FONT color=\#$color>",$rest,"\n</FONT>");
+	join('',"\n<FONT COLOR=\"\#$color\">", $rest
+	    , ($tex2html_deferred ? '' : "\n</FONT>" ));
     } else {
-	join('',"\n<FONT color=\#$color>",$rest,"\n</FONT>");
+	push ( @open_tags, $color_cmd );
+	join('',"\n<FONT COLOR=\"\#$color\">",$rest
+	    , ($tex2html_deferred ? '' : "\n</FONT>" ));
     }
 }
 
@@ -390,9 +452,13 @@ sub set_section_color {
 sub do_cmd_normalcolor {
     local($_) = @_;
     if ($next_section_color) {
-	local($color) = &find_color($next_section_color);
+	local($color,$_,$color_cmd) = &find_color($next_section_color);
 	if ($color) {
-	    $_ = join('',"<FONT COLOR =","\"$color\"",$_,"</FONT>");
+	    local($color_env) = $color_cmd;
+	    push (@open_tags, $color_cmd);
+	    $_ = &styled_text_chunk("FONT COLOR=\"\#$color\""
+		    ,'hue','font','color',"\#$color",'', $_ );
+	    pop (@open_tags);
 	}
     }
     $_;
@@ -439,20 +505,27 @@ sub get_model_color {
 
 sub find_color {
     local($_) = @_;
-    local($rest,$get_string,$color);
+    local($rest,$get_string,$color,$color_cmd);
     local ($model,$dum)=&get_next_optional_argument;
-    if (!($dum)) {$model = "named";}
+    if (!($dum)) {$model = 'named'}
+    else { $color_cmd = &revert_to_raw_tex($dum); $dum = '' }
     $model = "named" unless ($model);
     $get_string = "get_${model}_color";
     $color = &missing_braces
-	unless ((s/$next_pair_pr_rx/$color=$2;''/eo)
-	        ||(s/$next_pair_rx/$color=$2;''/eo));
+	unless ((s/$next_pair_pr_rx/$color=$2;$dum=$&;''/eo)
+	        ||(s/$next_pair_rx/$color=$2;$dum=$&;''/eo));
     $rest =$_;
+    $color_cmd .= &revert_to_raw_tex($dum);
+
     if (!(defined &$get_string)) {
 	print "\nno routine for $get_string, trying named color: $color\n";
 	$get_string = "get_named_color";
     }
-    {&$get_string($color),$rest};
+    $color = &$get_string($color);
+    $color_cmd = 'color'. $color_cmd;
+    $declarations{$color_cmd} = "<FONT COLOR=\"\#$color\"></FONT>"
+	unless ($declarations{$color_cmd});
+    ($color, $rest, $color_cmd );
 }
 
 sub apply_body_options{
@@ -542,11 +615,15 @@ sub do_color_ln {
 
 #	Some declarations
 
-    &process_commands_nowrap_in_tex ( <<_IGNORED_CMDS_);
-color # [] # {}
+&process_commands_nowrap_in_tex ( <<_IGNORED_CMDS_);
+#color # [] # {}
 pagecolor # [] # {}
 _IGNORED_CMDS_
 
+&process_commands_wrap_deferred ( <<_DEFERRED_CMDS_);
+color # [] # {}
+textcolor # [] # {} # {}
+_DEFERRED_CMDS_
 
 # Get rid of color specifications, but keep contents,
 # when the html version is inappropriate.

@@ -18,15 +18,22 @@ sub do_env_longtable {
     local($_) = @_;
     local($border,$this,$cols);
     s/$next_pair_rx/$cols=$&;''/eo;
-    &extract_captions;
-    while ($contents =~ /\\end((first)?head|(last)?foot)/ ) {
-	$contents = $';
-	$this = $`;
-	if ($this =~ /(\\[hv]line)\b/) { $border = $1 }
-    }
-    $contents = join('', $cols, (($border)? "\n" : ''), $contents);
-    $contents = &process_environment("tabular", $global{'max_id'}++, $contents);
+    local($cap_env, $captions) = ('table','');
+    do { local($contents) = $_;
+	&extract_captions($cap_env); $_ = $contents;
+    } if (/\\caption/m);
+    &do_env_tabular($cols.$_)
 }
+
+#    while (/\\end((first)?head|(last)?foot)/ ) {
+#	$_ = $';
+#	$this = $`;
+#	if ($this =~ /(\\[hv]line)\b/) { $border = $1 }
+#    }
+#    $contents = join('', $cols, (($border)? "\n" : ''), $contents);
+#    $contents = &process_environment("tabular", $global{'max_id'}++, $contents);
+#}
+
 
 &ignore_commands( <<_IGNORED_CMDS_);
 LTleft
