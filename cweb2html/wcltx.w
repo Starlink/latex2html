@@ -1,4 +1,4 @@
-% $Id: wcltx.w 12004 2004-02-20 13:13:29Z nxg $
+% $Id: wcltx.w,v 1.1 1998/02/24 02:29:56 latex2html Exp $
 %------------------------------------------------------------
 
 %
@@ -43,7 +43,7 @@
 \def\thefootnote{\hbox{$^*$}}
 \footnotetext[0]{\LaTeX{} markup by Joachim Schrod.}
 \endgroup
-\RCSdate $Date: 2004-02-20 03:13:29 -1000 (Fri, 20 Feb 2004) $
+\RCSdate $Date: 1998/02/24 02:29:56 $
 
 \maketitle
 
@@ -308,10 +308,7 @@ are also shown.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% $Log$
-% Revision 1.1  2004/02/20 13:13:26  nxg
-% Initial import
-%
+% $Log: wcltx.w,v $
 % Revision 1.1  1998/02/24 02:29:56  latex2html
 % for 98.1
 %

@@ -1,6 +1,6 @@
 
 ################################################################################
-# Copyright 22.2.98 by Jens Lippmann (lippmann@cdc.informatik.tu-darmstadt.de)
+# Copyright 1998-1999 by Jens Lippmann (lippmann@rbg.informatik.tu-darmstadt.de)
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose and without fee is hereby granted, provided that the above
@@ -14,19 +14,22 @@
 # Extension to LaTeX2HTML to translate HyTeX specific commands.
 # See also htcweb.tex, htcweb.sty.
 #
-# $Source$
-# $RCSfile$
-# $Revision: 12004 $
-# $Date: 2004-02-20 03:13:29 -1000 (Fri, 20 Feb 2004) $
-# $Author: nxg $
-# $State$
+# $Source: /home/latex2ht/cvs/latex2html/user/cweb2html/htcweb.perl,v $
+# $RCSfile: htcweb.perl,v $
+# $Revision: 1.3 $
+# $Date: 1999/10/15 22:05:37 $
+# $Author: JCL $
+# $State: Exp $
 #
 ################################################################################
 # History
 #
-# $Log$
-# Revision 1.1  2004/02/20 13:13:26  nxg
-# Initial import
+# $Log: htcweb.perl,v $
+# Revision 1.3  1999/10/15 22:05:37  JCL
+# small patch to get real node names with l2h 99.2 instead subsequent M.html or N.html
+#
+# Revision 1.2  1999/04/09 19:25:33  JCL
+# changed my e-Mail address
 #
 # Revision 1.1  1998/02/24 02:29:50  latex2html
 # for 98.1
@@ -160,6 +163,13 @@ mathrel
 
 %section_commands = ('N', 'H1', 'M', 'H2', 'inx', 'H2', 'fin', 'H2', %section_commands);
 
+$CUSTOM_TITLES = 1;
+sub custom_title_hook {
+    local($title) = @_;
+
+    print "XXX customize title <$title> to <node$OUT_NODE>\n";
+    "node$OUT_NODE";
+}
 
 sub top_navigation_panel {
     &navigation_panel;

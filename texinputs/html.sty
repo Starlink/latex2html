@@ -1,6 +1,6 @@
 %
-% $Id: html.sty 12004 2004-02-20 13:13:29Z nxg $
-% LaTeX2HTML Version 98.2 : html.sty
+% $Id: html.sty,v 1.39 2001/10/01 22:47:06 RRM Exp $
+% LaTeX2HTML Version 2K.1 : html.sty
 % 
 % This file contains definitions of LaTeX commands which are
 % processed in a special way by the translator. 
@@ -25,8 +25,25 @@
 \ifx \htmlstyloaded\relax \endinput\else\let\htmlstyloaded\relax\fi
 \makeatletter
 
-\providecommand{\latextohtml}{\LaTeX2\texttt{HTML}}
+% allow for the hyperref package to be cleanly loaded
+% either before or after this package,
+% and ensure it is already loaded, when using pdf-TeX
 
+\ifx\undefined\hyperref
+ \ifx\pdfoutput\undefined \let\pdfunknown\relax
+  \let\html@new=\newcommand
+ \else
+  \ifx\pdfoutput\relax \let\pdfunknown\relax
+   \RequirePackage{hyperref}\let\html@new=\renewcommand
+  \else
+   \RequirePackage{hyperref}\let\html@new=\newcommand
+  \fi
+ \fi
+\else
+ \let\html@new=\renewcommand
+\fi
+
+\providecommand{\latextohtml}{\LaTeX2\texttt{HTML}}
 
 %%% LINKS TO EXTERNAL DOCUMENTS
 %
@@ -36,19 +53,29 @@
 % The hyperlink will appear as a hyperlink in the HTML 
 % document and as a footnote in the dvi or ps files.
 %
-\newcommand{\htmladdnormallinkfoot}[2]{#1\footnote{#2}} 
-
+\ifx\pdfunknown\relax
+ \html@new{\htmladdnormallinkfoot}[2]{#1\footnote{#2}} 
+\else
+ \def\htmladdnormallinkfoot#1#2{\footnote{\href{#2}{#1}}}
+\fi
 
 % This is an alternative definition of the command above which
 % will ignore the URL in the dvi or ps files.
-\newcommand{\htmladdnormallink}[2]{#1}
-
+\ifx\pdfunknown\relax
+ \html@new{\htmladdnormallink}[2]{#1}
+\else
+ \def\htmladdnormallink#1#2{\href{#2}{#1}}
+\fi
 
 % This command takes as argument a URL pointing to an image.
 % The image will be embedded in the HTML document but will
 % be ignored in the dvi and ps files.
 %
-\newcommand{\htmladdimg}[1]{}
+\ifx\pdfunknown\relax
+ \html@new{\htmladdimg}[1]{}
+\else
+ \def\htmladdimg#1{\hyperimage{#1}}
+\fi
 
 
 %%% CROSS-REFERENCES BETWEEN (LOCAL OR REMOTE) DOCUMENTS
@@ -82,6 +109,23 @@
 %  
 \newcommand{\externalcite}{\nocite}
 
+% This allows a section-heading in the TOC or mini-TOC to be just
+% a hyperlink to an external document.
+%
+%   \htmladdTOClink[<path_to_labels>]{<section-level>}{<title>}{<URL>}
+% where <section-level> is  'chapter' , 'section' , 'subsection' etc.
+% and <path_to_labels> is the path to find a  labels.pl  file,
+% so that external cross-referencing may work, as with \externallabels
+%
+%\ifx\pdfunknown\relax
+ \newcommand{\htmladdTOClink}[4][]{}
+%
+% can do something here, using the \pdfoutline primitive
+%\else
+% \def\htmladdTOClink#1#2#3#4{\pdfoutline user {/S /URI /URI #4}
+%   name{#2} count{#1}{#3}}
+%\fi
+
 
 %%% HTMLRULE
 % This command adds a horizontal rule and is valid even within
@@ -90,6 +134,10 @@
 \newcommand{\htmlrule}{\protect\HTMLrule}
 \newcommand{\HTMLrule}{\@ifstar\htmlrulestar\htmlrulestar}
 \newcommand{\htmlrulestar}[1]{}
+
+%%% HTMLCLEAR
+% This command puts in a <BR> tag, with CLEAR="ALL"
+\newcommand{\htmlclear}{}
 
 % This command adds information within the <BODY> ... </BODY> tag
 %
@@ -108,19 +156,35 @@
 %e.g. \hyperref{using the tracer}{using the tracer (see Section}{)}{trace}
 % where there is a corresponding \label{trace}
 %
-\newcommand{\hyperref}{\hyperrefx[ref]}
-\def\hyperrefx[#1]{{\def\next{#1}%
- \def\tmp{ref}\ifx\next\tmp\aftergroup\hyperrefref
- \else\def\tmp{pageref}\ifx\next\tmp\aftergroup\hyperpageref
- \else\def\tmp{page}\ifx\next\tmp\aftergroup\hyperpageref
- \else\def\tmp{noref}\ifx\next\tmp\aftergroup\hypernoref
- \else\def\tmp{no}\ifx\next\tmp\aftergroup\hypernoref
- \else\typeout{*** unknown option \next\space to  hyperref ***}%
- \fi\fi\fi\fi\fi}}
-\newcommand{\hyperrefref}[4]{#2\ref{#4}#3}
-\newcommand{\hyperpageref}[4]{#2\pageref{#4}#3}
-\newcommand{\hypernoref}[3]{#2}
+% avoid possible confict with  hyperref  package
+\ifx\undefined\hyperref
+ \newcommand{\hyperrefhyper}[4]{#4}%
+ \def\next{\newcommand}%
+\else
+ \let\hyperrefhyper\hyperref
+ \def\next{\renewcommand}%
+\fi
+\next{\hyperref}{\hyperrefi[]}\let\next=\relax
 
+\def\hyperrefi[#1]{{\def\next{#1}\def\tmp{}%
+ \ifx\next\tmp\aftergroup\hyperrefdef
+ \else\def\tmp{ref}\ifx\next\tmp\aftergroup\hyperrefref
+ \else\def\tmp{pageref}\ifx\next\tmp\aftergroup\hyperrefpageref
+ \else\def\tmp{page}\ifx\next\tmp\aftergroup\hyperrefpage
+ \else\def\tmp{noref}\ifx\next\tmp\aftergroup\hyperrefnoref
+ \else\def\tmp{no}\ifx\next\tmp\aftergroup\hyperrefno
+ \else\def\tmp{hyper}\ifx\next\tmp\aftergroup\hyperrefhyper
+ \else\def\tmp{html}\ifx\next\tmp\aftergroup\hyperrefhtml
+ \else\typeout{*** unknown option \next\space to  hyperref ***}%
+ \fi\fi\fi\fi\fi\fi\fi\fi}}
+\newcommand{\hyperrefdef}[4]{#2\ref{#4}#3}
+\newcommand{\hyperrefpageref}[4]{#2\pageref{#4}#3}
+\newcommand{\hyperrefnoref}[3]{#2}
+\let\hyperrefref=\hyperrefdef
+\let\hyperrefpage=\hyperrefpageref
+\let\hyperrefno=\hyperrefnoref
+\ifx\undefined\hyperrefhyper\newcommand{\hyperrefhyper}[4]{#4}\fi
+\let\hyperrefhtml=\hyperrefdef
 
 %%% HYPERCITE --- added by RRM
 % Suggested by Stephen Simpson <simpson@math.psu.edu>
@@ -132,36 +196,45 @@
 % uses the pre/post-texts in LaTeX, with a  \cite{<key>}
 %
 %   \hypercite[ext]{<html-text>}{<LaTeX-text>}{<key>}
+%   \hypercite[ext]{<html-text>}{<LaTeX-text>}[<prefix>]{<key>}
 %
 % uses the pre/post-texts in LaTeX, with a  \nocite{<key>}
 % the actual reference comes from an \externallabels  file.
 %
-\newcommand{\hypercite}{\hypercitex[int]}
-\def\hypercitex[#1]{{\def\next{#1}%
- \def\tmp{int}\ifx\next\tmp\aftergroup\hyperciteint
- \else\def\tmp{cite}\ifx\next\tmp\aftergroup\hyperciteint
+\newcommand{\hypercite}{\hypercitei[]}
+\def\hypercitei[#1]{{\def\next{#1}\def\tmp{}%
+ \ifx\next\tmp\aftergroup\hypercitedef
+ \else\def\tmp{int}\ifx\next\tmp\aftergroup\hyperciteint
+ \else\def\tmp{cite}\ifx\next\tmp\aftergroup\hypercitecite
  \else\def\tmp{ext}\ifx\next\tmp\aftergroup\hyperciteext
- \else\def\tmp{nocite}\ifx\next\tmp\aftergroup\hyperciteext
- \else\def\tmp{no}\ifx\next\tmp\aftergroup\hyperciteext
+ \else\def\tmp{nocite}\ifx\next\tmp\aftergroup\hypercitenocite
+ \else\def\tmp{no}\ifx\next\tmp\aftergroup\hyperciteno
  \else\typeout{*** unknown option \next\space to  hypercite ***}%
- \fi\fi\fi\fi\fi}}
-\newcommand{\hyperciteint}[4]{#2{\def\tmp{#3}\def\emptyopt{}%
+ \fi\fi\fi\fi\fi\fi}}
+\newcommand{\hypercitedef}[4]{#2{\def\tmp{#3}\def\emptyopt{}%
  \ifx\tmp\emptyopt\cite{#4}\else\cite[#3]{#4}\fi}}
-\newcommand{\hyperciteext}[3]{#2\nocite{#3}}
-
-
+\newcommand{\hypercitenocite}[2]{#2\hypercitenocitex[]}
+\def\hypercitenocitex[#1]#2{\nocite{#2}}
+\let\hypercitecite=\hypercitedef
+\let\hyperciteint=\hypercitedef
+\let\hyperciteext=\hypercitenocite
+\let\hyperciteno=\hypercitenocite
 
 %%% HTMLREF
 % Reference in HTML version only.
 % Mix between \htmladdnormallink and \hyperref.
 % First arg is text for in both versions, second is label for use in HTML
 % version.
-\newcommand{\htmlref}[2]{#1}
+\ifx\pdfunknown\relax
+ \html@new{\htmlref}[2]{#1}
+\else
+ \def\htmlref#1#2{\hyperefhyper[#2]{#1}}
+\fi
 
 %%% HTMLCITE
 % Reference in HTML version only.
 % Mix between \htmladdnormallink and \hypercite.
-% First arg is text for in both versions, second is citation for use in HTML
+% First arg is text for both versions, second is citation for use in HTML
 % version.
 \newcommand{\htmlcite}[2]{#1}
 
@@ -216,6 +289,11 @@
 \newcommand{\htmladdtonavigation}[1]{}
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% based upon Eijkhout's  comment.sty v2.0
+% with modifications to avoid conflicts with later versions
+% of this package, should a user be requiring it.
+%	Ross Moore,  10 March 1999
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Comment.sty   version 2.0, 19 June 1992
 % selectively in/exclude pieces of text: the user can define new
@@ -273,23 +351,28 @@
     \def\CurrentComment{#1}%
     \let\do\makeinnocent \dospecials
     \makeinnocent\^^L% and whatever other special cases
-    \endlinechar`\^^M \catcode`\^^M=12 \xComment}
+%%RRM
+%%  use \xhtmlComment for \xComment
+%%  use \html@next    for \next
+    \endlinechar`\^^M \catcode`\^^M=12 \xhtmlComment}
 {\catcode`\^^M=12 \endlinechar=-1 %
- \gdef\xComment#1^^M{\def\test{#1}\edef\test{\meaning\test}
+ \gdef\xhtmlComment#1^^M{\def\test{#1}\edef\test{\meaning\test}
       \csarg\ifx{PlainEnd\CurrentComment Test}\test
           \let\html@next\endgroup
       \else \csarg\ifx{LaLaEnd\CurrentComment Test}\test
             \edef\html@next{\endgroup\noexpand\end{\CurrentComment}}
       \else \csarg\ifx{LaInnEnd\CurrentComment Test}\test
             \edef\html@next{\endgroup\noexpand\end{\CurrentComment}}
-      \else \let\html@next\xComment
+      \else \let\html@next\xhtmlComment
       \fi \fi \fi \html@next}
 }
 
-\def\includecomment
+%%\def\includecomment	%%RRM
+\def\htmlincludecomment
  #1{\expandafter\def\csname#1\endcsname{}%
     \expandafter\def\csname end#1\endcsname{}}
-\def\excludecomment
+%%\def\excludecomment	%%RRM
+\def\htmlexcludecomment
  #1{\expandafter\def\csname#1\endcsname{\ThrowAwayComment{#1}}%
     {\escapechar=-1\relax
      \edef\tmp{\string\\end#1}%
@@ -300,21 +383,29 @@
       \csarg\xdef{LaInnEnd#1Test}{\meaning\tmp}%
     }}
 
-\excludecomment{comment}
+%%\excludecomment{comment}	%%RRM
+\htmlexcludecomment{comment}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % end Comment.sty
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\let\includecomment=\htmlincludecomment
+\let\excludecomment=\htmlexcludecomment
 
 %
 % Alternative code by Robin Fairbairns, 22 September 1997
 % revised to cope with % and unnested { }, by Ross Moore, 4 July 1998
+% further revised to cope with & and # in tables, 10 March 1999
 %
-\def\raw@catcodes{\catcode`\%=12 \catcode`\{=12 \catcode`\}=12}
+\def\raw@catcodes{\catcode`\%=12 \catcode`\{=12 \catcode`\}=12
+ \catcode`\&=12 \catcode`\#=12 }
 \newcommand\@gobbleenv{\bgroup\raw@catcodes
  \let\reserved@a\@currenvir\@gobble@nv}
 \bgroup
  \def\expansionhead{\gdef\@gobble@nv@i##1}
  \def\expansiontail{{\def\reserved@b{##1}\@gobble@nv@ii}}
+ \def\expansionheadii{\long\gdef\@gobble@nv##1\end}
+ \def\expansiontailii{{\@gobble@nv@i}}
+ \def\expansionmidii{##2}
  \raw@catcodes\relax
  \expandafter\expansionhead\expandafter}\expansiontail
 \egroup
@@ -328,15 +419,17 @@
   \expandafter\@gobble@nv
  \fi}
 
-\renewcommand{\excludecomment}[1]{%
+\renewcommand{\htmlexcludecomment}[1]{%
     \csname newenvironment\endcsname{#1}{\@gobbleenv}{}}
+\newcommand{\htmlreexcludecomment}[1]{%
+    \csname renewenvironment\endcsname{#1}{\@gobbleenv}{}}
 
 %%% RAW HTML 
 % 
 % Enclose raw HTML between a \begin{rawhtml} and \end{rawhtml}.
 % The html environment ignores its body
 %
-\excludecomment{rawhtml}
+\htmlexcludecomment{rawhtml}
 
 
 %%% HTML ONLY
@@ -345,12 +438,12 @@
 % HTML output and will be ignored by LaTeX with 
 % \begin{htmlonly} and \end{htmlonly}
 %
-\excludecomment{htmlonly}
+\htmlexcludecomment{htmlonly}
 % Shorter version
 \newcommand{\html}[1]{}
 
 % for images.tex only
-\excludecomment{imagesonly}
+\htmlexcludecomment{imagesonly}
 
 %%% LaTeX ONLY
 % Enclose LaTeX constructs which will only appear in the 
@@ -416,11 +509,17 @@
 %  - support for segmented documents
 %
 
-%\ProvidesPackage{html}
-%          [1996/12/22 v1.1 hypertext commands for latex2html (nd, hws, rrm)]
 \ProvidesPackage{html}
-          [1998/06/21 v1.31 hypertext commands for latex2html (nd, hws, rrm)]
+          [1999/07/19 v1.38 hypertext commands for latex2html (nd, hws, rrm)]
 
+%
+% Ensure that \includecomment and \excludecomment are bound
+% to the version defined here.
+%
+\AtBeginDocument{%
+ \let\includecomment=\htmlincludecomment
+ \let\excludecomment=\htmlexcludecomment
+ \htmlreexcludecomment{comment}}
 
 %%%  bind \htmlurl to \url if that is later loaded
 %
@@ -436,7 +535,11 @@
 %
 % Example:  \htmladdimg[ALT="portrait" ALIGN=CENTER]{portrait.gif}
 %
-\renewcommand{\htmladdimg}[2][]{}
+\ifx\pdfunknown\relax
+ \renewcommand{\htmladdimg}[2][]{}
+\else
+ \renewcommand{\htmladdimg}[2][]{\hyperimage{#2}}
+\fi
 
 %%% HTMLRULE for LaTeX2e
 % This command adds a horizontal rule and is valid even within
@@ -451,6 +554,11 @@
 % Renew the necessary part.
 \renewcommand{\htmlrulestar}[1][all]{}
 
+%%% HTMLCLEAR for LaTeX2e
+% This command puts in a <BR> tag, with optional CLEAR="<attrib>"
+%
+\renewcommand{\htmlclear}[1][all]{}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  renew some definitions to allow optional arguments
@@ -458,17 +566,58 @@
 % The description of the options is missing, as yet.
 %
 \renewcommand{\latextohtml}{\textup{\LaTeX2\texttt{HTML}}}
-\renewcommand{\htmladdnormallinkfoot}[3][]{#2\footnote{#3}} 
-\renewcommand{\htmladdnormallink}[3][]{#2}
-\renewcommand{\htmlbody}[1][]{}
-\renewcommand{\hyperref}[1][ref]{\hyperrefx[#1]}
-\renewcommand{\hypercite}[1][int]{\hypercitex[#1]}
-\renewcommand{\htmlref}[3][]{#2}
-\renewcommand{\htmlcite}[1]{#1\htmlcitex}
-\newcommand{\htmlcitex}[2][]{{\def\tmp{#1}\ifx\tmp\@empty\else~[#1]\fi}}
-\renewcommand{\htmlimage}[2][]{}
-\renewcommand{\htmlborder}[2][]{}
+\ifx\pdfunknown\relax
+ \renewcommand{\htmladdnormallinkfoot}[3][]{#2\footnote{#3}} 
+ \renewcommand{\htmladdnormallink}[3][]{#2}
+\else
+ \renewcommand{\htmladdnormallinkfoot}[1][]{\def\next{#1}%
+   \ifx\next\@empty\def\next{\htmladdnonamedlinkfoot}%
+   \else\def\next{\htmladdnamedlinkfoot{#1}}\fi \next}
+ \newcommand{\htmladdnonamedlinkfoot}[2]{%
+   #1\footnote{\href{#2}{#2}}}
+ \newcommand{\htmladdnamedlinkfoot}[3]{%
+   \hypertarget{#1}{#2}\footnote{\href{#3}{#3}}}
+ \renewcommand{\htmladdnormallink}[1][]{\def\next{#1}%
+  \ifx\next\@empty\def\next{\htmladdnonamedlink}%
+  \else\def\next{\htmladdnamedlink{#1}}\fi \next}
+ \newcommand{\htmladdnonamedlink}[2]{\href{#2}{#1}}
+ \newcommand{\htmladdnamedlink}[3]{%
+   \hypertarget{#1}{\hskip2bp}\href{#3}{#2}}
+\fi
 
+\renewcommand{\htmlbody}[1][]{}
+\renewcommand{\htmlborder}[2][]{}
+\renewcommand{\externallabels}[3][]{}
+\renewcommand{\externalref}[2][]{}
+\renewcommand{\externalcite}[1][]{\nocite}
+\renewcommand{\hyperref}[1][]{\hyperrefi[#1]}
+\renewcommand{\hypercite}[1][]{\hypercitei[#1]}
+\renewcommand{\hypercitenocite}[2]{#2\hypercitenocitex}
+\renewcommand{\hypercitenocitex}[2][]{\nocite{#2}}
+\let\hyperciteno=\hypercitenocite
+\let\hyperciteext=\hypercitenocite
+
+\ifx\pdfunknown\relax
+ \renewcommand{\htmlimage}[2][]{}
+ \renewcommand{\htmlref}[2][]{#2{\def\tmp{#1}\ifx\tmp\@empty
+  \aftergroup\htmlrefdef\else\aftergroup\htmlrefext\fi}}
+ \newcommand{\htmlrefdef}[1]{}
+ \newcommand{\htmlrefext}[2][]{}
+ \renewcommand{\htmlcite}[2][]{#2{\def\tmp{#1}\ifx\tmp\@empty
+  \aftergroup\htmlcitedef\else\aftergroup\htmlciteext\fi}}
+ \newcommand{\htmlciteext}[2][]{}
+\else
+ \renewcommand{\htmlimage}[2][]{\hyperimage{#2}}
+ \renewcommand{\htmlref}[1][]{\def\htmp@{#1}\ifx\htmp@\@empty
+  \def\htmp@{\htmlrefdef}\else\def\htmp@{\htmlrefext{#1}}\fi\htmp@}
+ \newcommand{\htmlrefdef}[2]{\hyperref[hyper][#2]{#1}}
+ \newcommand{\htmlrefext}[3]{%
+  \hypertarget{#1}{\hskip2bp}\hyperref[hyper][#3]{#2}}
+ \renewcommand{\htmlcite}[2][]{#2{\def\htmp@{#1}\ifx\htmp@\@empty
+  \aftergroup\htmlcitedef\else\aftergroup\htmlciteext\fi}}
+ \newcommand{\htmlciteext}[1][]{\cite}
+\fi
+\newcommand{\htmlcitedef}[1]{ \nocite{#1}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -517,13 +666,21 @@
 %  In the LaTeX2HTML version this put a URL into a <BASE> tag
 %  within the <HEAD>...</HEAD> portion of a document.
 %
-\newcommand{\htmlbase}[1]{}
+\ifx\pdfunknown\relax
+ \newcommand{\htmlbase}[1]{}
+\else
+ \let\htmlbase=\hyperbaseurl
+\fi
 
 
 %  Include style information into the stylesheet; e.g. CSS
 %
 \newcommand{\htmlsetstyle}[3][]{}
 \newcommand{\htmladdtostyle}[3][]{}
+
+%  Define a style-class for information in a particular language
+%
+\newcommand{\htmllanguagestyle}[2][]{}
 
 
 %
@@ -571,10 +728,12 @@
 %  commands.
 %
 
+\@ifundefined{c@part}{\newcounter{part}}{}%
 \newcounter{lpart}
 \newcounter{lchapter}[part]
 \@ifundefined{c@chapter}%
- {\let\Hchapter\relax \newcounter{lsection}[part]}%
+ {\let\Hchapter\relax \newcounter{chapter}\let\thechapter\relax
+  \newcounter{lsection}[part]}%
  {\let\Hchapter=\chapter \newcounter{lsection}[chapter]}
 \newcounter{lsubsection}[section]
 \newcounter{lsubsubsection}[subsection]
@@ -681,14 +840,19 @@
 %
 \def\reset@dependents#1{\begingroup\let \@elt \@stpelt
  \csname cl@#1\endcsname\endgroup}
+
+% ignore optional *-version of \tableofcontents
+\let\ltx@tableofcontents\tableofcontents
+\renewcommand{\tableofcontents}{%
+ \@ifstar\ltx@tableofcontents\ltx@tableofcontents}
 %
 %
 %  Define a helper macro to dump a single \secounter command to a file.
 %
 \newcommand{\DumpPtr}[2]{%
-\count255=\arabic{#1}\def\dummy{dummy}\def\tmp{#2}%
+\count255=\csname c@#1\endcsname\relax\def\dummy{dummy}\def\tmp{#2}%
 \ifx\tmp\dummy\def\ctr{#1}\else
- \def\ctr{#2}\advance\count255 by \arabic{#2}\fi
+ \def\ctr{#2}\advance\count255 by \csname c@#2\endcsname\relax\fi
 \immediate\write\ptrfile{%
 \noexpand\setcounter{\ctr}{\number\count255}}}
 %\expandafter\noexpand\expandafter\setcounter\expandafter{\ctr}{\number\count255}}}
@@ -809,9 +973,52 @@
 %
 % (The listing of Initiales see Changes)
 
-% $Log$
-% Revision 1.1  2004/02/20 13:13:28  nxg
-% Initial import
+% $Log: html.sty,v $
+% Revision 1.39  2001/10/01 22:47:06  RRM
+%  --  somehow revision 1.39 was not committed earlier
+%  --  it allows a * version of \tableofcontents (used with frames) to be
+%      treated as un-starred by LaTeX
+%
+% Revision 1.39  2000/09/10 12:23:20  RRM
+%  --  added *-argument for \tableofcontents  in frames.perl
+%      LaTeX should just ignore it
+%
+% Revision 1.38  1999/07/19 13:23:20  RRM
+%  --  compatibility with pdflatex and hyperref.sty
+%  	citations are not complete yet, I think
+%  --  ensure that \thechapter remains undefined; some packages use it
+%  	as a test for the type of documentclass being used.
+%
+% Revision 1.37  1999/03/12 07:02:38  RRM
+%  --  change macro name from \addTOCsection to \htmladdTOClink
+%  --  it has 3 + 1 optional argument, to allow a local path to a labels.pl
+%  	file for the external document, for cross-references
+%
+% Revision 1.36  1999/03/10 05:46:00  RRM
+%  --  extended the code for compatibilty with comment.sty
+%  --  allow excluded environments to work within tables,
+%  	with the excluded material spanning headers and several cells
+%  	thanks Avinash Chopde for recognising the need for this.
+%  --  added LaTeX support (ignores it) for  \htmladdTOCsection
+%  	thanks to Steffen Klupsch and Uli Wortmann for this idea.
+%
+% Revision 1.35  1999/03/08 11:16:16  RRM
+% 	html.sty  for LaTeX2HTML V99.1
+%
+%  --  ensure that html.sty can be loaded *after* hyperref.sty
+%  --  support new command  \htmlclear for <BR> in HTML, ignored by LaTeX
+%  --  ensure {part} and {chapter} counters are defined, even if not used
+%
+% Revision 1.34  1998/09/19 10:37:29  RRM
+%  --  fixed typo with \next{\hyperref}{....}
+%
+% Revision 1.33  1998/09/08 12:47:51  RRM
+%  --  changed macro-names for the \hyperref and \hypercite options
+% 	allows easier compatibility with other packages
+%
+% Revision 1.32  1998/08/24 12:15:14  RRM
+%  --  new command  \htmllanguagestyle  to associate a style class
+%  	with text declared as a particular language
 %
 % Revision 1.31  1998/07/07 14:15:41  RRM
 %  --  new commands  \htmlsetstyle  and  \htmladdtostyle

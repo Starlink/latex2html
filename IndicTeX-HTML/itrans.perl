@@ -1,4 +1,4 @@
-# $Id: itrans.perl 12004 2004-02-20 13:13:29Z nxg $
+# $Id: itrans.perl,v 1.4 1999/03/13 00:22:58 RRM Exp $
 # ITRANS.PERL by Ross Moore <ross@mpce.mq.edu.au> 8-4-98
 # Mathematics Department, Macquarie University, Sydney, Australia.
 #
@@ -81,9 +81,12 @@
 #
 # Change Log:
 # ===========
-# $Log$
-# Revision 1.1  2004/02/20 13:13:26  nxg
-# Initial import
+# $Log: itrans.perl,v $
+# Revision 1.4  1999/03/13 00:22:58  RRM
+#  --  implement <SPAN> and <DIV> tags for HTML4.0
+#  --  include LANG=  attribute with HTM4.0
+#  --  use \vbox with paragraphs
+#  --  fine-tuning for certain letters to prevent cropping-bar problems
 #
 # Revision 1.3  1998/06/19 12:28:48  RRM
 #  --  recognise #endfont
@@ -303,6 +306,20 @@ sub itrans_environments {
     );
 }
 
+%ISO_indic = (
+	  'gujarati'	, 'gu'
+	, 'gurmukhi'	, 'pu'
+	, 'punjabi'	, 'pu'
+	, 'hindi'	, 'hi'
+	, 'kannada'	, 'kn'
+	, 'marathi'	, 'mr'
+	, 'oriya'	, 'or'
+	, 'roman'	, 'sa'
+	, 'sanskrit'	, 'sa'
+	, 'tamil'	, 'ta'
+	, 'telugu'	, 'te'
+	, %ISO_indic
+);
 
 # interface for inclusion of fonts...
 # ...either using <FONT FACE=...> or by style-sheet
@@ -354,16 +371,19 @@ sub do_env_pre_itrans {
     else { $inline_length = $itrans_inline; }
 
     local($strut);
+    local($par_start, $par_end, $ilang) = ('<P', "</P>\n", '');
+    if ($USING_STYLES) {
+	$ilang = join('', ' LANG="', $ISO_indic{$indic}, '"');
+    }
     if (/\\par/) {
 	local(@paragraphs, @indic_processed, $this_par);
-	local($par_start, $par_end) = ('<P', "</P>\n");
 	local($par_alt_start, $par_alt_end) = ($par_start, '');
 	if ($USING_STYLES) {
 	    $indic =~ s/^([A-Z]{3})\w*$/$1/;
 	    $env_style{'P.'.$indic} = " " unless ($env_style{'P.'.$indic});
 	    $env_style{'SPAN.'.$indic} = " " unless ($env_style{'SPAN.'.$indic});
-	    $par_start .=  " CLASS=\"$indic\">";
-	    $par_alt_start =  "<SPAN CLASS=\"$indic\">";
+	    $par_start .=  $ilang." CLASS=\"$indic\">";
+	    $par_alt_start =  "<SPAN$ilang CLASS=\"$indic\">";
 	    $par_alt_end =  "</SPAN>";
 	} else {
 	    $par_start .= '>';
@@ -411,24 +431,37 @@ sub do_env_pre_itrans {
 
 		next if ($this_par =~ /^\s*$/s);
 	    }
-	    if (($#paragraphs >= 0)||($this_par =~ /\n+$/)
-		||(length($this_par) > $inline_length )) {
-
-		$this_par =~ s/^\s*|\s*$//g;
-		$_ = &process_in_latex(
-			"\#$indic$strut\n$this_par\n\#end$indic\n");
-		push(@indic_processed
-		    , &make_comment( 'ITRANS: '.$indic, $this_par)
-		    , $par_start , $_ , $par_end);
+	    if (($#paragraphs >= 0)||($this_par =~ /\\\\|\n+$/)
+		    ||(length($this_par) > $inline_length )) {
+		$this_par =~ s/^\s*|\s*$//sg;
+		if (($HTML_VERSION >= 4)&&(defined &process_object_in_latex)) {
+		    $_ = &process_object_in_latex(
+			"\\vbox{\#$indic$strut\n", $this_par, "\n\#end$indic}"
+			);
+		    push(@indic_processed, $par_start , $_ , $par_end);
+		} else {
+		    $_ = &process_in_latex(
+			"\\vbox{\#$indic$strut\n$this_par\n\#end$indic}");
+		    push(@indic_processed
+			, &make_comment( 'ITRANS: '.$indic, $this_par)
+			, $par_start , $_ , $par_end);
+		}
 	    } else {
 		$this_par =~ s/^\s*|\s*$//g;
-		$_ = &process_undefined_environment(
+		if (($HTML_VERSION >= 4)&&(defined &process_object_in_latex)) {
+		    $_ = &process_object_in_latex(
+			"\#$indic ", $this_par, "$strut\#end$indic\n"
+			);
+		    push(@indic_processed, $par_alt_start , $_ , $par_alt_end);
+		} else {
+		    $_ = &process_undefined_environment(
 			'tex2html_ind_inline'
 			, ++$global{'max_id'}
 			, "\#$indic $this_par$strut\#end$indic\n");
-		push(@indic_processed
-		    , &make_comment( 'ITRANS: '.$indic, $this_par)
-		    , $par_alt_start , $_ , $par_alt_end);
+		    push(@indic_processed
+			, &make_comment( 'ITRANS: '.$indic, $this_par)
+			, $par_alt_start , $_ , $par_alt_end);
+		}
 	    }
 	}
 	join('', @indic_processed );
@@ -456,19 +489,30 @@ sub do_env_pre_itrans {
 	if (length($_) < $inline_length ) {
 	    # preserve empty {}s 
 	    s/(($O|$OP)\d+($C|$CP))\1/\{\}/g;
-	    $_ = &process_undefined_environment('tex2html_ind_inline'
-		, ++$global{'max_id'}, "\#$indic $_$strut\#end$indic\n")
-		unless ($_ =~ /^\s*$/s);
+	    if (($HTML_VERSION >= 4)&&(defined &process_object_in_latex)) {
+		$_ = &process_object_in_latex(
+		    "\#$indic ", $_ , "$strut\#end$indic}"
+		    ) unless ($_ =~ /^\s*$/s);
+	    } else {
+		$_ = &process_undefined_environment('tex2html_ind_inline'
+		    , ++$global{'max_id'}, "\#$indic $_$strut\#end$indic\n")
+		    unless ($_ =~ /^\s*$/s);
+	    }
+	} elsif (($HTML_VERSION >= 4)&&(defined &process_object_in_latex)) { 
+	    $_ =~ s/^\s*|\s*$//g;
+	    $_ = &process_object_in_latex(
+		"\\vbox{\#$indic$strut\n" , $_, "\n\#end$indic}"
+		) unless ($_ =~ /^\s*$/s);
 	} else { 
 	    $_ =~ s/^\s*|\s*$//g;
 	    $comment = join('', &make_comment( 'ITRANS: '.$indic, $_),"\n");
-	    $_ = &process_in_latex("\#$indic$strut\n$_\n\#end$indic\n")
+	    $_ = &process_in_latex("\\vbox{\#$indic$strut\n$_\n\#end$indic}")
 		unless ($_ =~ /^\s*$/s);
 	}
 	if ($USING_STYLES) {
 	    $indic =~ s/^([A-Z]{3})\w*$/$1/;
 	    $env_style{$indic} = " " unless ($env_style{$indic});
-	    join('', $comment, "<SPAN CLASS=\"$indic\">", $_, '</SPAN>');
+	    join('', $comment, "<SPAN$ilang CLASS=\"$indic\">", $_, '</SPAN>');
 	} else { $comment . $_ }
     }
 }
@@ -488,7 +532,7 @@ sub tuneup_gurmukhi {
     #catch characters that draw outside their boxes
     s/^\s*((nn|mm)a)/\\ $1/;
     s/(r(a|u))$/$1\\,/;
-    s:(\w)$:$1\\/:;
+    s|(\\)?(\w+)$|$1?$1.$2:$2."\\/"|e;
     $_;
 }
 
@@ -497,7 +541,7 @@ sub tuneup_dvnc {
     #catch characters that draw outside their boxes
 #    s/^\s*((nn|mm)a)/\\ $1/;
     s/(hu|u|ii|aas?|ar|th|tr|ai?|e|\.\w|M|m)$/$1\\,/;
-    s:(\w)$:$1\\/:;
+    s|(\\)?(\w+)$|$1?$1.$2:$2."\\/"|e;
     $_;
 }
 

@@ -1,4 +1,4 @@
-# $Id: malyalam.perl 12004 2004-02-20 13:13:29Z nxg $
+# $Id: malyalam.perl,v 1.1 1998/01/22 04:33:22 RRM Exp $
 # MALYALAM.PERL by Ross Moore <ross@mpce.mq.edu.au> 23-12-97
 # Mathematics Department, Macquarie University, Sydney, Australia.
 #
@@ -72,10 +72,7 @@
 #
 # Change Log:
 # ===========
-# $Log$
-# Revision 1.1  2004/02/20 13:13:26  nxg
-# Initial import
-#
+# $Log: malyalam.perl,v $
 # Revision 1.1  1998/01/22 04:33:22  RRM
 # 	LaTeX2HTML interfaces to packages and pre-processors for including
 # 	traditional Indic scripts (as images) in HTML documents

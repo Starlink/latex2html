@@ -1,17 +1,32 @@
+# -*- perl -*-
 #
-# $Id: verbatim.perl 12004 2004-02-20 13:13:29Z nxg $
+# $Id: verbatim.perl,v 1.10 2001/11/29 21:44:13 RRM Exp $
 # verbatim.perl
-#   Jens Lippmann <lippmann@cdc.informatik.tu-darmstadt.de> 17-DEC-96
+#   Jens Lippmann <lippmann@rbg.informatik.tu-darmstadt.de> 17-DEC-96
 #
 # Extension to LaTeX2HTML to support the verbatim.sty LaTeX2e package.
 #
 # Change Log:
 # ===========
-#  jcl = Jens Lippmann <http://www-jb.cs.uni-sb.de/~www/people/lippmann>
+#  jcl = Jens Lippmann
 #
-# $Log$
-# Revision 1.1  2004/02/20 13:13:28  nxg
-# Initial import
+# $Log: verbatim.perl,v $
+# Revision 1.10  2001/11/29 21:44:13  RRM
+#  --  update to use  &replace_all_html_special_chars  if defined
+#
+# Revision 1.9  1999/10/15 09:17:16  RRM
+#  --  enable link to stylesheet "verbatim" class
+#
+# Revision 1.8  1999/09/14 22:02:02  MRO
+#
+# -- numerous cleanups, no new features
+#
+# Revision 1.7  1999/04/09 18:15:17  JCL
+# changed my e-Mail address
+#
+# Revision 1.6  1998/12/02 01:25:19  RRM
+#  --  preserve styles around the use of  \verbatiminput
+#  --  wrap the \verbatiminput command; i.e. treat as an environment
 #
 # Revision 1.5  1998/03/22 20:52:49  latex2html
 # reviewed for 98.1, works & is testable via devel/tests/regr/verbatim/run
@@ -79,13 +94,29 @@ sub do_cmd_verbatiminput {
     &write_warnings("No file <$file> for verbatim input.")
 	unless $found;
 
+    local($closures,$reopens) = &preserve_open_tags;
     # pre_process file contents
-    &replace_html_special_chars;
+    if (defined &replace_all_html_special_chars) {
+	&replace_all_html_special_chars;
+    } else {
+	&replace_html_special_chars;
+    }
     s/\n$//;		# vertical space is contributed by </PRE> already.
     # %verbatim not coupled to a dbm => will not work in subprocesses, but don't mind
     $verbatim{++$global{'verbatim_counter'}} = $_;
-    join('',"<BR><PRE>",$verbatim_mark,'verbatim',$global{'verbatim_counter'},
-	 "#</PRE>",$outer);
+
+    my ($verb_pre, $verb_post) = ('<PRE>','</PRE>');
+    if ($USING_STYLES) {
+	$env_id .= ' CLASS="verbatim"' unless ($env_id =~ /(^|\s)CLASS\s*\=/i);
+	$verb_pre =~ s/>/ $env_id>/;
+    }
+    join('', $closures, "<BR>\n", $verb_pre
+	, $verbatim_mark, 'verbatim', $global{'verbatim_counter'}
+	, '#', $verb_post, $reopens, $outer);
 }
+
+&process_commands_wrap_deferred (<<_RAW_ARG_DEFERRED_CMDS_);
+verbatiminput # {}
+_RAW_ARG_DEFERRED_CMDS_
 
 1;			# Must be last line

@@ -43,7 +43,6 @@ with different versions supporting different features.
 In order to make your documents viewable by the widest possible audience,
 you should use the most advanced \texttt{HTML} version with widely-accepted usage.
 
-\cbversion{98.1}\begin{changebar}\cbversion{98.1}
 Currently the most advanced is \HTMLIV. 
 However this has only recently become an officially recommended version.
 Not all of its features are fully implemented in popular browsers,
@@ -51,19 +50,16 @@ and the level of usage is unclear.
 Hence the default version for \latextohtml, version 98.1 remains at \HTMLIII.
 Further work is required before \latextohtml{} can fully exploit the
 features available using \HTMLIV.
-\end{changebar}
 
 \index{iso-latin1@ISO--Latin--1|see{\htmlref{character set}{IIIcharset}}}%
 \index{iso-8879@ISO--8879|see{\htmlref{character set}{IIIcharset}}}%
 \index{character set!ISO-8879@ISO--8879 (ISO--Latin--1)}%
 \index{HTML@\texttt{HTML}!interactive forms}%
 \index{HTML@\texttt{HTML}!image-maps}%
-\cbversion{97.1}\begin{changebar}\cbversion{97.1}
 This provides support for alignment of headings, images and text
 (including text-flow around images), tables with separate captions
 and alignment of rows and columns, variable sizes and colors for
 text and color or patterns for the background
-\end{changebar}
 as well as images, server-side image-maps, interactive forms, 
 and the minimal typographic elements (bold, italic and teletype)
 that were supported already in \texttt{HTML} version 2.0\,.
@@ -187,7 +183,6 @@ Originally developed by the \htmladdnormallink{World Wide Web Consortium}%
 it is no longer supported by them.
 
 \index{mathematics!MathML}
-\cbversion{97.1}\begin{changebar}
 There has been a recent proposal for a Mathematical Markup Language
 (\htmladdnormallink{\texttt{MathML}}%
 {http://www.w3.org/pub/WWW/TR/WD-math-970515}) 
@@ -200,7 +195,6 @@ using \texttt{MathML}.
 See also \hyperref{another page}{Section~}{}{maths} for a discussion
 the the mechanisms available with \latextohtml{} for handling
 mathematical equations and expressions.
-\end{changebar}%
 \end{htmllist}
 
 
@@ -219,16 +213,17 @@ $LANGUAGE_TITLES = 'french';
 \end{quote}
 will cause \latextohtml{} to produce ``Table des mati{\`e}res'' instead of
 ``Table of Contents''.
-%\cbversion{96.1}\begin{changebar}
 Furthermore, the value of the \Lc{today} command is presented in a format
 customary in that language.
 
 \index{languages!french}\index{languages!english}\index{languages!german}%
+\index{languages!spanish}\index{languages!finnsh}%\index{languages!slovene}%
 \html{\\}%
-The only languages currently supported are 
-\env{french}, \env{english} and \env{german}
-but it is trivial to add support for another language by creating a file
-in the \fn{versions/} subdirectory, 
+Languages currently supported are 
+\env{finnish}, \env{french}, \env{english}, \env{german}
+ and \env{spanish}.
+It is trivial to add support for another language by creating a file
+in the \fn{styles/} subdirectory, 
 or by adding to the file \fn{latex2html.config}.
 As a guide, here is the entry for French titles:
 %begin{latexonly}
@@ -261,13 +256,10 @@ sub french_titles {
 %begin{latexonly}
 \end{small}
 %end{latexonly}
-%\end{changebar}%
-\cbversion{98.1}\begin{changebar}
 Notice how the backslash needs to be doubled, when a macro is needed
 (for accented characters, say).
 Also, the \texttt{\$GENERIC\_WORDS} are a list of short words to be excluded
 when filenames are specially requested to be created from section-headings.
-\end{changebar}
 In order to provide full support for another language you may also
 replace the navigation buttons which come with \latextohtml{} 
 (by default in English) with your own. 
@@ -279,7 +271,6 @@ there should not be a problem.
 %
 \index{extension!options}%
 \html{\\}%
-\cbversion{98.1}\begin{changebar}
 \latextohtml{} can interpret input using 8-bit fonts, 
 provided it is told which font-encoding is being used.
 This can be done by appending an ``extension'' option
@@ -347,12 +338,9 @@ characters occur within the source.
 In this case the \texttt{unicode} extension ought to be loaded also,
 else browsers may get quite confused about what to render.
 
-\end{changebar}
-
 
 \subsubsection{Multi-lingual documents, using Images\label{multilang}}%
 %
-\cbversion{98.1}\begin{changebar}%
 Some multi-lingual documents can be constructed, when all the languages
 can be presented using characters from a single font-encoding,
 as discussed in the \hyperref{previous section}{Section~}{}{fontEncodings}.
@@ -401,7 +389,6 @@ to get:
 \begin{center}
  published by {\wncyr Rus\-ski\char26\ \char23zyk}.
 \end{center}
-\end{changebar}
 
 
 \subsection{Mathematics\label{maths}}
@@ -484,7 +471,7 @@ This is what was used when creating\latex{ the \texttt{HTML} version of}
 this manual. For a more detailed discussion of processing mathematics
 using this strategy see the online document by the present author, 
 entitled \htmladdnormallinkfoot{``Mathematics with \latextohtml''}%
-{http://www-math.mpce.mq.edu.au/texdev/LaTeX2HTML/mathdocs/}.
+{http://www-texdev.mpce.mq.edu.au/l2h/mathdocs/}.
 Examples \htmlref{below}{ex-aalias} show how to generate an image
 of a whole environment, even with these options in force.
  
@@ -575,14 +562,12 @@ compared with laser-print.
 The amount of this scaling is given by the
 value of a configuration variable \fn{\$MATH\_SCALE\_FACTOR},
 by default set to 1.6 in \fn{latex2html.config}. 
-\cbversion{97.1}\begin{changebar}
 A further variable \fn{\$DISP\_SCALE\_FACTOR} is used with
 `displayed math' equations and formulas.
 This value multiplies the \fn{\$MATH\_SCALE\_FACTOR} 
 to give the actual scaling to be used.
 The main purpose of this extra scaling is to allow some clarity in
 super/subscripts etc.
-\end{changebar}
 
 
 \index{anti-aliasing!comparison}%
@@ -673,7 +658,6 @@ with regard to the quality of \htmlref{printed images}{printqual}.
 
 \index{mbox@\Lc{mbox} command with math!generates an image}%
 \paragraph*{The \Lc{mbox} command.}
-\cbversion{97.1}\begin{changebar}
 Another way to force an image to be created of a mathematical expression,
 when global settings are not such as to do this anyway, 
 is via the \Lc{mbox} command having math delimiters within its argument.
@@ -689,12 +673,10 @@ It is not necessary for there to be any actual mathematics inside
 the \Lc{mbox}'s contents;\html{\\}
 e.g. \verb|\mbox{...some text...${}$}|
 will cause an image to be created of the given text.
-\end{changebar}
 
 
 \index{parbox@\Lc{parbox} command!generates an image}%
 \paragraph*{The \Lc{parbox} command.}
-\cbversion{97.1}\begin{changebar}
 The \Lc{parbox[}\Meta{align}\verb|]{|\Meta{width}\verb|}{|\Meta{text}\verb|}| 
 command also generates an image of its contents,
 except when used within a \env{tabular} environment, or other
@@ -704,7 +686,6 @@ piece of text, and any special line-breaks or alignments that
 this may imply. Hence to get the best effect, \LaTeX{} is used
 to typeset the complete \Lc{parbox}, with its specified width,
 alignment and contents, resulting in an image.
-\end{changebar}
 
 
 \index{heqn.sty@\texttt{heqn.sty} style-file}%
@@ -712,7 +693,6 @@ alignment and contents, resulting in an image.
 \index{eqnarray@\env{eqnarray} environment}%
 \index{equation@\env{equation} environment}\html{\\}%
 \paragraph*{The \env{heqn} package.}
-\cbversion{96.1}\begin{changebar}%
 %
 If you need \texttt{HTML} 2.0 compatible Web pages,
 and have a document with a great many displayed equations, 
@@ -735,7 +715,6 @@ in each line of the equation array, to suppress the equation number.
 A side-effect of this approach is that equation numbers will
 appear on the left side of the page.
 The \env{heqn} package requires the \env{html} package.%
-\cbversion{96.1}\end{changebar}
 
 \smallskip\noindent
 Using \texttt{HTML} Version 3.2 the \env{heqn} package is quite redundant,
@@ -787,7 +766,6 @@ The configuration variable \fn{\$FIGURE\_SCALE\_FACTOR} performs
 a similar function for ``figures''. 
 Both of these variables are initially set to have value 1.6.
 
-\cbversion{97.1}\begin{changebar}
 A further variable \fn{\$DISP\_SCALE\_FACTOR} is used with
 `displayed math' equations and formulas;
 this value multiplies the \fn{\$MATH\_SCALE\_FACTOR} 
@@ -810,7 +788,6 @@ The browser itself scales them down to the intended size,
 but has the extra information available for a better quality print. 
 This feature is also available with single images. It is discussed, 
 with examples, \hyperref{on the next page}{in Section~}{}{printqual}.
-\end{changebar}
 
 
 \index{htmlimage@\Lc{htmlimage}}%
@@ -821,7 +798,6 @@ with examples, \hyperref{on the next page}{in Section~}{}{printqual}.
 For finer control, several parameters affecting the conversion 
 of a single image can be controlled
 with the command \Lc{htmlimage}, which is defined in \fn{html.sty}.
-\cbversion{97.1}\begin{changebar}
 With version \textsc{v97.1} use of this command has been extended to allow
 it to control whether an image is generated or not
 for some environments,
@@ -835,17 +811,15 @@ Having empty \Meta{options} still causes the image to be generated.
 
 This ability has been used within this manual, for example with the
 mathematics images in \hyperref{the previous section}{Figure~}{}{eq:pics}.
-\end{changebar}
 
 \medskip\noindent
 The \Meta{options} argument is a string separated by commas.
 \index{images!options}\html{\\}% 
 Allowable options are:
 %
-\begin{itemize}
-%
 \index{images!scale}%
 \index{figures!arbitrarily scaled}%
+\begin{itemize}
 \item \texttt{scale=}\Meta{scale-factor}\\
 allows control over the size of the final image.
 
@@ -871,7 +845,7 @@ the `\texttt{external}' option.
 
 \index{images!image-map}%
 \index{images!server-side image-map}%
-\cbversion{96.1}\begin{changebar}%
+%
 \item \texttt{map=}\Meta{server-side image-map URL}\\
 specifies that the image is to be made into an 
 \htmladdnormallink{active image-map}%
@@ -924,11 +898,10 @@ be centered horizontally.
 This option is valid only if the \texttt{HTML} version 
 is \texttt{3.0} or higher.
 The default alignment is `\texttt{bottom}'.%
-\end{changebar}
 
 \index{images!transparent}%
 \index{transparent images!override defaults}%
-\cbversion{97.1}\begin{changebar}
+%
 \item \texttt{transparent}, \texttt{no\_transparent}
  or \texttt{notransparent}\\
 specify that a transparent background should (not) be used with this image,
@@ -982,7 +955,6 @@ be acceptable for
 Instead they may need to be generated afresh on each run of \latextohtml{} 
 through the same source document.
 %
-\end{changebar}
 \end{itemize}
 
 \medskip\noindent
@@ -1028,14 +1000,13 @@ this gives a pseudo-3D effect in some browsers.
 \begin{figure}
     \htmlimage{thumbnail=0.5}
     \htmlborder{5}
-    \centering\includegraphics[width=5in]{psfiles/figure.ps}
+    \centering \includegraphics[width=5in]{psfiles/figure.ps}
     \latex{\addtocounter{footnote}{-1}}
     \caption{A sample figure showing part of a page generated by
        \latextohtml{} containing a customised navigation panel 
        (from the \htmladdnormallink
-        {CSEP project\latex{\protect\footnotemark}}%
-        {http://csep1.phy.ornl.gov/csep.html}).}
-       \label{fig:example}
+        {CSEP project\latex{\protect\footnotemark}}
+        {http://csep1.phy.ornl.gov/csep.html}).}\label{fig:example}
 \end{figure}
 \latex{\footnotetext{http://csep1.phy.ornl.gov/csep.html}}
 \end{verbatim}
@@ -1050,16 +1021,15 @@ this gives a pseudo-3D effect in some browsers.
 \begin{figure}[hbt]
     \htmlimage{thumbnail=0.5}
     \htmlborder{5}
-    \centering\includegraphics[width=5in]{psfiles/figure.ps}
-    \latex{\addtocounter{footnote}{-1}}
+    \centering \includegraphics[width=5in]{psfiles/figure.ps}
+    \latex{\addtocounter{footnote}{-1}}%
     \caption{A sample figure showing part of a page generated by
        \protect\latextohtml{} containing a customised navigation panel 
        (from the \htmladdnormallink
-        {CSEP project\latex{\protect\footnotemark}}%
-        {http://csep1.phy.ornl.gov/csep.html}).}
-       \label{fig:example}
+        {CSEP project\protect\latex{\protect\footnotemark}}%
+        {http://csep1.phy.ornl.gov/csep.html}).}\label{fig:example}
 \end{figure}
-\latex{\footnotetext{http://csep1.phy.ornl.gov/csep.html}}%
+\latex{\footnotetext{\protect\latex{http://csep1.phy.ornl.gov/csep.html}}}%
 
 \index{htmlimage@\Lc{htmlimage}!overrides configuration}%
 
@@ -1074,7 +1044,6 @@ use \verb|\htmlimage{scale=0}|\,.
 \subsubsection{Image Sharing and Recycling\label{recycling}}%
 %\subsection{Image Sharing and Recycling\label{recycling}}%
 \index{images!recycling}\index{images!sharing}%
-\cbversion{96.1}\begin{changebar}%
 It is not hard too see how reasonably sized papers,
 especially scientific articles, can require
 the use of many hundreds of external images.  For this reason,
@@ -1112,18 +1081,14 @@ this is because their figure numbers are part of the image.
 Figures and tables with captions, on the other hand, 
 are order-insensitive because the figure numbers 
 are not part of the image itself.%
-\end{changebar}
-\cbversion{97.1}\begin{changebar}
 Similarly when \HTMLiii{} code is being produced, equation
 numbers are no longer part of the image.
 Instead they are placed in a separate cell of a \HTMLtag{TABLE}.
 So most images of mathematical formulas can be reused also.%
-\end{changebar}
 
 
 \subsubsection{Quality of Printed Images\label{printqual}}
 %\subsection{Quality of Printed Images\label{printqual}}
-\cbversion{97.1}\begin{changebar}
 %
 \begin{htmlonly}
 Since it is often desirable to get a good quality print on paper
@@ -1232,7 +1197,6 @@ scaled to be comparable with normal 10\,pt type\latex{, as here}.
 \caption{Displayed math environments with \emph{extra-scale} of 2.0}
 \label{eq:pics2}
 \end{figure}
-\end{changebar}
 
 
 
@@ -1396,7 +1360,6 @@ Alternatively, set the \fn{\$WHITE\_BACKGROUND}
 \subsection{Document Classes and Options\label{sec:cls}}
 \tableofchildlinks*
 \index{document class}%
-\cbversion{97.1b}\begin{changebar}
 In general the standard \LaTeX{} document-classes: 
 \texttt{article}, \texttt{report}, \texttt{book}, \texttt{letter}, \texttt{slides}
 are translated by \latextohtml{} in the same way. 
@@ -1463,7 +1426,6 @@ without the need to have corresponding \texttt{.sty} or \texttt{.clo} files.
 \LaTeX{} simply notes the existence of unusupported options---processing is not
 interrupted.  
 
-\end{changebar}
 
 
 \subsection{Packages and Style-Files\label{sec:sty}}
@@ -1498,12 +1460,10 @@ to be used as required.
 This mechanism helps to keep the core script smaller, as well as making
 it easier for others to contribute and share solutions on  
 how to translate specific style-files.
-\cbversion{96.1}\begin{changebar}
 The current distribution includes the files to support the styles
 listed in \hyperref{the table below}{Table~}{}{styles}.
 These provide good examples of how you can create 
 further extensions to \latextohtml.%
-\end{changebar}
 
 \index{style-files}\index{packages}%
 %\begin{htmlonly}
@@ -1512,8 +1472,8 @@ further extensions to \latextohtml.%
 \begin{center}
 %\begin{tabular}{|c|p{3in}|}
 \begin{longtable}{|c|l|}
-\caption{Supported \protect\latextohtml\ style-files.}\\
-\hline
+\caption{Supported \protect\latextohtml\ packages and style-files.}
+\\\hline
 \endhead
 \hline
 \endfoot
@@ -1545,6 +1505,8 @@ further extensions to \latextohtml.%
  & Processes embedded figures not enclosed in a \env{figure} environment.\label{epsbox}\\
 \env{\bf epsfig}\index{package!epsfig@\env{epsfig}}\index{epsfig@\env{epsfig} package}%
  & Processes embedded figures not enclosed in a \env{figure} environment.\label{epsfig}\\
+\env{\bf finnish}\index{package!finnish@\env{finnish}}\index{finnish!finnish@\env{finnish} package}%
+ & Support for the Finnish language.\label{finnish}\\
 \env{\bf floatfig}\index{package!floatfig@\env{floatfig}}\index{floatfig@\env{floatfig} package}%
  & Processes floating figures.\label{floatfig}\\
 \env{\bf floatflt}\index{package!floatflt@\env{floatflt}}\index{floatflt@\env{floatflt} package}%
@@ -1554,13 +1516,13 @@ further extensions to \latextohtml.%
 \env{\bf frames}\index{package!frames@\env{frames}}\index{frames@\env{frames} package}%
  & Provides separate frames for navigation and footnotes.\label{frames}\\
 \env{\bf francais}\index{package!francais@\env{francais}}\index{french!francais@\env{francais} package}%
- & Special support for the French language, same as \fn{french.perl}.\label{francais}\\
+ & Support for the French language, same as \fn{french.perl}.\label{francais}\\
 \env{\bf french}\index{package!french@\env{french}}\index{french@\env{french} package}%
- & Special support for the French language.\label{french}\\
+ & Support for the French language.\label{french}\\
 \env{\bf german}\index{package!german@\env{german}}\index{german@\env{german} package}%
- & Special support for the German language.\label{german}\\
+ & Support for the German language.\label{german}\\
 \env{\bf germanb}\index{package!germanb@\env{germanb}}\index{german!germanb@\env{germanb} package}%
- & Special support for the German language, same as \fn{german.perl}.\label{germanb}\\
+ & Support for the German language, same as \fn{german.perl}.\label{germanb}\\
 \env{\bf graphics}\index{package!graphics@\env{graphics}}\index{graphics@\env{graphics} package}%
  & Supports commands in the \env{graphics} package.\label{graphics}\\
 \env{\bf graphicx}\index{package!graphicx@\env{graphicx}}\index{graphics!graphicx@\env{graphicx} package}%
@@ -1592,6 +1554,8 @@ further extensions to \latextohtml.%
  & Supports harvard-style citations, using \env{natbib}.\label{nharvard}\\
 \env{\bf seminar}\index{package!seminar@\env{seminar}}\index{seminar@\env{seminar} package}%
  & for creation of overhead-presentation slides.\label{seminar}\\
+\env{\bf spanish}\index{package!spanish@\env{spanish}}\index{spanish@\env{spanish} package}%
+ & Support for the Spanish language.\label{spanish}\\
 \env{\bf supertabular}\index{package!supertabular@\env{supertabular}}\index{tables!supertabular@\env{supertabular} package}%
  & supports use super-tables, as an ordinary table.\label{supertabular}\\
 \env{\bf texdefs}\index{package!texdefs@\env{texdefs}}\index{texdefs@\env{texdefs} package}%
@@ -1628,14 +1592,22 @@ Some of the techniques currently used are explained in
 %\subsection{Fancy List-Markers\label{htmllist}}
 \index{htmllist@\env{htmllist} environment}%
 \index{environment!htmllist@\env{htmllist}}%
-\begin{changebar}%
+%
 An optional style-file \fn{htmllist.sty} has been provided which
 produces fancier lists in the electronic version of the document%
-\html{\htmlref{, such as this}{listExample}}.
+\html{, }\htmlref{such as this}{listExample}.
 This file defines a new \LaTeX{} environment \env{htmllist},
 which causes a user-defined item-mark to be placed at each new
 item of the list, and which causes the optional description
-to be displayed in bold letters.  
+to be displayed in bold letters.
+\begin{changebar}
+The filename prefix for the item-mark image can be given as an
+optional parameter; see example below. The images distributed with
+\latextohtml{} for this purpose are listed with the description
+of the \verb|\htmlitemmark| command, which provides an alternative
+means of choosing the item-mark, and allows the image to be changed
+for different items in the list.
+\end{changebar}
 
 \index{htmlitemmark@\Lc{htmlitemmark}}%
 \index{htmllist@\env{htmllist}!prints as@prints as \env{description}}%
@@ -1649,7 +1621,7 @@ from a list of icons established at installation, or the URL of a mark
 not in the installation list. 
 The command \Lc{htmlitemmark} must be used \emph{inside} the 
 \env{htmllist} environment in order to be effective, 
-but it may be used more than once to change the mark within the list.  
+and it may be used more than once to change the mark within the list.  
 The item-marks supplied with \latextohtml{} are 
 \texttt{BlueBall}, \texttt{RedBall}, \texttt{OrangeBall}, \texttt{GreenBall}, 
 \texttt{PinkBall}, \texttt{PurpleBall}, \texttt{WhiteBall} and \texttt{YellowBall}.
@@ -1664,8 +1636,7 @@ An example of its usage is:
 \begin{small}
 %end{latexonly}
 \begin{verbatim}
-\begin{htmllist}
-\htmlitemmark{WhiteBall}%
+\begin{htmllist}[WhiteBall]
 \item[Item 1:] This will have a white ball.
 \item[Item 2:] This will also have a white ball.
 \htmlitemmark{RedBall}%
@@ -1676,8 +1647,8 @@ An example of its usage is:
 \end{small}
 %end{latexonly}
 
-\noindent This will produce:
-\begin{htmllist}\htmlitemmark{WhiteBall}
+\noindent This will produce:\label{listExample}
+\begin{htmllist}[WhiteBall]
 %begin{latexonly}
 \addtolength{\leftskip}{15pt}
 %end{latexonly}
@@ -1699,7 +1670,6 @@ allow text to wrap around a figure in the printed version,
 but are treated exactly as an ordinary \env{figure}s in the electronic version.  
 They are described in \hypercite{The \LaTeX{} Companion}%
 {\emph{The \LaTeX{} Companion}}{}{goossens:latex}.%
-\end{changebar}
 
 \subsubsection{Support for \FoilTeX\label{sec:foils}}
 \index{foils@\env{foils} class}%
@@ -1740,14 +1710,11 @@ differences from previous versions. This is a very primitive form of
 version control and there is much scope for improvement.
 
 \index{change-bars!different versions}% 
-\cbversion{96.1f}\begin{changebar}%
 Within the \LaTeX{} version of this manual two thicknesses of change-bar 
 have been used. Thicker bars indicate changes introduced with version \textsc{v97.1}\,,
 while thinner bars indicate earlier additions since \textsc{v96.1}\,.\html{\\}
 Within the \texttt{HTML} version the change-bars clearly indicate the 
 different revisions with explicit numbering.%
-\end{changebar}
-\cbversion{97.1}\begin{changebar}
 Within the \texttt{HTML} version, the graphic icons representing
 the changebars can be followed by some text indicating the new version.
 This is used repeatedly throughout\latex{ the online version of}
@@ -1758,7 +1725,6 @@ This sets a variable \fn{\$cb\_version} to be used both at the beginning
 and end of the environment. The value of this variable is retained,
 to be used with other \env{changebar} environments, unless changed explicitly
 by another occurrence of \fn{\$cb\_version}.
-\end{changebar}
 
 \smallskip\noindent
 \textbf{Warning: }
@@ -1774,7 +1740,6 @@ within each (sub)section or (sub)paragraph.
 \subsection{Indexing\label{index}\index{index|(}}%
 %\section{Indexing\label{index}\index{index|(}}%
 \index{index!section-names}%
-\cbversion{96.1f}\begin{changebar}
 \latextohtml{} automatically produces an Index consisting of the
 arguments to all \Lc{index} commands encountered, if there are any.
 A hyperlink is created to that point in the text where the 
@@ -1795,7 +1760,7 @@ produce \Meta{styled-text} as the entry, but sorted according to \Meta{sort-key}
 \item 
 [hierarchical entries, using `\texttt{!}' : ] 
 Entries of the form
-\verb|\index{|\Meta{item}\verb|@|\Meta{sub-item}\verb|}|
+\verb|\index{|\Meta{item}\verb|!|\Meta{sub-item}\verb|}|
 set the \Meta{sub-item} indented below the \Meta{item}.
 Unlimited levels of hierarchy are possible, 
 even though \LaTeX{} is limited to only 3 levels. 
@@ -1956,7 +1921,7 @@ Now the top-most node is indicated by the bare \Meta{prefix}.
 These features can also be obtained by setting the variable \fn{\$SHORT\_INDEX}
 to have value `\texttt{1}', in a configuration or initialisation file;
 provided, of course, that the document loads the \env{makeidx} package.%
-\end{changebar}\cbversion{96.1}
+
 \latex{\index{index|)}}
 
 
@@ -1966,7 +1931,7 @@ provided, of course, that the document loads the \env{makeidx} package.%
 \index{index!integrated with Glossary}%
 \index{Glossary!integrated with Index}%
 
-\noindent\cbversion{96.1f}\begin{changebar}%
+\noindent
 A large number of different pieces of software are required to make
 \latextohtml{} work effectively, as well as many files containing data or code 
 to work with parts of this software. 
@@ -2202,4 +2167,3 @@ which establishes the hyperlink to the Index, marked by `\verb|^|',
 and provides the \Lc{label} to create the target in the Glossary 
 for any \verb|\glossary{...}| command having the corresponding argument.%
 \end{itemize}
-\end{changebar}

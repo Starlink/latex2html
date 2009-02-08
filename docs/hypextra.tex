@@ -27,14 +27,15 @@ below are defined mainly in the \env{html} package,
 with \LaTeX{} definitions in the file \fn{html.sty},
 which is part of the \latextohtml{} distribution. 
 It \emph{must be included} in any \LaTeX{} document using these features, 
-by one of the following methods:%
+by one of the following methods:
+
 \begin{itemize}%
-\cbversion{96.1}\begin{changebar}
 \item including \texttt{html} as an optional argument 
 to \Lc{documentstyle} in \LaTeX\,2.09\,;
 \item including \texttt{html} in a \LaTeXe{} \Lc{usepackage} command.
-\end{changebar}%
 \end{itemize}
+
+\noindent
 It is \emph{not sufficient} to load the style file via an \Lc{input} or
 \Lc{include} command, such as \Lc{input}\verb| html.sty|\,.
 This will load the required definitions for \LaTeX, but will not load
@@ -241,7 +242,7 @@ in detail in \hyperref{a later section}{Section~}{}{misceffects}.
 %
 \begin{htmllist}\htmlitemmark{PinkBall}
 %
-\item[\htmlref{\Lc{HTML}}{HTMLtag} ]
+\item[\htmlref{\Lc{HTMLcode}}{HTMLtag} ]
 a general command for placing raw \texttt{HTML} tags,
 with attributes and contents;\html{\\}
 tags and attributes are ignored in \LaTeX, but not the contents.
@@ -363,7 +364,7 @@ old \AmS-style variant of \env{comment} \htmlref{environment}{comment}.
 \smallskip\noindent
 \textbf{Warning: } 
 These `pseudo'-environments are not as reliable as their \LaTeX{} 
-counterparts. In particular, the \texttt{\char92}\Meta{env-name} and
+counterparts. In particular, the \Lc{begin}\Meta{env-name} and
 \Lc{end}\Meta{env-name} commands should appear on lines
 by themselves, preferably with no preceding spaces or \Meta{tab} characters.
 This requirement is analogous to the \hyperref[page]{warning}%
@@ -420,14 +421,13 @@ the URL will have no effect. But when processed by the translator,
 \end{quote}
 
 \index{anchor tag!name@\texttt{NAME} attribute}%
-\cbversion{97.1}\begin{changebar}\noindent
+\noindent
 The optional argument to \Lc{htmladdnormallink} allows a name to be
 specified for the place in the document where the hyperlink occurs.
 This is done via the \texttt{NAME=\char34}\Meta{name}\texttt{\char34} attribute
 for the \HTMLtag{A ...} anchor tag in \texttt{HTML}\,. 
 Such a name can be used as the target for a hyperlink using the \Lc{htmlref} command, 
 described \hyperref{later}{in Section~}{}{htmlref}.
-\end{changebar}
 
 
 \index{htmladdimg@\Lc{htmladdimg}}%
@@ -435,7 +435,6 @@ described \hyperref{later}{in Section~}{}{htmlref}.
 In a similar way, the argument of the \Lc{htmladdimg} command 
 should be a URL pointing to an image. 
 This URL is ignored in the \LaTeX{}  hard copy output. 
-\cbversion{97.1}\begin{changebar}
 The optional argument to \Lc{htmladdimg} allows an alignment
 for the image to be given:  \texttt{center}, \texttt{right} or \texttt{left}.
 In the latter cases, the image is bound to the specified side
@@ -448,7 +447,6 @@ In fact any valid set of ``attributes'' for the \HTMLtag{IMG} tag in \texttt{HTM
 can be specified as the optional \Meta{align} parameter. In particular
 the \texttt{WIDTH}, \texttt{HEIGHT} and \texttt{BORDER} attributes can be set,
 perhaps overriding the natural size of the image.
-\end{changebar}
 
 \index{hypertext!URL as footnote}%
 \index{htmladdnormallinkfoot@\Lc{htmladdnormallinkfoot}}%
@@ -493,12 +491,10 @@ that know how to sensibly handle the resulting files.
 \paragraph*{\Lc{begin\char123rawhtml\char125}\label{rawhtml}}
 The simplest way to include raw \texttt{HTML} tags and/or text 
 is by using the \env{rawhtml} environment.
-\cbversion{97.1}\begin{changebar}
 (An alternative way is to use the \Lc{HTML} 
 \hyperref{command,}{command, described in Section~}{,}{sec:arbtags}
 which allows macros to be expanded to give the required tags, attributes
 and contents.)
-\end{changebar}
 
 \noindent
 Note the \hyperref[page]{warning}{warning on page~}{}{env:warn}
@@ -535,7 +531,7 @@ Windows.
 <LI> Plain Text Editors (Please Specify): <INPUT TYPE="text" NAME="other_ed">
 </OL>
 So, what do think (comments please): <BR>
-<INPUT TYPE="text" SIZE=45,4 NAME="other_wp">
+<INPUT TYPE="text" SIZE=45 NAME="other_wp">
 
 <INPUT TYPE="submit" VALUE="submit this form but don't expect much!">
 </FORM>
@@ -564,7 +560,7 @@ Windows.
 <LI> Plain Text Editors (Please Specify): <INPUT TYPE="text" NAME="other_ed">
 </OL>
 So, what do think (comments please): <BR>
-<INPUT TYPE="text" SIZE=45,4 NAME="other_wp">
+<INPUT TYPE="text" SIZE=45 NAME="other_wp">
 
 <INPUT TYPE="submit" VALUE="submit this form but don't expect much!">
 </FORM>
@@ -589,18 +585,15 @@ So, what do think (comments please): <BR>
 
 
 \index{rawhtml@\Lc{rawhtml}}%
-\paragraph*{\Lc{rawhtml}...\Lc{endrawhtml}\label{endrawhtml}}
-\cbversion{97.1}\begin{changebar}
+\paragraph*{\Lc{beginrawhtml}...\Lc{endrawhtml}\label{endrawhtml}}
 This is an alternative way to specify a chunk of raw \texttt{HTML} code,
 using the old \AmS-style of delimiting environments.
 Use of this style is discouraged; 
 the \env{rawhtml} \htmlref{environment}{rawhtml} is preferred.%
-\end{changebar}%
 
 \index{comment@\env{comment} environment}%
 \index{environment!comment@\env{comment}}%
 \paragraph*{\Lc{begin\char123comment\char125}\label{comment}}
-\cbversion{97.1}\begin{changebar}
 This environment is simple for the convenience of ``commenting-out''
 large sections of source code.
 The contents of this environment is completely ignored,
@@ -625,7 +618,6 @@ use the \env{rawhtml} environment as follows.
 %begin{latexonly}
 \end{small}
 %end{latexonly}%
-\end{changebar}%
 
 \noindent
 Note the \hyperref[page]{warning}{warning on page~}{}{env:warn}
@@ -635,13 +627,11 @@ concerning how the environment delimiters should be used in the
 
 \index{latexonly@\Lc{latexonly}}%
 \paragraph*{\Lc{comment...\char92endcomment}\label{endcomment}}
-\cbversion{97.1}\begin{changebar}
 This is an alternative way to specify a chunk of material intended
 to be ignored in both the \LaTeX{} and \texttt{HTML} versions,
 using the old \AmS-style of delimiting environments.
 Use of this style (though convenient for typing) is discouraged,
 since it is not as reliable as using the \env{comment} \htmlref{environment}{comment}.
-\end{changebar}\html{\\}
 
 
 \subsection{Arbitrary Tags and Attributes\label{sec:arbtags}}%
@@ -683,6 +673,7 @@ was constructed using this feature; its \LaTeX{} source follows.
 \begin{figure}
 \begin{makeimage}
 \end{makeimage}
+\setlength{\captionwidth}{7cm}
 \newcommand{\myalign}{center}
 \newcommand{\mylist}{UL}
 \newcommand{\myitem}[2]{\HTMLcode[disc]{LI}{\simpletest{#1}{#2}}}
@@ -924,18 +915,15 @@ concerning how the environment delimiters should be used in the
 
 \index{htmlonly@\Lc{htmlonly}}%
 \paragraph*{\Lc{htmlonly...\char92endhtmlonly}\label{endhtmlonly}}
-\cbversion{97.1}\begin{changebar}
 This is an alternative way to specify a chunk of material intended
 for the \texttt{HTML} version only,
 using the old \AmS-style of delimiting environments.
 Use of this style is discouraged; 
 the \env{htmlonly} \htmlref{environment}{htmlonly} is preferred.%
-\end{changebar}%
 
 
 \index{latexonly@\Lc{latexonly}}%
 \paragraph*{\Lc{latexonly...\char92endlatexonly}\label{endlatexonly}}
-\cbversion{97.1}\begin{changebar}
 This is an alternative way to specify a chunk of material intended
 for the \LaTeX{} typeset version only,
 using the old \AmS-style of delimiting environments.
@@ -943,7 +931,6 @@ Use of this style is discouraged;
 the \env{latexonly} \htmlref{environment}{latexonly} or the unscoped 
 \htmlref{\texttt{\%begin\char123latexonly\char125}}{unlatexonly} 
 construction are preferred.%
-\end{changebar}%
 
 \smallskip\noindent
 Note the \hyperref[page]{warning}{warning at the bottom of page~}{}{env:warn}
@@ -956,7 +943,6 @@ concerning how the environment delimiters should be used in the
 \index{html@\Lc{html}}%
 \index{latexhtml@\Lc{latexhtml}}\html{\\}%
 \paragraph*{\Lc{latex}, \Lc{html} and \Lc{latexhtml}\label{latexhtml}}
-\cbversion{96.1}\begin{changebar}
 There are also shorthand notations to accomplish the same thing 
 as in the \env{latexonly} \htmlref{environment}{latexonly} and \env{htmlonly} 
 \htmlref{environment}{htmlonly}, but with less typing.
@@ -976,7 +962,6 @@ with the contents of the second set of braces processed solely by \latextohtml.%
 Only small pieces of text work reliably in this way. 
 With whole paragraphs or contained sub-environments,
 the ``conditional'' environments should be used instead.
-\end{changebar}
 
 \index{conditional text!without scope}%
 \index{beginlatex@\texttt{\%{}begin\char123latexonly\char125}}%
@@ -984,11 +969,11 @@ the ``conditional'' environments should be used instead.
 \paragraph*{\texttt{\%begin\char123latexonly\char125}\label{unlatexonly}}
 Another variant of the \env{latexonly} environment is available, 
 in which everything between 
-\verb|%|\verb|begin{latexonly}| and \verb|%|\verb|end{latexonly}| 
+\texttt{\%begin\{latexonly\}} and \texttt{\%end\{latexonly\}}
 is ignored by \latextohtml.  
 The difference is that the \env{latexonly} environment 
 puts the contents into a group, in which all definitions are local.
-There is no such scoping with the \verb|%begin...%end| variant,
+There is no such scoping with the \texttt{\%begin...\%end} variant,
 since \LaTeX{} sees the initial \texttt{\%}s simply as starting comments.%
 
 \medskip
@@ -1001,12 +986,12 @@ The following example should clarify what happens:
 \newcommand{\A}{The letter A.}
 \newcommand{\B}{The letter B.}
 \end{verbatim}
-\indent\indent\indent\verb|\|\verb|begin{latexonly}|\\
+\indent\indent\indent\texttt{\char92begin\{latexonly\}}\\
 \indent\indent\verb|\renewcommand{\A}{Not the letter A.}|\\
-\indent\indent\verb|\|\verb|end{latexonly}|\\
-\indent\indent\verb|%|\verb|begin{latexonly}|\\
+\indent\indent\texttt{\char92end\{latexonly\}}\\
+\indent\indent\texttt{\%begin\{latexonly\}}\\
 \indent\indent\verb|\renewcommand{\B}{Not the letter B.}|\\
-\indent\indent\verb|%|\verb|end{latexonly}|
+\indent\indent\texttt{\%end\{latexonly\}}
 \begin{verbatim}
 \begin{document}
 \A \B
@@ -1035,13 +1020,11 @@ with the values of the corresponding counters in the \LaTeX{} version.
 \index{imagesonly@\env{imagesonly} environment}%
 \index{environment!imagesonly@\env{imagesonly}}%
 \paragraph*{\Lc{begin\char123imagesonly\char125}\label{imagesonly}}
-\cbversion{97.1}\begin{changebar}
 This environment is used to put \LaTeX{} code into the \fn{images.tex} file,
 to be used when generating images. Typically this is used to add commands to
 the preamble of \fn{images.tex}, such as setting the text or background color.
 However code can be added at any other point as well; 
 e.g. to change the background color of all images after a certain point in the document. 
-\end{changebar}%
 
 \smallskip\noindent
 Note the \hyperref[page]{warning}{warning at the bottom of page~}{}{env:warn}
@@ -1052,7 +1035,6 @@ concerning how the environment delimiters should be used in the
 \index{makeimage@\env{makeimage} environment}%
 \index{environment!makeimage@\env{makeimage}}%
 \paragraph*{\Lc{begin\char123makeimage\char125}\label{makeimage}}
-\cbversion{97.1}\begin{changebar}
 This is a special environment which forces an image to be made of its contents.
 That is, one gets effectively a snapshot of a portion of a page
 that has been typeset using \LaTeX. 
@@ -1079,8 +1061,6 @@ that really need it, in particular the \env{makeimage} sub-environments.
 An empty \env{makeimage} sub-environment does not generate an image of itself,
 yet still it inhibits an image being made of the whole \env{figure}.
 These comments apply also to \env{table} environments.
-\end{changebar}\html{\\}
-
 
 
 
@@ -1173,7 +1153,6 @@ In the hypertext version what would appear is:
 \end{latexonly}
 
 \bigskip\htmlrule[50\% center]
-\cbversion{97.1}\begin{changebar}%
 \noindent
 An extended syntax for \Lc{hyperref} uses an optional argument, 
 which determines what information is to be placed in the \LaTeX{} version
@@ -1185,20 +1164,14 @@ These forms are recognised:
 \begin{small}
 %end{latexonly}
 \begin{quote}\label{hypernoref}
-\Lc{hyperref}\verb|[ref]{|\Meta{HTML-text}\verb|}{|\Meta{LaTeX-text}%
-\verb|}{|\Meta{post-LaTeX}\verb|}{|\Meta{label}\verb|}|\\
-\Lc{hyperref}\verb|{|\Meta{HTML-text}\verb|}{|\Meta{LaTeX-text}%
-\verb|}{|\Meta{post-LaTeX}\verb|}{|\Meta{label}\verb|}|\medskip
+\Lc{hyperref}\verb|[ref]{|\Meta{HTML-text}\verb|}{|\Meta{LaTeX-text}\verb|}{|\Meta{post-LaTeX}\verb|}{|\Meta{label}\verb|}|\\
+\Lc{hyperref}\verb|{|\Meta{HTML-text}\verb|}{|\Meta{LaTeX-text}\verb|}{|\Meta{post-LaTeX}\verb|}{|\Meta{label}\verb|}|\medskip
 
-\Lc{hyperref}\verb|[pageref]{|\Meta{HTML-text}\verb|}{|\Meta{LaTeX-text}%
-\verb|}{|\Meta{post-LaTeX}\verb|}{|\Meta{label}\verb|}|\\
-\Lc{hyperref}\verb|[page]{|\Meta{HTML-text}\verb|}{|\Meta{LaTeX-text}%
-\verb|}{|\Meta{post-LaTeX}\verb|}{|\Meta{label}\verb|}|\medskip
+\Lc{hyperref}\verb|[pageref]{|\Meta{HTML-text}\verb|}{|\Meta{LaTeX-text}\verb|}{|\Meta{post-LaTeX}\verb|}{|\Meta{label}\verb|}|\\
+\Lc{hyperref}\verb|[page]{|\Meta{HTML-text}\verb|}{|\Meta{LaTeX-text}\verb|}{|\Meta{post-LaTeX}\verb|}{|\Meta{label}\verb|}|\medskip
 
-\Lc{hyperref}\verb|[noref]{|\Meta{HTML-text}\verb|}{|\Meta{LaTeX-text}%
-\verb|}{|\Meta{label}\verb|}|\\
-\Lc{hyperref}\verb|[no]{|\Meta{HTML-text}\verb|}{|\Meta{LaTeX-text}%
-\verb|}{|\Meta{label}\verb|}|
+\Lc{hyperref}\verb|[noref]{|\Meta{HTML-text}\verb|}{|\Meta{LaTeX-text}\verb|}{|\Meta{label}\verb|}|\\
+\Lc{hyperref}\verb|[no]{|\Meta{HTML-text}\verb|}{|\Meta{LaTeX-text}\verb|}{|\Meta{label}\verb|}|
 \end{quote}
 %begin{latexonly}
 \end{small}
@@ -1210,7 +1183,6 @@ uses \Lc{ref}\verb|{|\Meta{label}\verb|}|.
 With the next two \LaTeX{} uses \Lc{pageref}\verb|{|\Meta{label}\verb|}|,
 while with the final two \LaTeX{} completely ignores the \Meta{label},
 setting just the \Meta{LaTeX-text}.
-\end{changebar}
 
 \medskip
 \index{hyperref@\Lc{hyperref}!pageref@\Lc{pageref} example}%
@@ -1340,11 +1312,9 @@ See the \htmlref{bibliography}{biblio} for how this will appear.\html{\\}
 No other modifications are required; \LaTeX{} and Bib\TeX{} should work as normal.
 %
 \index{bibliography!string commands@\texttt{\char64string} commands}%
-\cbversion{96.1f}\begin{changebar}
 Note that it would be sensible to put the \texttt{@string} commands
 into a separate file, \fn{urls.bib} say, 
 loaded with the main file via\html{\\} \verb|\bibliography{urls,...}|.%
-\end{changebar}
 
 \smallskip\index{citations!Harvard style}%
 \index{bibliography!Harvard style}\label{harvard}\html{\\}%
@@ -1356,7 +1326,6 @@ For those who use the Harvard style for references
 \index{citations!natbib@\env{natbib} package}%
 \index{bibliography!natbib@\env{natbib} package}%
 \index{citations!Harvard style!handled@handled by \env{natbib}}%
-\cbversion{96.1g}\begin{changebar}
 The \env{natbib} package, written for \LaTeX{} by \PatrickDaly,
 provides even more flexibility in the way a reference may be cited. 
 All the features of \htmlref{this package}{natbib} are implemented 
@@ -1370,12 +1339,10 @@ This requires loading also the \env{nharvard} \htmlref{package}{nharvard}.)
 in producing this extension, and to \RossMoore\ for 
 necessary adjustments to allow it to work correctly with the 
 \htmlref{document segmentation strategy}{Segmentation}.
-\end{changebar}
 
 
 \index{hypercite@\Lc{hypercite}}%
 \paragraph*{\Lc{hypercite}\label{hypercite}}
-\cbversion{97.1}\begin{changebar}
 Analogous to \Lc{hyperref} is the \Lc{hypercite} command,
 which allows a free-form textual hyperlink to the bibliography,
 whereas the \LaTeX{} typeset version contains the usual citation code.
@@ -1464,12 +1431,10 @@ as well as many other \LaTeX{} constructions, such as are described in the \LaTe
 \textit{Companion}[2] and \LaTeX{} \textit{Graphics Companion}[3, \Xy-pic];
 \end{quote}
 \end{htmlonly}
-\end{changebar}%
 
 
 \index{htmlcite@\Lc{htmlcite}}%
 \paragraph*{\Lc{htmlcite}\label{htmlcite}}
-\cbversion{97.1}\begin{changebar}
 Analogous to \Lc{htmlref} is the \Lc{htmlcite} command,
 which creates a textual hyperlink to a place on the document's bibliography page, 
 but without displaying any reference marker in the \LaTeX{} typeset version.
@@ -1479,7 +1444,6 @@ The \Lc{externalcite}
 \hyperref[page]{command}{command, described on page~}{, }{externcite}
 provides a similar facility when the bibliography page is ``external'';
 that is, not part of the current document.%
-\end{changebar}
 
 \index{bibliography|)}
 
@@ -1495,7 +1459,6 @@ that is, not part of the current document.%
  \htmlref{references, symbolic}{IIIsymref}}%
 \index{labels!symbolic}%
 %
-\cbversion{96.1}\begin{changebar}
 The method of the previous section to generated
 symbolic \htmlref{hyperized}{hyperized} links can
 easily be extended to \emph{external} documents processed by \latextohtml.  
@@ -1505,16 +1468,13 @@ which contains a list of all the symbolic labels that were defined,
 along with their locations.  
 The \htmlref{\Meta{prefix}}{prefix} is empty unless otherwise specified, 
 to allow different document segments to share the same directory.  
-\end{changebar}
 
 \index{externallabels@\Lc{externallabels}}%
 \index{externalref@\Lc{externalref}}%
 \paragraph*{\Lc{externallabels}\label{externlabels}}
-\cbversion{96.1}\begin{changebar}
 Links to an external document are then possible once a connection 
 is established to that document's \fn{labels.pl} file.  
 This connection is established by the \Lc{externallabels} command:%
-\end{changebar}%
 %
 \begin{quote}
 %begin{latexonly}
@@ -1540,7 +1500,6 @@ document in order to import the \textit{external labels}\label{externallabels}
 into the current document.
 A warning is given if \fn{labels.pl} cannot be found.
 
-\begin{changebar}%
 If a symbolic reference made in either of the commands described
 \hyperref{on the previous page}{in Section~}{}{hyperized} is not 
 defined within the document itself,
@@ -1570,13 +1529,11 @@ When processed by \LaTeX, each \Lc{ref} command is replaced by the
 section number in which the corresponding \Lc{label} occurred.
 When processed by the translator, each \Lc{ref} is replaced by 
 a hypertext link to the place where the corresponding \Lc{label} occurred.%
-\end{changebar}%
  
 
 \index{references!to external documents}%
 \index{externalref@\Lc{externalref}}%
 \paragraph*{\Lc{externalref}\label{externref}}
-\begin{changebar}%
 This mechanism can be extended to external documents:
 \begin{quote}
 %begin{latexonly}
@@ -1591,13 +1548,11 @@ The argument to \Lc{externalref} may be any symbolic label defined
 in the \fn{labels.pl} file of any of the external documents.
 Such references to external symbolic labels are then translated
 into hyper-links pointing to the external document.%
-\end{changebar}%
 
 
 \index{citations!within external bibliographies}%
 \index{externalcite@\Lc{externalcite}}%
 \paragraph*{\Lc{externalcite}\label{externcite}}
-\cbversion{97.1}\begin{changebar}
 %
 Analogous to \htmlref{\Lc{externalref}}{externref},
 the \Lc{externalcite} command is used to create a citation link,
@@ -1615,7 +1570,6 @@ from a particular organisation or institution.
 
 \medskip\noindent
 \textbf{Thanks...} to \Engberg\ for suggesting this feature.
-\end{changebar}
 
 \index{external references|)}
 
@@ -1713,7 +1667,6 @@ such as might warrant extra vertical space within the printed version.
 \index{htmlrule!htmlrulestar@\Lc{htmlrule*}}%
 \index{htmlrule!variants}%
 \index{htmlrule!attributes@attributes to the \HTMLtag{HR} tag}%
-\cbversion{97.1}\begin{changebar}
 Much variation can be obtained in the horizontal rule that is produced,
 using extended forms of the \Lc{htmlrule} command:
 \begin{quote}
@@ -1763,22 +1716,18 @@ taking \texttt{left}, \texttt{all}, \texttt{right} or \texttt{none}.
 \end{itemize}%
 Some examples of these effects appear on 
 \latex{the \texttt{HTML} version of} this page.%
-\end{changebar}%
 
 
 \index{strikeout@\Lc{strikeout}}%
 \paragraph*{\Lc{strikeout\char123}\Meta{text}\texttt{\char125}\label{strikeout}}
-\cbversion{97.1}\begin{changebar}
 With this command the \Meta{text} is processed as normal in the \texttt{HTML} version,
 then placed between \HTMLtag{STRIKE}...\HTMLtag{/STRIKE} tags.
 Thus a horizontal line should be drawn through the middle of the \Meta{text}.\html{\\}
 Currently the command and the \Meta{text} are ignored in the \LaTeX{} version.%
-\end{changebar}%
 
 
 \index{tableofchildlinks@\Lc{tableofchildlinks}}%
 \paragraph*{\Lc{tableofchildlinks }\label{tochlinks}}
-\cbversion{97.1}\begin{changebar}
 As an extra aid to navigation within a long page, 
 containing several (sub)subsections or deeper levels of sectioning,
 there is the \Lc{tableofchildlinks} command.
@@ -1798,12 +1747,10 @@ all subsections in which several explicit commands have been discussed
 have their child-links table placed at the top of the page,
 using \Lc{tableofchildlinks*}. 
 This helps to quickly find the description of how the commands are used.%
-\end{changebar}%
 
 
 \index{htmlinfo@\Lc{htmlinfo}}%
 \paragraph*{\Lc{htmlinfo }\label{htmlinfo}}
-\cbversion{97.1}\begin{changebar}
 Normally an ``About this document...'' page is created at the end
 of the \texttt{HTML} document, containing technical information
 about how the document was created, by whom, or any other information
@@ -1818,12 +1765,10 @@ Instead the \htmlref{\Lc{htmlhead}}{htmlhead} command
 can be used to place an alternative heading, prior to the \Lc{htmlinfo*} command.
 Neither this heading nor the \fn{\$INFO} \htmlref{contents}{infostring} appears 
 in the \LaTeX{} typeset version.%
-\end{changebar}%
 
 
 \index{bodytext@\Lc{bodytext}}%
 \paragraph*{\Lc{bodytext\char123}\Meta{options}\texttt{\char125}\label{bodytext}}
-\cbversion{96.1g}\begin{changebar}
 The text and background colors, and colors for the text of hypertext links can
 be set on an \texttt{HTML} page by giving appropriate attributes 
 with the \HTMLtag{BODY ...} tag. This is particularly easy to do
@@ -1844,22 +1789,18 @@ notably the \fn{color.perl} implementation of \LaTeX's \env{color} package,
 and the (prototype) \env{frames} package, by \Wilck\ and \RossMoore.
 In both these packages the requested information is checked for
 validity as an attribute within the \HTMLtag{BODY ...} tag.
-\end{changebar}%
 
 \index{htmlbody@\Lc{htmlbody}}%
 \paragraph*{\Lc{htmlbody\char123}\Meta{options}\texttt{\char125}\label{htmlbody}}
-\cbversion{97.1}\begin{changebar}
 This is similar to the \Lc{bodytext} command, except that it adds the
 value of an attribute, or allows an existing value to be changed.
 Thus it can be used to alter just a single one of the text and background colors, 
 colors for the text of hypertext links or add a background pattern.
 The \Meta{options} are given as key-value pairs; some checking is done to ensure 
 the validity of the attributes whose values are being set.%
-\end{changebar}%
 
 \index{htmlbase@\Lc{htmlbase}}%
 \paragraph*{\Lc{htmlbase\char123}\Meta{URL}\texttt{\char125}\label{htmlbase}}
-\cbversion{96.1g}\begin{changebar}
 This specifies that the given \Meta{URL} be included in the \HTMLtag{HEAD} section
 of each \texttt{HTML} page via a tag: 
 \texttt{<BASE HREF=\char34\Meta{URL}\char34}.\html{\\}
@@ -1881,7 +1822,7 @@ rather than relative to the new location.
 %
 \item
 Other uses for this feature are likely to become apparent.%
-\end{itemize}\end{changebar}%
+\end{itemize}
 
 
 \index{HTMLset@\Lc{HTMLset}!alters a \Perl{} variable}%
@@ -1890,7 +1831,6 @@ Other uses for this feature are likely to become apparent.%
 \Meta{value}\texttt{\char125} and 
 \Lc{HTMLsetenv\char123}\Meta{which}\texttt{\char125\char123}%
 \Meta{value}\texttt{\char125}\label{HTMLset}}
-\cbversion{97.1}\begin{changebar}
 The \Lc{HTMLset} command provides a mechanism whereby an arbitrary
 \Perl{} variable can be assigned a value dynamically, during the \latextohtml{} processing. 
 A variable having name `\texttt{\$}\Meta{which}' is assigned the specified \Meta{value},
@@ -1900,21 +1840,19 @@ but it is expanded in order as if it were an environment, rather than a command.
 \medskip\noindent
 \textbf{Warning: }This is intended for \Perl{} programmers only.
 Use this command at your own risk!
-\end{changebar}
 
 \htmlrule[width=300]
 \index{LaTeX2HTML@\latextohtml{}!command for its name}%
 \index{names of important packages}%
 \index{latextohtml@\Lc{latextohtml}!gives @gives \latextohtml{}}%
 \paragraph*{\Lc{latextohtml}\label{l2hname}} 
-\cbversion{97.1}\begin{changebar}
 expands to the name \latextohtml, of this translator.
 Commands for parts of names of important \LaTeX{} packages are also 
 included with \latextohtml: e.g. \TeX, \LaTeX, \AmS, \Xy\,.
 (This is to make it easy to refer to these products, in a consistent way
 within the \texttt{HTML} pages; you may still need \LaTeX{} definitions
 for the typeset version.)
-\end{changebar}
+
 \medskip
 
 
@@ -1925,7 +1863,6 @@ for the typeset version.)
 \index{HTML@\texttt{HTML}!Version 3.2}%
 \index{usemap@\texttt{usemap}}%
 \index{thumbnail}%
-\cbversion{96.1}\begin{changebar}%
 \emph{Image maps} are images with active regions in which a 
 Web-surfer can click, to send him off to another sector of cyberspace.  
 \latextohtml{} can design either inline ``figures'' or external ones 
@@ -2046,7 +1983,7 @@ files mentioned, they will be interpreted as URLs without translation.
 
 The \texttt{HTML} image-maps are generated and placed in directory
 \path{report/} by invoking the command: \verb| makemap report.map report |.%
-\end{changebar}\par
+
 \index{images!image-maps|)}
 
 
@@ -2057,7 +1994,6 @@ The \texttt{HTML} image-maps are generated and placed in directory
 is supported only for users of \LaTeXe.}\label{Segmentation}}%
 \tableofchildlinks*\htmlrule
 \index{segmentation|(}%
-\cbversion{96.1}\begin{changebar}
 One of the greatest appeals of the World-Wide Web is its high
 connectivity through hyper-links.  As we have seen, the \LaTeX{} 
 author can provide these links either manually or symbolically.
@@ -2103,7 +2039,7 @@ The following four \LaTeX{} extensions carry out segmentation:
 %
 \index{segment@\Lc{segment}}%
 \item [ \Lc{segment\char123}\Meta{file}\texttt{\char125\char123}\Meta{sec-type}%
- \texttt{\char125\char123}\Meta{heading}\texttt{\char125}\label{segment}]
+ \texttt{\char125\char123}\Meta{heading}\texttt{\char125}\label{intsegment}]
 %
 This command indicates the start of a new program segment.
 The segment resides in \Meta{file}\texttt{.tex}, represents the start
@@ -2184,8 +2120,10 @@ Index information from other segments is to be read.
 \html{\\}%
 %\item[\texttt{indexkeys}] Index information from other segments are to be read.
 %\item[\texttt{subindexkeys}] Index information from other segments are to be read.
+\item[\texttt{images}] 
+Allows images generated in other segments to be reused with the current segment.
+\html{\\}%
 \end{htmllist}
-\cbversion{96.1f}\begin{changebar}
 \index{index!short prefixes preferred}%
 \index{index!cumbersome}\html{\\}%
 \textbf{Note: } If extensive indexing is to be used, then it is advisable
@@ -2194,7 +2132,6 @@ in the index have text strings constructed from this \Meta{prefix},
 when using the \env{makeidx} package. Having long names with
 multiply-indexed items results in an extremely inelegant, cumbersome index.
 See \hyperref{the section on indexing}{Section~}{}{index} for more details.%
-\end{changebar}
 
 
 \index{startdocument@\Lc{startdocument}}%
@@ -2223,13 +2160,10 @@ via the \Meta{file}\texttt{.ptr} file.\html{\\}
 It identifies to \latextohtml\ that the current segment 
 is a \LaTeX{} sectional unit of type \Meta{sec-type}, with the specified heading.\html{\\}
 This command is ignored by \LaTeX. %
-\cbversion{97.1}\begin{changebar}
 From version \textsc{v97.1}\,, it is possible to use this command to insert extra section-headings,
 for use in the \texttt{HTML} version only.%
-\end{changebar}
 
 \index{htmlnohead@\Lc{htmlnohead}}%
-\cbversion{97.1}\begin{changebar}
 \item [ \Lc{htmlnohead}\label{htmlnohead}] 
 %
 When placed at the top of the preamble of a document segment, the \Lc{htmlnohead}
@@ -2261,21 +2195,16 @@ via the \Meta{file}\texttt{.ptr} file.\html{\\}
 It specifies to \latextohtml\ that the background of in the document 
 should have the color \Meta{color}~.%
 %
-\end{changebar}%
-\end{htmllist}\end{changebar}
+\end{htmllist}
 
-\cbversion{97.2}\begin{changebar}
 The use of the segmenting commands is best illustrated by the
 \htmlref{example}{sec:segmentexample} below.
 You might want to check your segmented document for consistency using
 the \htmlref{-unsegment}{unsegment} command line option.
-\end{changebar}
 
 
 \subsubsection{A Segmentation Example\index{segmentation!example}%
   \label{sec:segmentexample}}%
-\cbversion{96.1}\begin{changebar}%
-\noindent
 The best way to illustrate document segmentation 
 is through a simple example.  
 Suppose that a document is to be segmented into one parent 
@@ -2421,10 +2350,8 @@ current program segment causes the labels to change from the previous run.
 This ensures that \latextohtml{} is not run unnecessarily. 
 It is also usual for the information page to be suppressed by specifying 
 \Cs{info 0} for all but the top-level document.%
-\end{changebar}
 
 \index{segmentation!same sub-directory}%
-\cbversion{96.1f}\begin{changebar}
 In the above example, all segments are built within the same sub-directory
 \fn{report/} of the directory containing the \LaTeX{} source files.
 This is achieved simply by using the option \Cs{dir report} with each.
@@ -2444,7 +2371,7 @@ with each \htmlref{\Lc{internal}}{internal} command; e.g.
 \begin{verbatim}
 \internal[figure]{../sect1/s1}
 \end{verbatim}
-\end{changebar}
+
 \index{segmentation|)}%
 
 

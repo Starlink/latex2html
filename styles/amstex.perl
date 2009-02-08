@@ -6,9 +6,20 @@
 # Change Log:
 # ===========
 #
-# $Log$
-# Revision 1.1  2004/02/20 13:13:28  nxg
-# Initial import
+# $Log: amstex.perl,v $
+# Revision 1.24  2000/11/04 03:32:17  RRM
+#  --  fixed typo where $t_author should be $t_address
+#      thanks to Bruce Miller for reporting this
+#
+# Revision 1.23  1999/06/11 09:57:23  RRM
+#  --  removed unnecessary tagging for ommitted information on title-page
+#
+# Revision 1.22  1999/06/03 05:40:36  RRM
+#  --  fixed error in previous commit
+#
+# Revision 1.21  1999/06/02 11:15:54  RRM
+#  --  the \author and \address commands were not reading their argument
+#      safely --- looping could result;  now fixed.
 #
 # Revision 1.20  1998/07/22 02:03:20  RRM
 #  --  implemented {proof} environment and \qed and \qedsymbol
@@ -169,8 +180,10 @@ sub do_cmd_author {
     }
     &get_next_optional_argument;
     local($rest) = $_;
-    $rest =~ s/$next_pair_pr_rx//o;
-    ($t_author) =  &translate_commands($&);
+    $t_author = &missing_braces unless (
+	($rest =~ s/$next_pair_pr_rx/$t_author=$&;''/eo)
+	||($rest =~ s/$next_pair_rx/$t_author=$&;''/eo));
+    ($t_author) =  &translate_commands($t_author);
     $rest;
 }
 
@@ -183,8 +196,10 @@ sub do_cmd_address {
     }
     &get_next_optional_argument;
     local($rest) = $_;
-    $rest =~ s/$next_pair_pr_rx//o;
-    ($t_address) =  &translate_commands($&);
+    $t_address = &missing_braces unless (
+	($rest =~ s/$next_pair_pr_rx/$t_address=$&;''/eo)
+	||($rest =~ s/$next_pair_rx/$t_address=$&;''/eo));
+    ($t_address) =  &translate_commands($t_address);
     $rest;
 }
 
@@ -308,17 +323,17 @@ sub do_cmd_maketitle {
     if ($t_author) {
 	$the_title .= "<P ALIGN=CENTER><STRONG>$t_author</STRONG></P>\n";
     } else { &write_warnings("There is no author for this document."); }
-    if ($t_translator) {
+    if (($t_translator)&&!($t_translator=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
 	$the_title .= "<BR><P ALIGN=CENTER>Translated by $t_translator</P>\n";}
-    if ($t_affil) {
+    if (($t_affil)&&!($t_affil=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
 	$the_title .= "<BR><P ALIGN=CENTER><I>$t_affil</I></P>\n";}
-    if ($t_date) {
+    if (($t_date)&&!($t_date=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
 	$the_title .= "<BR><P ALIGN=CENTER><I>Date:</I> $t_date</P>\n";}
 
-    if ($t_address) {
+    if ($t_address&&!($t_address=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
 	$the_title .= "<BR><P ALIGN=LEFT><FONT SIZE=-1>$t_address</FONT></P>\n";
     } else { $the_title .= "<P ALIGN=LEFT>"}
-    if ($t_email) {
+    if ($t_email&&!($t_email=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
 	$the_title .= "<P ALIGN=LEFT><FONT SIZE=-1>$t_email</FONT></P>\n";
     } else { $the_title .= "</P>" }
     if ($t_keywords) {

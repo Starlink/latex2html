@@ -1,4 +1,4 @@
-# $Id: babelbst.perl 12004 2004-02-20 13:13:29Z nxg $
+# $Id: babelbst.perl,v 1.2 1998/08/06 14:50:28 UW Exp $
 # babelbst.perl - LaTeX2HTML support for the merlin \bbl*** commands
 #  (default English style) for use with Patrick Daly's  natbib.sty
 # Ross Moore, 29.6.1998 (ross@mpce.mq.edu.au)

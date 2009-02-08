@@ -9,11 +9,13 @@ print "Spanish style interface for LaTeX2HTML\n";
 # Put Spanish equivalents here for headings/dates/ etc when
 # latex2html start supporting them ...
 
-sub main'spanish_translation {
-    @_[0];
-}
+sub main'spanish_translation { @_[0] }
+
+
 
 package main;
+
+if (defined &addto_languages) { &addto_languages('spanish') };
 
 sub do_cmd_spanishTeX {
     # Just in case we pass things to LaTeX
@@ -42,12 +44,34 @@ sub spanish_titles {
     $app_title = "Ap\\'endice";
     $pre_title = "Prefacio";
     $foot_title = "Notas al pie";
+    $thm_title = "Teorema";
     $fig_name = "Figura";
     $tab_name = "Tabla";
-    $part_name = "Parte";
     $prf_name = "Demostraci\\'on";
+    $date_name = "Fecha";
+    $page_name = "P\\'agina";
+  #  Sectioning-level titles
+    $part_name = "Parte";
+    $chapter_name = "Cap\\'itulo";
+    $section_name = "Seccion";
+    $subsection_name = "Subseccion";
+    $subsubsection_name = "Subsubseccion";
+    $paragraph_name = "Parrafo";
+  #  Misc. strings
     $child_name = "Subsecciones";
     $info_title = "Sobre este documento...";
+    $also_name = "v\\'ease tambi\\'en";
+    $see_name = "v\\'ease";
+  #  names in navigation panels
+    $next_name = "Siguiente";
+    $up_name = "Subir";
+    $prev_name = "Anterior";
+    $group_name = "Grupo";
+  #  mail fields
+    $encl_name = "Adjunto";
+    $headto_name = "A";
+    $cc_name = "Copia a";
+
     @Month = ('', 'enero', "febrero", 'marzo', 'abril', 'mayo',
               'junio', 'julio', "agosto", 'septiembre', 'octubre',
               'noviembre', "diciembre");
@@ -58,7 +82,7 @@ sub spanish_titles {
       "los","las");
 }
 
-sub do_cmd_today {
+sub spanish_today {
     local($today) = &get_date();
     $today =~ s|(\d+)/0?(\d+)/|$2 de $Month[$1] |;
     join('',$today,$_[0]);
@@ -68,5 +92,6 @@ sub do_cmd_today {
 &spanish_titles;
 $default_language = 'spanish';
 $TITLES_LANGUAGE = "spanish";
+$spanish_encoding = 'iso-8859-1';
 
 1;                            # Not really necessary...

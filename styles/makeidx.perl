@@ -36,11 +36,28 @@
 #  implemented styles for hyper-link text from Index.
 
 
-sub add_idx {
+sub add_real_idx {
     print "\nDoing the index ...";
-    local($key, @keys, $next, $index);
+    local($key, @keys, $next, $index, $old_key, $old_html);
 # RRM, 15.6.96:  index constructed from %printable_key, not %index
     @keys = keys %printable_key;
+
+    # include non- makeidx  index-entries
+    foreach $key (keys %index) {
+	next if $printable_key{$key};
+	$old_key = $key;
+	if ($key =~ s/###(.*)$//) {
+	    next if $printable_key{$key};
+	    push (@keys, $key);
+	    $printable_key{$key} = $key;
+	    if ($index{$old_key} =~ /HREF="([^"]*)"/i) {
+		$old_html = $1;
+		$old_html =~ /$dd?([^#\Q$dd\E]*)#/;
+		$old_html = $1;
+	    } else { $old_html = '' }
+	    $index{$key} = $index{$old_key} . $old_html."</A>\n | ";
+	};
+    }
     @keys = sort makeidx_keysort @keys;
     @keys = grep(!/\001/, @keys);
     foreach $key (@keys) {
@@ -75,9 +92,10 @@ sub add_idx_key {
 	else { $index .= "<DT><DD><BR>\n<DT>".&print_key."\n<DD>"; }
     } elsif (($index{$key})&&(!($index_printed{$key}))) {
 	if ($SHORT_INDEX) { 
-	    $next = "<DD>".&print_key."\n : ". $index{$key};
-	} else { $next = "<DT>".&print_key."\n<DD>".$index{$key}; }
-	$next =~ s/(\n )?\| $//;
+	    $next = "<DD>".&print_key."\n : ". &print_idx_links;
+	} else {
+	    $next = "<DT>".&print_key."\n<DD>". &print_idx_links;
+	}
 	$index .= $next."\n";
 	$index_printed{$key} = 1;
     }
@@ -102,8 +120,15 @@ sub add_idx_key {
 sub print_key {
     local($text) = $printable_key{$key};
     #cannot have block-level tags in the <DT> part
-    $text =~ s/(<\/?(HR|P|DIV)( [^>]*)?>)/<\/STRONG><DD>$1<STRONG>/g;
-    "<STRONG>$text</STRONG>"
+    $text =~ s!(<\/?(HR|P|DIV)( [^>]*)?>)!$eidx_style<DD>$1$sidx_style!g;
+    $sidx_style.$text.$eidx_style
+}
+sub print_idx_links {
+    local($links) = $index{$key};
+    $links =~ s/(\n )?\| $//;
+    if ($INDEX_STYLES =~ /small/i) {
+	'<SMALL>'.$links.'</SMALL>'
+    } else { $links }
 }
 
 sub add_sub_idx_key {
@@ -114,20 +139,18 @@ sub add_sub_idx_key {
 	@subkeys = sort(split("\004", $sub_index{$key}));
 	if ($SHORT_INDEX) { 
 	    if ($index{$key}) {
-		$next = "<DD>".&print_key." : ".$index{$key};
-#		$next =~ s/[\|] $/\n/;
-#        	$index .= $next;
-		$next =~ s/(\n )?\| $//;
+		$next = "<DD>".&print_key." : ". &print_idx_links;
         	$index .= $next."\n";
-#        	$index_printed{$key} = 1;
-	    } else { $index .= "<DD>".&print_key  unless $index_printed{$key} }
+	    } else {
+		$index .= "<DD>".&print_key  unless $index_printed{$key}
+	    }
 	} else { 
 	    if ($index{$key}) {
-		$next = "<DT>".&print_key."\n<DD>".$index{$key};
-		$next =~ s/(\n )?\| $//;
+		$next = "<DT>".&print_key."\n<DD>". &print_idx_links;
 		$index .= $next."\n";
-#		$index_printed{$key} = 1;
-	    } else { $index .= "<DT>".&print_key  unless $index_printed{$key} }
+	    } else {
+		$index .= "<DT>".&print_key  unless $index_printed{$key}
+	    }
 	} 
 	if ($SHORT_INDEX) { $index .= "<DD><DL>\n"; }
 	else { $index .= "<DD><DL COMPACT>\n"; }
@@ -137,17 +160,17 @@ sub add_sub_idx_key {
 	$index .= "</DL>\n";
     } elsif ($index{$key}) {
 	if ($SHORT_INDEX) { 
-	    $next = "<DD>".&print_key." : " . $index{$key};
-	} else { $next = "<DT>".&print_key."\n<DD>".$index{$key}; }
-	$next =~ s/(\n )?\| $//;
+	    $next = "<DD>".&print_key." : " . &print_idx_links;
+	} else {
+	    $next = "<DT>".&print_key."\n<DD>". &print_idx_links;
+	}
 	$index .= $next."\n";
-#	$index_printed{$key} = 1;
     }
     $index_printed{$key} = 1;
     return $index;
 }
 
-sub do_cmd_index {
+sub do_real_index {
     local($_) = @_;
     local($pat,$idx_entry,$index_type);
     # catches opt-arg from \index commands for  index.sty 
@@ -159,7 +182,6 @@ sub do_cmd_index {
     $idx_entry = &named_index_entry($pat, $idx_entry);
     $idx_entry.$_;
 }
-sub do_cmd_indexstar { &do_cmd_index(@_) }
 
 sub named_index_entry {
     local($br_id, $str) = @_;
@@ -167,8 +189,7 @@ sub named_index_entry {
     # ! -> \001
     # @ -> \002
     # | -> \003
-    $* = 1; $str =~ s/\n/ /g; $* = 0; # remove any newlines
-
+    $* = 1; $str =~ s/\n\s*/ /g; $* = 0; # remove any newlines
     # protect \001 occurring with images
     $str =~ s/\001/\016/g;
 
@@ -195,7 +216,8 @@ sub named_index_entry {
     $TITLE = $before unless $TITLE;
     # Save the reference
     local($words) = '';
-    if ($SHORT_INDEX) { $words = &make_shortidxname; }
+    if ($SHOW_SECTION_NUMBERS) { $words = &make_idxnum; }
+    elsif ($SHORT_INDEX) { $words = &make_shortidxname; }
     else { $words = &make_idxname; }
     local($super_key) = '';
     local($sort_key, $printable_key, $cur_key);
@@ -321,9 +343,11 @@ sub named_index_entry {
 #	    $pageref =~ s/$cross_ref_mark#(\w+)#(\w+)>$cross_ref_mark/
 	    $pageref =~ s/$cross_ref_mark#([^#]+)#([^>]+)>$cross_ref_mark/
 	      do { ($label,$id) = ($1,$2);
+		$ref_files{$label} = ''; # ???? RRM
 		if ($index_labels{$label}) { $ref_label = ''; } 
 		else { $ref_label = $external_labels{$label} 
-		    unless ($ref_label = $ref_files{$label}); }
+		    unless ($ref_label = $ref_files{$label});
+		}
 		'"' . "$ref_label#$label" . '">' .
 		  &get_ref_mark($label,$id)}/geo;
 	}
@@ -337,7 +361,7 @@ sub named_index_entry {
 	$index{$cur_key} .= $thisref."\n | ";
 #	$index{$cur_key} .= &make_named_href('',"$CURRENT_FILE#$br_id",$words)."\n | ";
     }
-#print "\nREF:$sort_key : $cur_key :$index{$cur_key}";
+#print "\nREF: $sort_key : $cur_key :$index{$cur_key}";
  
 #    join('',"<A NAME=$br_id>$anchor_invisible_mark<\/A>",$_);
     "<A NAME=\"$br_id\">$anchor_invisible_mark<\/A>";
@@ -349,6 +373,7 @@ $WORDS_IN_INDEX = 4 unless ($WORDS_IN_INDEX);
 # alternative strings for short-names or section-names
 #
 sub make_idxname {(&get_first_words($TITLE, $WORDS_IN_INDEX) || 'no title')}
+sub make_idxnum {(&get_first_words($TITLE, 1) || 'no title')}
 
 sub make_shortidxname {
     local($sstring, $key );

@@ -141,8 +141,8 @@ sub embed_display {
 }
 
 $smdiv_rx = "<(BR|DIV)";
-$spdisplay = "<P ALIGN=\"CENTER\">";
-$epdisplay = "<BR CLEAR=\"ALL\">\n<P>";
+$spdisplay = (($HTML_VERSION > 3.1)? "<DIV ":"<P "). "ALIGN=\"CENTER\">";
+$epdisplay = (($HTML_VERSION > 3.1)? "</DIV>\n":'')."<BR CLEAR=\"ALL\">\n<P>";
 $mdisp_width = " WIDTH=\"100%\"";
 $smarray = "<TABLE";
 $smarrayB = " CELLPADDING=\"0\"";
@@ -175,14 +175,16 @@ eval "sub do_env_equation { \&process_env_equation(1,\@_); }";
 eval "sub do_env_equationstar { \&process_env_equation(0,\@_); }";
 
 sub do_env_subequations {
-    local($prev_eqn_number) = ++$global{'eqn_number'};
+    local($contents) = @_[0];
+    local($prev_eqn_number) = $global{'eqn_number'}++;
     local($eqno_prefix) = &translate_commands('\theequation');
     $eqno_prefix =~ s/\s+$//;
-    $subequation_level++;
+    ++$subequation_level;
+    local($outer_math) = 'subequations' unless $outer_math;
     $global{'eqn_number'} = 0;
-    local($contents) = &process_env_equation(1, @_[0]);
-    $subequation_level--;
-    $global{'eqn_number'} = $prev_eqn_number;
+    $contents = &process_env_equation(1, $contents);
+    --$subequation_level;
+    $global{'eqn_number'} = ++$prev_eqn_number;
     $contents;
 }
 
@@ -192,40 +194,47 @@ sub process_env_equation {
     local($attribs, $border);
     if (s/$htmlborder_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
     elsif (s/$htmlborder_pr_rx//o) { $attribs = $2; $border = (($4)? "$4" : 1) }
-    local($saved) = $_;
+    local($saved) = &revert_array_envs($_);
     local($falign) = 'CENTER';
     local($sbig,$ebig)= &set_math_size($math_mode);
     $failed = 1 if ($NO_SIMPLE_MATH); # simplifies the next call
     ($labels, $comment, $_) = &process_math_env($math_mode,$_);
+    $failed = 0;
 
-    $failed = (/$htmlimage_rx|$htmlimage_pr_rx/) unless ($outer_math); # force an image
+    $failed = (/$htmlimage_rx|$htmlimage_pr_rx/); # force an image
     local($outer_math) = $env unless ($outer_math);
 
-#    if ($failed) {
-#	local($this_env) = $outer_math;
-#	if (!($this_env =~ s/(star|\*)$/\*/)) { $global{'eqn_number'}++ };
-#	$_ = &process_undefined_environment($this_env, $id, $saved);
-#	$falign = (($EQN_TAGS =~ /L/)? 'LEFT' : 'RIGHT') if $numbered;
-#	local($fsdisplay,$fedisplay) = ($spdisplay,$epdisplay);
-#	if (!($fsdisplay =~ s/(ALIGN\s*=\s*\")[^\"]*\"/$1$falign\"/)) {
-#	    $fsdisplay .= "<DIV ALIGN=\"$falign\">";
-#	    $fedisplay = '</DIV>'.$epdisplay;
-#	}
-#	$_ = join('', $fsdisplay, $labels, $comment, $_, $fedisplay);
-#
-#    } elsif ($NO_SIMPLE_MATH) {
-    if ($NO_SIMPLE_MATH) {
+    if ($USING_STYLES) {
+	$env_id =~ s/(CLASS=\")(\w+)/$1$outer_math/;
+	$env_style{$outer_math} = "" unless ($env_style{$outer_math});
+	$env_id = ' CLASS="'.$outer_math.'"' unless $env_id;
+    }
+
+    if ($failed) {
+	local($this_env) = $outer_math;
+	if (!($this_env =~ s/(star|\*)$/\*/)) { $global{'eqn_number'}++ };
+	$_ = &process_undefined_environment($this_env, $id, $saved);
+	$falign = (($EQN_TAGS =~ /L/)? 'LEFT' : 'RIGHT') if $numbered;
+	local($fsdisplay,$fedisplay) = ($spdisplay,$epdisplay);
+	if (!($fsdisplay =~ s/(ALIGN\s*=\s*\")[^\"]*\"/$1$falign\"/)) {
+	    $fsdisplay .= "<DIV$env_id ALIGN=\"$falign\">";
+	    $fedisplay = '</DIV>'.$epdisplay;
+	}
+	$_ = join('', $fsdisplay, $labels, $comment, $_, $fedisplay);
+
+    } elsif ($NO_SIMPLE_MATH) {
+#    if ($NO_SIMPLE_MATH) {
 	$failed = 0;
 	s/$htmlimage_rx/$doimage = $&;''/eo ; # force an image
 	s/$htmlimage_pr_rx/$doimage .= $&;''/eo ; # force an image
 	local($valign) = &set_math_valign();
 	local($sarray, $srow, $scell, $calign, $ecell, $erow, $earray);
 
-	local($env_id) = $env_id;
-	if ($USING_STYLES) {
-	    $env_id =~ s/(CLASS=\")(\w+)/$1$outer_math/;
-	    $env_style{$env} = "" unless ($env_style{$env});
-	}
+#	local($env_id) = $env_id;
+#	if ($USING_STYLES) {
+#	    $env_id =~ s/(CLASS=\")(\w+)/$1$outer_math/;
+#	    $env_style{$env} = "" unless ($env_style{$env});
+#	}
 
 	($sarray, $erow, $earray, $sempty, $calign) = ( 
 	    $smarray.$env_id.$smarrayB.$mdisp_width.$mcalign
@@ -239,7 +248,6 @@ sub process_env_equation {
 	local($valign) = &set_math_valign($eqno);
 
 	$_ = &protect_array_envs($_);
-
 	if ($_ =~ /\s*\\begin\s*$O\d+$C\s*align/) {
 	    # no equation numbering --- handled by the inner-alignment
 	    $inner_numbered = 1;
@@ -282,9 +290,13 @@ sub process_env_equation {
 	        $thismath = &process_math_in_latex("indisplay",'',''
 		    , $doimage.$thismath ) unless ($thismath eq '' );
 	    } else {
-#	        $thismath = &make_math('displaymath','',''
-	        $thismath = &make_math('display','','', $thismath)
-		    unless ( $thismath eq '' );
+		if ($thismath =~ /$subAMS_array_env_rx/) {
+		    $outer_math =~ s/(equation)(star)?$/$1star/;
+		    $thismath = &make_math($outer_math,'','', $thismath);
+		} else {
+		    $thismath = &make_math('display','','', $thismath)
+			unless ( $thismath eq '' );
+		}
 	    }
 	    if ($thismath ne '') {
 	        $return .= join('', $calign
@@ -306,7 +318,6 @@ sub process_env_equation {
     }
 
     undef $outer_math unless ($subequation_level);
-    $subequation_level-- if ($subequation_level);
     &embed_display($_);
 }
 
@@ -463,7 +474,7 @@ sub process_intertext {
 	(s/$next_pair_pr_rx/$text = $2;''/e)
 	||(s/$next_pair_rx/$text = $2;''/e));
     $post = $_; $post =~ s/(^\s*|\s*$)//go;
-    $text = &translate_environments(&translate_commands($text))
+    $text = &translate_commands(&translate_environments($text))
 	if ($text =~ /\\/);
     $text = join('', $smrow, $emtag
 	, (($span > 1) ? $smcell." COLSPAN=$span".$mlalign : $smlcell)
@@ -697,7 +708,10 @@ sub process_env_align{
 
 	    if (/\\intertext/) {
 		local($extra_row);
-		($extra_row,$_) = &process_intertext($numbered,$_);
+		#der -- David Rourke
+		#there is an equation-number cell, even if empty
+		#($extra_row,$_) = &process_intertext($numbered,$_);
+		($extra_row,$_) = &process_intertext(1,$_);
 		$return .= $extra_row;
 	    }
 	    ($eqno, $_) = &get_eqn_number($numbered,$_);

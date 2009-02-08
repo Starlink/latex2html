@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 
 ################################################################################
-# Copyright 22.2.98 by Jens Lippmann (lippmann@cdc.informatik.th-darmstadt.de)
+# Copyright 1998-1999 by Jens Lippmann (lippmann@rbg.informatik.th-darmstadt.de)
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose and without fee is hereby granted, provided that the above
@@ -17,12 +17,12 @@
 # Use with LaTeX2HTML to translate HyTeX specific commands.
 # Corresponding to HTMLMAC.STY, HTMLMAC.TEX, HTMLMAC.PERL.
 #
-# $Source$
-# $RCSfile$
-# $Revision: 12004 $
-# $Date: 2004-02-20 03:13:29 -1000 (Fri, 20 Feb 2004) $
-# $Author: nxg $
-# $State$
+# $Source: /home/latex2ht/cvs/latex2html/user/cweb2html/cweb2html,v $
+# $RCSfile: cweb2html,v $
+# $Revision: 1.2 $
+# $Date: 1999/04/09 19:25:32 $
+# $Author: JCL $
+# $State: Exp $
 #
 # Handles:
 # - TeX macros \.{  \?  \\{  \&{  \,  \)  \|  $<$  $>$  \1...\9
@@ -36,9 +36,9 @@
 ################################################################################
 # History
 #
-# $Log$
-# Revision 1.1  2004/02/20 13:13:26  nxg
-# Initial import
+# $Log: cweb2html,v $
+# Revision 1.2  1999/04/09 19:25:32  JCL
+# changed my e-Mail address
 #
 # Revision 1.1  1998/02/24 02:29:49  latex2html
 # for 98.1
@@ -164,7 +164,7 @@ $DS = '/';
 $FILE = undef;
 
 
-$RCSID = '$Id: cweb2html 12004 2004-02-20 13:13:29Z nxg $';
+$RCSID = '$Id: cweb2html,v 1.2 1999/04/09 19:25:32 JCL Exp $';
 $RCSID =~ /[^ ]* ([^ ]*),v ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*)/;
 $PRGFILE = $1;
 $RCSFILE = "$1,v";

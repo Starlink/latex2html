@@ -1,4 +1,4 @@
-# $Id: gujarati.perl 12004 2004-02-20 13:13:29Z nxg $
+# $Id: gujarati.perl,v 1.1 1998/02/03 05:26:55 RRM Exp $
 # GUJRATHI.PERL by Ross Moore <ross@mpce.mq.edu.au> 17-1-98
 # Mathematics Department, Macquarie University, Sydney, Australia.
 #
@@ -54,10 +54,7 @@
 #
 # Change Log:
 # ===========
-# $Log$
-# Revision 1.1  2004/02/20 13:13:26  nxg
-# Initial import
-#
+# $Log: gujarati.perl,v $
 # Revision 1.1  1998/02/03 05:26:55  RRM
 #  --  changed name from  gujrathi.sty  and  gujrathi.perl
 #

@@ -25,18 +25,18 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-$DOCTYPE = '-//IETF//DTD HTML i18n';
+# $DOCTYPE = '-//IETF//DTD HTML i18n';
 
-sub do_cmd_oe {
-    join('', &iso_map("oe", "lig"), $_[0]);}
-sub do_cmd_OE {
-    join('', &iso_map("OE", "lig"), $_[0]);}
-sub do_cmd_l {
-    join('', &iso_map("l", "stroke"), $_[0]);}
-sub do_cmd_L {
-    join('', &iso_map("L", "stroke"), $_[0]);}
-sub do_cmd_ng {
-    join('', &iso_map("eng", ""), $_[0]);}
+#sub do_cmd_oe {
+#    join('', &iso_map("oe", "lig"), $_[0]);}
+#sub do_cmd_OE {
+#    join('', &iso_map("OE", "lig"), $_[0]);}
+#sub do_cmd_l {
+#    join('', &iso_map("l", "strok"), $_[0]);}
+#sub do_cmd_L {
+#    join('', &iso_map("L", "strok"), $_[0]);}
+#sub do_cmd_ng {
+#    join('', &iso_map("eng", ""), $_[0]);}
 
 # Language codes as defined by ISO 639
 # http://www.ics.uci.edu/pub/ietf/http/related/iso639.txt
@@ -65,14 +65,19 @@ sub do_cmd_ng {
 	'welsh'		=> 'cy',
 	'danish'	=> 'da',
 	'german'	=> 'de',
-	'austrian'	=> 'de.at',
+	'austrian'	=> 'de-AT',
+	'swiss german'	=> 'de-CH',
 	'bhutani'	=> 'dz',
 	'greek'		=> 'el',
 	'english'	=> 'en',
 	'original'	=> 'en',
-	'USenglish'	=> 'en.us',
+	'UKenglish'	=> 'en-UK',
+	'USenglish'	=> 'en-US',
 	'esperanto'	=> 'eo',
 	'spanish'	=> 'es',
+	'argentinian'	=> 'es-AR',
+	'colombian'	=> 'es-CO',
+	'mexican'	=> 'es-MX',
 	'estonian'	=> 'et',
 	'basque'	=> 'eu',
 	'persian'	=> 'fa',
@@ -80,6 +85,9 @@ sub do_cmd_ng {
 	'fiji'		=> 'fj',
 	'faeroese'	=> 'fo',
 	'french'	=> 'fr',
+	'french-belgian'	=> 'fr-BE',
+	'french canadian'	=> 'fr-CA',
+	'swiss french'	=> 'fr-CH',
 	'frisian'	=> 'fy',
 	'irish'		=> 'ga',
 	'scots gaelic'	=> 'gd',
@@ -94,7 +102,8 @@ sub do_cmd_ng {
 	'interlingua'	=> 'ia',
 	'interlingue'	=> 'ie',
 	'inupiak'	=> 'ik',
-	'indonesian'	=> 'in',
+	'indonesian'	=> 'id',
+# ?	'indonesian'	=> 'in',
 	'icelandic'	=> 'is',
 	'italian'	=> 'it',
 	'hebrew'	=> 'iw',
@@ -129,6 +138,7 @@ sub do_cmd_ng {
 	'nauru'		=> 'na',
 	'nepali'	=> 'ne',
 	'dutch'		=> 'nl',
+	'belgian'		=> 'nl-BE',
 	'norwegian'	=> 'no',
 	'occitan'	=> 'oc',
 	'afan'		=> 'om',
@@ -139,6 +149,7 @@ sub do_cmd_ng {
 	'pashto'	=> 'ps',
 	'pushto'	=> 'ps',
 	'portuguese'	=> 'pt',
+	'brazilian'	=> 'pt-BR',
 	'quechua'	=> 'qu',
 	'rhaeto-romance'=> 'rm',
 	'kirundi'	=> 'rn',
@@ -184,6 +195,8 @@ sub do_cmd_ng {
 	'xhosa'		=> 'xh',
 	'yoruba'	=> 'yo',
 	'chinese'	=> 'zh',
+	'CNchinese'	=> 'zh-CN',
+	'taiwanese'	=> 'zh-TW',
 	'zulu'		=> 'zu'
 	);
 

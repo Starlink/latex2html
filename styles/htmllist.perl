@@ -71,15 +71,18 @@ sub do_env_htmlliststar{
 
 sub set_htmllist_marker {
     local($icon) = @_;
+    local($ICONSERVER) = ($LOCAL_ICONS ? '' : $ICONSERVER.$dd );
     if (!($ImageMarks{$icon})) {
 	print "\nUnknown icon '$icon' for htmllist marker";
 	&write_warnings("Unknown icon '$icon' for htmllist marker");
 	return();
     }
     local($mark_size,$imagemark) = $ImageSizeMarks{$icon};
-    $icon = "$ICONSERVER/$ImageMarks{$icon}.$IMAGE_TYPE" if ($ImageMarks{$icon});
+    $icon = "$ICONSERVER$ImageMarks{$icon}.$IMAGE_TYPE" if ($ImageMarks{$icon});
     $imagemark = '<IMG ' . $mark_size . ' SRC="' . $icon . '" ALT="*">';
     $imagemark =~ s/~/&#126;/g;	# Allow ~'s in $ICONSERVER
+    # mark as used, in case $LOCAL_ICONS: thanks, Roman E. Pavlov
+    $used_icons{$icon} = 1; 
     $imagemark;
 }
 

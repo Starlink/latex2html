@@ -1,8 +1,8 @@
 
 ########################################################################
-# $Id: CJK.perl 12004 2004-02-20 13:13:29Z nxg $
+# $Id: CJK.perl,v 1.8 2002/04/26 16:06:52 RRM Exp $
 # CJK.perl
-#   Jens Lippmann <lippmann@cdc.informatik.tu-darmstadt.de>,
+#   Jens Lippmann <lippmann@rbg.informatik.tu-darmstadt.de>,
 #   Boy Yang <yangboy@math.ntu.edu.tw>,
 #   Werner Lemberg <xlwy01@uxp1.hrz.uni-dortmund.de>
 #
@@ -12,11 +12,29 @@
 ########################################################################
 # Change Log:
 # ===========
-#  jcl = Jens Lippmann <http://www-jb.cs.uni-sb.de/~www/people/lippmann>
+#  jcl = Jens Lippmann
 #
-# $Log$
-# Revision 1.1  2004/02/20 13:13:28  nxg
-# Initial import
+# $Log: CJK.perl,v $
+# Revision 1.8  2002/04/26 16:06:52  RRM
+#  --  JIS is EUC-JP, not ISO-2022-JP.
+#
+# Revision 1.7  2002/04/26 14:17:31  RRM
+#  --  fixed MIME names for the encodings; thanks to Jungshik Shin for
+#      the correct names
+#
+# Revision 1.6  2002/04/24 22:27:00  RRM
+#  --  automatic recognition of document charset, based upon the
+#      encoding in the first {CJK} or {CJK*} environment.
+#
+# Revision 1.5  1999/06/06 14:24:59  MRO
+#
+#
+# -- many cleanups wrt. to TeXlive
+# -- changed $* to /m as far as possible. $* is deprecated in perl5, all
+#    occurrences should be removed.
+#
+# Revision 1.4  1999/04/09 18:11:27  JCL
+# changed my e-Mail address
 #
 # Revision 1.3  1998/02/19 22:24:26  latex2html
 # th-darmstadt -> tu-darmstadt
@@ -73,14 +91,42 @@
 
 package main;
 
+# possible values for the 1st optional argument to \begin{CJK}
+# and the corresponding charset:
+
+%CJK_charset = (
+	  'Bg5'    , 'Big5'
+	, 'Bg5+'   , 'Big5Plus'
+	, 'Bg5hk'  , 'Big5-HKSCS'
+	, 'GB'     , 'gb2312'
+	, 'GBt'    , 'gbt_12345'
+	, 'GBK'    , 'GBK'
+#	, 'JIS'    , 'ISO-2022-JP'
+	, 'JIS'    , 'EUC-JP'
+	, 'SJIS'   , 'Shift_JIS'
+	, 'KS'     , 'EUC-KR'
+	, 'UTF8'   , 'UTF-8'
+	, 'EUC-TW' , 'X-EUC-TW'
+	, 'EUC-JP' , 'EUC-JP'
+	, 'EUC-KR' , 'EUC-KR'
+	, 'CP949'  , 'X-Windows-949'
+);
+
+# Use 'Bg5' => 'big5' as default charset, for both input and output,
+# unless it is set already with a value for  $CJK_AUTO_CHARSET
+
+$CJK_AUTO_CHARSET = '' unless (defined $CJK_AUTO_CHARSET);
+$charset = $CHARSET = $CJK_AUTO_CHARSET || $CJK_charset{'Bg5'};
+
+
 sub pre_pre_process {
     # Handle TeX's normalized special character encoding.
     # This *might* be done by LaTeX2HTML, too, but yet we don't
     # rely on it.
-    s/\^\^([^0-9a-f])/chr((64+ord($1))&127)/ge;
-    s/\^\^([0-9a-f][0-9a-f])/chr(hex($1))/ge;
+    s/\^\^([^0-9a-f])/chr((64+ord($1))&127)/gem;
+    s/\^\^([0-9a-f][0-9a-f])/chr(hex($1))/gem;
     # Care for standard CJK encoding -> l2h internal form.
-    s/([\201-\237\241-\376])([\100-\176\200-\376])/"$1" . ord($2) . "\377"/ge;
+    s/([\201-\237\241-\376])([\100-\176\200-\376])/"$1" . ord($2) . "\377"/gem;
 }
 
 sub post_post_process {
@@ -107,10 +153,28 @@ sub do_cmd_CJKchar {
 #
 sub do_env_CJK {
     local($_) = @_;
+    my ($cjk_enc);
     # skip font encoding
     &get_next_optional_argument;
-    # skip CJK encoding
-    s/$next_pair_rx//o;
+
+    # handle CJK encoding
+    $cjk_enc = &missing_braces unless 
+	((s/$next_pair_pr_rx/$cjk_enc = $2; ''/eo)
+	||(s/$next_pair_rx/$cjk_enc = $2; ''/eo));
+    $cjk_enc =~ s/^\s+|\s+$//g;
+    if ($cjk_enc) {
+	if (!defined $CJK_charset{$cjk_enc}) {
+	    &write_warning ( "unknown charset code: $cjk_enc in CJK environment.");
+	} elsif (!$CJK_AUTO_CHARSET) {
+	    $CJK_AUTO_CHARSET = $charset = $CHARSET = $CJK_charset{$cjk_enc};
+	} elsif ($CHARSET eq $CJK_charset{$cjk_enc}) {
+	    # compatible; do nothing.
+	} else {
+	    &write_warning ( "Only one charset allowed per document: $CHARSET");
+	    &write_warning ( "Ignoring request for ".$CJK_charset{$cjk_enc});
+	}
+    }
+    
     # skip CJK font family
     s/$next_pair_rx//o;
     $_;

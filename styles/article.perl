@@ -6,10 +6,7 @@
 # Change Log:
 # ===========
 #
-# $Log$
-# Revision 1.1  2004/02/20 13:13:28  nxg
-# Initial import
-#
+# $Log: article.perl,v $
 # Revision 1.6  1998/06/18 12:09:35  RRM
 #  --  do not override user's $LATEX_FONT_SIZE settings
 #

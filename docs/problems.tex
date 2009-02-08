@@ -15,40 +15,20 @@
 Here are some of the problems that were known to exist
 with previous versions of \latextohtml. 
 Most of those that were real errors are either fixed completely
-in the current version (\textsc{v98.1}), or are much less likely to occur
-within correct \LaTeX{} source. (Some are not really errors but
-indications of poor style in the user's choices among
+in more recent versions (\textsc{v98.1} and later),
+or are much less likely to occur within correct \LaTeX{} source. 
+(Some are not really errors but indications of poor style
+in the user's choices among
 various ways to organise their source code.)\html{\\} 
 Several are indeed limitations inherent in the way 
 \latextohtml{} currently performs its processing.
 %
 \begin{htmllist}
 \htmlitemmark{PurpleBall}
-\item [Correctness and Efficiency:\index{efficiency} ]
-The translator cannot be guaranteed to perform as expected.
-Several aspects of the implementation need
-optimisation and improvement. Apart from possible bugs the translator 
-may place heavy demands on your resources.
-\cbversion{97.1}\begin{changebar}
-%begin{latexonly}
-\textit
-%end{latexonly}
-{The current version works much more efficiently than previous
-versions; many subtle bugs have been identified and eliminated.}
-\end{changebar}
-\cbversion{98.1}\begin{changebar}
-%begin{latexonly}
-\textit
-%end{latexonly}
-{The process of command substitution has been improved significantly,
-resulting in memory savings and faster translation.}
-\end{changebar}
-
 \item [Unrecognised Commands and Environments:\index{unrecognised commands} ]
 Unrecognised commands are ignored and any arguments are left in the text. 
 Unrecognised environments are passed to \LaTeX{}  and the result is
 included in the document as one or more inlined images.
-\cbversion{97.1}\begin{changebar}
 %begin{latexonly}
 \newline\textit
 %end{latexonly}
@@ -58,95 +38,47 @@ even though not explicitly mentioned
 in the \LaTeX{} \hypercite{blue book}{blue book}{}{lamp:latex}.
 Any aberrant commands should be reported to the \latextohtml{}
 \hyperref{mailing list}{mailing list, see Section~}{}{support}.}
-\end{changebar}
 
-
-\item [Cross-references:\index{cross-references} ]
-References in environments that are passed to \LaTeX{}  for processing
-(e.g. a \Lc{cite}, or a \Lc{ref} command), 
-are not processed correctly.
-\Lc{label} commands are handled correctly.
-\cbversion{97.1}\begin{changebar}
-%begin{latexonly}
-\newline\textit
-%end{latexonly}
-{All citation, reference and label commands should work correctly now.
-Report any problems to the \latextohtml{}
-\hyperref{mailing list}{mailing list, see Section~}{}{support}.}
-\end{changebar}
-
-\item[Order-Sensitive Commands: ]
-Commands which affect global parameters during the translation,
-and are sensitive to the order in which they are processed may
-not be handled correctly. In particular, counter manipulation
-(e.g. \Lc{newcounter}, \Lc{setcounter}, \Lc{stepcounter}, etc.) 
-commands may cause problems.
-\cbversion{97.1}\begin{changebar}
-%begin{latexonly}
-\newline\textit
-%end{latexonly}
-{Counter commands now work correctly; dependencies
-are also implemented.}
-\end{changebar}
 
 \index{index}
 \item [Index: ]
 The translator generates its own index by saving the arguments  of 
 the \Lc{index} command. The contents of the \env{theindex}
 environment are ignored.
-\cbversion{97.1}\begin{changebar}
-%begin{latexonly}
-\newline\textit
-%end{latexonly}
-{This remains true. When using the \env{makeidx} package,
+When using the \env{makeidx} package,
 very sophisticated Indexes can be built automatically.
-The Index for this manual is a good example.}
-\end{changebar}
+The Index for this manual is a good example.
+
 
 \item[New Definitions:\index{extensions!definitions} ]
 New definitions (\Lc{newcommand}, \Lc{newenvironment}, 
 \Lc{newtheorem} and \Lc{def}),
 will not work as expected if they are defined more than once.
 Only the last definition will be used throughout the document.
-\cbversion{97.1}\begin{changebar}
-%begin{latexonly}
-\newline\textit
-%end{latexonly}
-{This remains true. Stylistically it is bad to declare new
+Stylistically it is bad to declare new
 environments or theorems outside of the document preamble,
-so these should cause no problems anyway.\html{\\}
+so this should not cause any real problems.\html{\\}
 Changes to commands using \Lc{def} or \Lc{renewcommand}
 should usually be made only locally, within special environments,
 to set a needed parameter; 
 e.g. a basic length in a \env{picture} environment.
 But when such environments force an image to be generated,
-then \LaTeX{} will make the correct redefinition.}
-\end{changebar}
+then \LaTeX{} will make the correct redefinition.
 
 \item [Scope of declarations and environments: ]
 If the scope of a declaration or environment crosses section
 boundaries, then the output may not be as expected, because each
 section is processed independently.
-\cbversion{97.1}\begin{changebar}
-%begin{latexonly}
-\newline\textit
-%end{latexonly}
-{This is inherent to the way \latextohtml{} does its processing. 
-It will not be fixed until later versions change this strategy;
-e.g. when \latextohtmlNG\ becomes fully integrated.}
-\end{changebar}
+\newline
+\textit{This is inherent to the way \latextohtml{} does its processing. 
+It will not be different unless later versions change this strategy;
+(e.g. if \latextohtmlNG\ ever becomes fully integrated.)}
 
 \item [Math-mode font-size changes: ]  Math-mode font changes
 made outside the math-mode are not honoured.  Thus the two equations
 in \verb|$a_b$| and \verb|{\LARGE $a_b$}|
 would come out looking the same.  The trick is to write
 \verb|$a_b| and \verb|$\mbox{\LARGE $a_b$}$|.
-\cbversion{97.1}\begin{changebar}
-%begin{latexonly}
-\newline\textit
-%end{latexonly}
-{This remains. The work-around is effective.}
-\end{changebar}
 \end{htmllist}
 
 
@@ -224,14 +156,11 @@ file itself contains raw \TeX{} commands. In this case you may
 put such commands inside a \env{latexonly}
 \hyperref{environment}{environment (see Section }{)}{sec:latexonly}.
 
-\cbversion{97.1}\begin{changebar}
 The \fn{\$VERBOSITY} \htmlref{variable}{verbosity}{} can be used 
 to create tracing messages, which may help to locate which command 
 or environment was being processed when everything stopped.
-\end{changebar}
 
 \index{unending loop}\index{looping endlessly}
-\cbversion{97.1}\begin{changebar}
 \item [It appears to be doing nothing.\label{looping}]
 Perhaps the processor has fallen into an unending loop.
 Usually there will be a bad definition, or other faulty source code,
@@ -247,7 +176,6 @@ It should soon become apparent where any such looping occurs.
 No `perhaps' here; the processor has definitely fallen into an unending loop.
 See the previous item for how to detect which command or environment
 is causing the problem.
-\end{changebar}
 
 \cbversion{98.1}\begin{changebar}
 %
@@ -325,28 +253,15 @@ Try splitting your source file into more than one file,
 using the \LaTeX{} commands \Lc{input} or \Lc{include}. 
 Also, try using the \Cs{no\_images} option.
 
-\cbversion{97.1}\begin{changebar}
 Perhaps the processor has fallen into an infinite loop.
 Usually there will be a bad definition, or other faulty source code,
 which has caused this. 
 See an \htmlref{earlier problem}{looping} for
 how to set the \fn{\$VERBOSITY} \htmlref{variable}{verbosity} to 
 help locate the bad code leading to this memory exhaustion.
-\end{changebar}
 
 As a last resort you may consider increasing the virtual memory
-(swap space) of your machine. As an indication 
-of what you might be able to do on your machine,
-a very long book (about 1000 printed pages) required about 
-24MB of RAM and over 150MB of swap space to convert on a local Sun Sparc ELC
-running SunOS 4.1.3.
-\cbversion{97.1}\begin{changebar}
-%begin{latexonly}
-\newline\textit
-%end{latexonly}%
-{Much of this memory would have been consumed during image-generation.
-This part of the processing is much more efficient in \textsc{v97.1}\,.}
-\end{changebar}%
+(swap space) of your machine.
 
 
 \cbversion{98.1}\begin{changebar}
@@ -374,7 +289,6 @@ You will probably need to re-install \Perl{ 5} (see above topic).
 \end{changebar}
 
 
-\cbversion{97.1}\begin{changebar}
 This can happen when an image is being created from a large piece
 of \LaTeX{} source code. The image-reuse mechanism uses the code itself
 to construct a database key. If too long, the key is invalid and may
@@ -395,7 +309,6 @@ One solution may be to wrap the whole environment within
 \Lc{begin\char123makeimage\char125} and \Lc{end\char123makeimage\char125}.
 This will still cause the image to be created, 
 but uses just the environment name and number as the database key.
-\end{changebar}%
 
 
 
@@ -411,11 +324,9 @@ Alternatively try using something like:
 \textbf{Warning:} Some browsers may not be able to interpret the \verb|%7E|
 as a ``tilde'' character.
 
-\cbversion{98.1}\begin{changebar}
 Try using \Lc{char126}~.
 In any case tildes within \Lc{htmladdnormallink} and similar commands
-are now handled correctly.
-\end{changebar}
+should be handled correctly.
 
 \item [Macro definitions don't work correctly: ]
 As mentioned in other places, not all plain \TeX{} \Lc{def}-initions 
@@ -426,21 +337,12 @@ make use of sectioning or \Lc{verbatim} commands. These are
 handled in a special way by \latextohtml{} and cannot be used in
 macro definitions. 
 
-In general the macro handling mechanism is inefficient and very
-fragile. Avoid using macros if possible.
-\cbversion{97.1}\begin{changebar}%
-A greater range of macros definitions can now be handled,
-especially if appropriate declarations are added to an initialization file.
-\end{changebar}%
-
 
 \item [\Lc{input} commands: ]
-There is a bug in the expansion of \Lc{input} commands which causes 
-a problem
-when more than one \Lc{input} command appears on the same line.
+There is a bug in the expansion of \Lc{input} commands which may cause
+a problem when more than one \Lc{input} command appears on the same line.
 There is no quick fix other than suggesting that you put each
-\Lc{input} command on a line by itself,
-in the \LaTeX{} source files.
+\Lc{input} command on a line by itself, in the \LaTeX{} source files.
 
 \item [\Lc{input} commands in \env{verbatim} environments: ]
 \cbversion{98.1}\begin{changebar}

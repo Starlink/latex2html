@@ -1,7 +1,7 @@
 #
-# $Id: verbatimfiles.perl 12004 2004-02-20 13:13:29Z nxg $
+# $Id: verbatimfiles.perl,v 1.6 1999/04/09 18:16:51 JCL Exp $
 # verbatimfiles.perl
-#   Jens Lippmann <lippmann@cdc.informatik.tu-darmstadt.de> 6-FEB-96
+#   Jens Lippmann <lippmann@rbg.informatik.tu-darmstadt.de> 6-FEB-96
 #
 # Extension to LaTeX2HTML to support verbatim.sty/verbatimfiles.sty.
 #
@@ -9,9 +9,12 @@
 # ===========
 #  jcl = Jens Lippmann
 #
-# $Log$
-# Revision 1.1  2004/02/20 13:13:28  nxg
-# Initial import
+# $Log: verbatimfiles.perl,v $
+# Revision 1.6  1999/04/09 18:16:51  JCL
+# changed my e-Mail address
+#
+# Revision 1.5  1998/12/02 01:22:53  RRM
+#  --  wrap the \verbatimfile  and  \verbatimlisting  commands
 #
 # Revision 1.4  1998/03/22 20:52:50  latex2html
 # reviewed for 98.1, works & is testable via devel/tests/regr/verbatim/run
@@ -88,5 +91,10 @@ sub do_cmd_verbatimlisting {
     $verbatim{$global{'verbatim_counter'}} = $first.$_;
     $outer;
 }
+
+&process_commands_wrap_deferred (<<_RAW_ARG_DEFERRED_CMDS_);
+verbatimfile # {}
+verbatimlisting # {}
+_RAW_ARG_DEFERRED_CMDS_
 
 1; 		# Must be last line

@@ -24,6 +24,7 @@ $Xyname = (($HTML_VERSION ge "3.0")? "X<SUB>Y</SUB>" : "Xy");
 $Xypicname = (($HTML_VERSION ge "3.0")? "X<SUB>Y</SUB>-pic" : "Xy-pic");
 $LamSname = (($HTML_VERSION ge "3.0")? "L<SUP><SMALL>A</SMALL></SUP><SUB>M</SUB>S" : "LamS");
 $LaTeXsub = (($HTML_VERSION ge "3.0")? "2<SUB>e</SUB>" : "2e");
+$XyMname = (($HTML_VERSION ge "3.0")? 'X<SUP>Y</SUP><SUB>M</SUB>' : 'XyM');
 
 
 sub do_cmd_TeX {
@@ -122,6 +123,17 @@ sub do_cmd_Xypic {
     ($USING_STYLES ?
 	join('','<SPAN CLASS="logo Xy-pic">',$Xypicname,'</SPAN>')
 	: $Xypicname ) . $_[0] }
+
+sub do_cmd_XyM {
+    ($USING_STYLES ?
+        join('','<SPAN CLASS="logo XyM-TeX">',$XyMname,'</SPAN>')
+        : $XyMname ) . $_[0] }
+
+sub do_cmd_XyMTeX {
+    ($USING_STYLES ?
+        join('','<SPAN CLASS="logo XyM-TeX">',$XyMname,'-',$TeXname,'</SPAN>')
+        : $XyMname.'-'.$TeXname ) . $_[0] }
+
 
 
 1;      # Must be last line

@@ -1,7 +1,13 @@
-% $Id: linkex2.w 12004 2004-02-20 13:13:29Z nxg $
+% $Id: linkex2.w,v 1.2 1999/10/15 22:02:26 JCL Exp $
 
 \documentclass{cweb}
+
+%begin{latexonly}
+% This is a fix to not upset html.sty about missing sectioning commands:
+\let\subsection\null\let\subsubsection\null\let\paragraph\null
+%end{latexonly}
 \usepackage{html}
+
 % This command also turns on the special treatment of refinement names
 % such as writing them to the label file.
 \HTCweblabels{dvi.obj/linkex1,dvi.obj/linkex2}{html.obj/linkex1,html.obj/linkex2}
@@ -45,9 +51,9 @@ int main()
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% $Log$
-% Revision 1.1  2004/02/20 13:13:26  nxg
-% Initial import
+% $Log: linkex2.w,v $
+% Revision 1.2  1999/10/15 22:02:26  JCL
+% added latexonly sequence that defines \sub...section and \paragraph \null to make html.sty happy
 %
 % Revision 1.1  1998/02/24 02:29:53  latex2html
 % for 98.1

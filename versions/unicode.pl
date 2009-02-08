@@ -34,15 +34,17 @@
 ## Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 
-require("$LATEX2HTMLVERSIONS${dd}latin1.pl");
-
+# save previous settings before loading  latin1.pl 
 $PREV_CHARSET = $CHARSET if ($CHARSET);
+$PREV_charset = $charset if ($charset);
+require("$LATEX2HTMLVERSIONS${dd}latin1.pl");
+$CHARSET = $PREV_CHARSET if ($PREV_CHARSET);
+
 %unicode_table = ();
 
-$CHARSET = "iso-10646";
-$charset = "utf-8";
+$CHARSET = "iso-10646" unless ($PREV_CHARSET);
+$charset = ($NO_UTF ? ($PREV_charset ? $PREV_charset : $CHARSET) : 'utf-8');
 %unicode_table = ();
-
 
 # This creates a table of translations to Unicode #bignumber; entities,
 # used for converting embedded 8-bit font characters in the range \200-\377
@@ -60,15 +62,18 @@ sub make_unicode_map {
         $key = pop @nums; $ent = pop @ents;
 	$unicode_table{$key} = $iso_10646_character_map{$ent}
             if ($key =~ /\#\d+;/);
-    print "\n$key : $ent : ".$unicode_table{$key} if ($VERBOSITY > 2);
+	    print "\n$key : $ent : ".$unicode_table{$key} if ($VERBOSITY > 2);
     }    
 }
 
 sub convert_to_unicode {
-    local(*_) = @_;
-    local($char,$uchar);
-    $_ =~ s/([\200-\377])/$char="\&#".ord($1).";";
-	$uchar = $unicode_table{$char};($uchar ? $uchar : $char)/eg;
+    # MRO: by reference; local(*_) = @_;
+    my $char, $uchar;
+    return($_[0]) if ($NO_UTF && !$USE_UTF);
+    $_[0] =~ s/([\200-\377])/$char="\&#".ord($1).";";
+	$unicode_table{$char}||$char
+    /eg;
+#	$uchar = $unicode_table{$char};($uchar ? $uchar : $char)/eg;
 }
 
 
@@ -86,9 +91,13 @@ sub convert_to_unicode {
 
 sub do_cmd_oe { join('', &iso_map("oe", "lig"), $_[0]);}
 sub do_cmd_OE { join('', &iso_map("OE", "lig"), $_[0]);}
-sub do_cmd_l { join('', &iso_map("l", "stroke"), $_[0]);}
-sub do_cmd_L { join('', &iso_map("L", "stroke"), $_[0]);}
+sub do_cmd_l { join('', &iso_map("l", "strok"), $_[0]);}
+sub do_cmd_L { join('', &iso_map("L", "strok"), $_[0]);}
 sub do_cmd_ng { join('', &iso_map("eng", ""), $_[0]);}
+
+# inhibit later wrapping for an image
+$raw_arg_cmds{'l'} = $raw_arg_cmds{'L'} = -1 ;
+$raw_arg_cmds{'oe'} = $raw_arg_cmds{'OE'} = -1 ;
 
 
 # this maps lowercase characters to non-entity equivalents
@@ -332,7 +341,7 @@ sub do_cmd_ng { join('', &iso_map("eng", ""), $_[0]);}
 	'dot', '&#729;',
 	'ring', '&#730;',
 	'ogon', '&#731;',
-#	'tilde', '&#732;',
+	'tilde', '&#732;',
 	'dblac', '&#733;',
 
 #<!-- Greek -->
@@ -392,6 +401,59 @@ sub do_cmd_ng { join('', &iso_map("eng", ""), $_[0]);}
 	'upsih', '&#978;',
 	'piv', '&#982;',
 
+#<!-- Hebrew vocalization points -->
+	'sheva', '&#1456;',
+	'hatafsegol', '&#1457;',
+	'hatafpatah', '&#1458;',
+	'hatafqamats', '&#1459;',
+	'hiriq', '&#1460;',
+	'tzere', '&#1461;',
+	'segol', '&#1462;',
+	'patah', '&#1463;',
+	'qamats', '&#1464;',
+	'holam', '&#1465;',
+#	'', '&#1466;',
+	'qubuts', '&#1467;',
+	'dagesh', '&#1468;',
+	'meteg', '&#1469;',
+	'maqaf', '&#1470',
+	'rafe', '&#1471;',
+	'paseq', '&#1472;',
+	'sofpasuq', '&#1475;',
+	'gershayim', '&#1480;',
+	'doublevav', '&#1520;',
+	'vavyod', '&#1521;',
+	'doubleyod', '&#1522;',
+	'geresh', '&#1523;',
+
+#<!-- Hebrew letters -->
+	'alef', '&#1488;',
+	'bet', '&#1489;',
+	'gimel', '&#1490;',
+	'dalet', '&#1491;',
+	'he', '&#1492;',
+	'vav', '&#1493;',
+	'zayin', '&#1494;',
+	'het', '&#1495;',
+	'tet', '&#1496;',
+	'yod', '&#1497;',
+	'finalkaf', '&#1498;',
+	'kaf', '&#1499;',
+	'lamed', '&#1500;',
+	'finalmem', '&#1501;',
+	'mem', '&#1502;',
+	'finalnun', '&#1503;',
+	'nun', '&#1504;',
+	'samekh', '&#1505;',
+	'ayin', '&#1506;',
+	'finalpe', '&#1507;',
+	'pe', '&#1508;',
+	'finaltsadi', '&#1509;',
+	'tsadi', '&#1510;',
+	'qof', '&#1511;',
+	'resh', '&#1512;',
+	'shin', '&#1513;',
+	'tav', '&#1514;',
 
 #<!-- General Punctuation -->
 	'ensp', '&#8194;',
@@ -401,8 +463,8 @@ sub do_cmd_ng { join('', &iso_map("eng", ""), $_[0]);}
 	'zwj', '&#8205;',
 	'lrm', '&#8206;',
 	'rlm', '&#8207;',
-	'ndash', '&#8211;',  # NS4(Mac)
-	'mdash', '&#8212;',  # NS4(Mac)
+	'ndash', '&#8211;',
+	'mdash', '&#8212;',
 	'lsquo', '&#8216;',
 	'rsquo', '&#8217;',
 	'sbquo', '&#8218;',
@@ -411,6 +473,8 @@ sub do_cmd_ng { join('', &iso_map("eng", ""), $_[0]);}
 	'bdquo', '&#8222;',
 	'dagger', '&#8224;',
 	'Dagger', '&#8225;',
+
+#<!-- General Punctuation -->
 	'bull', '&#8226;',
 	'hellip', '&#8230;',  # horiz ellipsis
 	'permil', '&#8240;',  # per million
@@ -426,11 +490,11 @@ sub do_cmd_ng { join('', &iso_map("eng", ""), $_[0]);}
 
 #<!-- Letterlike Symbols -->
 	'image', '&#8465;',   # black-letter I
-	'weirp', '&#8472;',   # Weierstrasse-P
+	'weierp', '&#8472;',   # Weierstrasse-P
 	'real', '&#8476;',    # black-letter R
 	'trade', '&#8482;',   # trademark  # NS4(Mac)
 	'alefsym', '&#8501;',   # aleph   # NS4(Mac)
-	'aleph', '&#8501;',   # aleph   # NS4(Mac)
+#	'aleph', '&#8501;',   # aleph   # NS4(Mac)
         
 #<!-- Arrows -->
 	'larr', '&#8592;',
@@ -438,7 +502,7 @@ sub do_cmd_ng { join('', &iso_map("eng", ""), $_[0]);}
 	'rarr', '&#8594;',
 	'darr', '&#8595;',
 	'harr', '&#8596;',
-	'crarr', '&#8629;',
+	'crarr', '&#8629;',  # carriage-return arrow
 	'lArr', '&#8656;',
 	'uArr', '&#8657;',
 	'rArr', '&#8658;',
@@ -639,7 +703,7 @@ sub do_cmd_ng { join('', &iso_map("eng", ""), $_[0]);}
 
 	'&#402;', '\\ensuremath{f}',
 	'&#710;', '\\hash{}',
-	'&#732;', '\\~{}',
+	'&#732;', '\\~{\\phantom{x}}',
 
 	'&#913;', '\\Alpha ',
 	'&#914;', '\\Beta ',
@@ -696,6 +760,34 @@ sub do_cmd_ng { join('', &iso_map("eng", ""), $_[0]);}
 	'&#978;', '\\upsilon ',    # this is wrong, but close
 	'&#982;', '\\varpi ',
 
+     '&#1488;' , '\\alef ',
+     '&#1489;' , '\\bet ',
+     '&#1490;' , '\\gimel ',
+     '&#1491;' , '\\dalet ',
+     '&#1492;' , '\\he ',
+     '&#1493;' , '\\vav ',
+     '&#1494;' , '\\zayin ',
+     '&#1495;' , '\\het ',
+     '&#1496;' , '\\tet ',
+     '&#1497;' , '\\yod ',
+     '&#1498;' , '\\finalkaf ',
+     '&#1499;' , '\\kaf ',
+     '&#1500;' , '\\lamed ',
+     '&#1501;' , '\\finalmem ',
+     '&#1502;' , '\\mem ',
+     '&#1503;' , '\\finalnun ',
+     '&#1504;' , '\\nun ',
+     '&#1505;' , '\\samekh ',
+     '&#1506;' , '\\ayin ',
+     '&#1507;' , '\\finalpe ',
+     '&#1508;' , '\\pe ',
+     '&#1509;' , '\\finaltsadi ',
+     '&#1510;' , '\\tsadi ',
+     '&#1511;' , '\\qof ',
+     '&#1512;' , '\\resh ',
+     '&#1513;' , '\\shin ',
+     '&#1514;' , '\\tav ',
+
 	'&#8194;', '\\;',
 	'&#8195;', '\\>',
 	'&#8201;', '\\,',
@@ -707,46 +799,40 @@ sub do_cmd_ng { join('', &iso_map("eng", ""), $_[0]);}
 	'&#8212;', '{---}',
 	'&#8216;', '\`{}',
 	'&#8217;', "\'{}",
-	'&#8218;', '\\leftguilsingl{}',
+	'&#8218;', '\\quotesinglbase{}',
 	'&#8220;', '\`\`',
 	'&#8221;', "\'\'",
-	'&#8222;', '\\leftguildbl{}',
+	'&#8222;', '\\quotedblbase{}',
 	'&#8224;', '\\dagger{}',
 	'&#8225;', '\\ddagger{}',
 	'&#8226;', '\\ensuremath{\\bullet}',
 	'&#8230;', '\\dots{}',
-#	'&#8240;',  # per million
+	'&#8240;', '\\textperthousand{}', # per mille
 	'&#8242;', '\\ensuremath{^{\\prime}}',
 	'&#8243;', '\\ensuremath{^{\\prime\\prime}}',
+	'&#8249;', '\\leftguilsingl{}',
+	'&#8250;', '\\rightguilsingl{}',
 	'&#8254;', '\\ensuremath{\\overline{\phantom{x}}}',
 	'&#8260;', '\\emsuremath{/}',
-#	'&#8364;',   # Euro sign
+	'&#8364;', '\\texteuro{}', # Euro sign
 	'&#8465;', '\\ensuremath{\\Im}',
 	'&#8472;', '\\ensuremath{\\wp}',
 	'&#8476;', '\\ensuremath{\\Re}',
 	'&#8482;', '\\trademark{}',
 	'&#8501;', '\\ensuremath{\\aleph}',
 
-	'larr', '&#8592;', '\\leftarrow ',
-	'uarr', '&#8593;', '\\uparrow ', 
-	'rarr', '&#8594;', '\\rightarrow ',
-	'darr', '&#8595;', '\\downarrow ',
-	'harr', '&#8596;', '\\leftrightarrow ',
-	'crarr', '&#8629;', '\\downharpoonleft ',
-	'lArr', '&#8656;', '\\Leftarrow ',
-	'uArr', '&#8657;', '\\Uparrow ',
-	'rArr', '&#8658;', '\\Rightarrow ',
-	'dArr', '&#8659;', '\\Downarrow ',
-	'hArr', '&#8660;', '\\Leftrightarrow ',
+	'&#8592;', '\\leftarrow ',
+	'&#8593;', '\\uparrow ', 
+	'&#8594;', '\\rightarrow ',
+	'&#8595;', '\\downarrow ',
+	'&#8596;', '\\leftrightarrow ',
+	'&#8629;', '\\downharpoonleft ',
+	'&#8656;', '\\Leftarrow ',
+	'&#8657;', '\\Uparrow ',
+	'&#8658;', '\\Rightarrow ',
+	'&#8659;', '\\Downarrow ',
+	'&#8660;', '\\Leftrightarrow '
 
 	);
 
 1;
-
-
-
-
-
-
-
-

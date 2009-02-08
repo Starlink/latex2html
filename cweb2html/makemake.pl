@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 
 ################################################################################
-# Copyright 22.2.98 by Jens Lippmann (lippmann@cdc.informatik.tu-darmstadt.de)
+# Copyright 1998-1999 by Jens Lippmann (lippmann@rbg.informatik.tu-darmstadt.de)
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose and without fee is hereby granted, provided that the above

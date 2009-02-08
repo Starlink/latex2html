@@ -42,7 +42,7 @@
 #-->
 
 $CHARSET = "iso-8859-1";
-
+$INPUTENC = '' unless ($INPUTENC);  # empty implies 'latin1'
 
 #Character ranges for lower --> upper-case conversion
 
@@ -92,8 +92,8 @@ $scextra = "s/\\337/ss/g";
 
 #sub do_cmd_oe { join('', &iso_map("oe", "lig"), $_[0]);}
 #sub do_cmd_OE { join('', &iso_map("OE", "lig"), $_[0]);}
-#sub do_cmd_l { join('', &iso_map("l", "stroke"), $_[0]);}
-#sub do_cmd_L { join('', &iso_map("L", "stroke"), $_[0]);}
+#sub do_cmd_l { join('', &iso_map("l", "strok"), $_[0]);}
+#sub do_cmd_L { join('', &iso_map("L", "strok"), $_[0]);}
 #sub do_cmd_ng { join('', &iso_map("eng", ""), $_[0]);}
 
 #sub do_cmd_DH { join('', &iso_map("D", "strok"), $_[0]);}
@@ -215,8 +215,8 @@ sub do_cmd_micron { join('', &iso_map("micro", ""), $_[0]);}
        'brvbar', '&#166;',  
        'sect', '&#167;',       # section mark
        'copy', '&#169;',       # copyright mark
-       'ordm', '&#170;',
-       'ordf', '&#186;',
+       'ordf', '&#170;',
+       'ordm', '&#186;',
        'laquo', '&#171;', 
        'raquo', '&#187;', 
        'not', '&#172;',
@@ -242,7 +242,6 @@ sub do_cmd_micron { join('', &iso_map("micro", ""), $_[0]);}
        'acute' , "&#180;",
        'circ', '^',
        'tilde', '&#126;',
-       'ring', '&#176;',
        'dot', '.',
        'uml', '&#168;',
        'macr' , '&#175;',
@@ -252,13 +251,13 @@ sub do_cmd_micron { join('', &iso_map("micro", ""), $_[0]);}
 
 # These are for ``Latin Extended-A'' ...
 
-%iso_8859_1A_character_map_inv = (
+%iso_8859_1A_character_map = (
        'OElig', "&#338;",
        'oelig', "&#339;",
        'Scaron', "&#352;",
        'scaron', "&#353;",
        'Yuml', "&#376;",
-        %iso_8859_1_character_map,
+        %iso_8859_1A_character_map
 	);
 
 %iso_8859_1_character_map_inv =
@@ -282,20 +281,20 @@ sub do_cmd_micron { join('', &iso_map("micro", ""), $_[0]);}
 #	'&#170;' , '\\mathordfeminine{}',
 	'&#170;' , '\\ensuremath{^{a}}',
 	'&#171;' , '\\guillemotleft{}',
-	'&#172;' , '\\lnot{}',
+	'&#172;' , '\\ensuremath{\\lnot{}}',
 	'&#173;' , '\\-',
 #	'&#174;' , '\\textregistered{}',
 	 '&#174;' , '\\ensuremath{\\circledR}',
      '&#175;' , '\\={}',
 #	'&#176;' , '\\mathdegree{}',
-     '&#176;' , '\\ensuremath{^{\circ}}',
+     '&#176;' , '\\ensuremath{^{\\circ}}',
 	'&#177;' , '\\ensuremath{\\pm}',
 #	'&#178;' , '\\mathtwosuperior{}',
 	'&#178;' , '\\ensuremath{^{2}}',
 #	'&#179;' , '\\maththreesuperior{}',
 	'&#179;' , '\\ensuremath{^{3}}',
      '&#180;' , '\\\'{}',
-	'&#181;' , '\ensuremath{\\mu}',
+	'&#181;' , '\\ensuremath{\\mu}',
      '&#182;' , '\\P{}',
 #	'&#183;' , '\\textperiodcentered{}',
      '&#183;' , '\\cdot{}',

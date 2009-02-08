@@ -30,6 +30,7 @@
 
 
 $CHARSET = "iso-8859-2";
+$INPUTENC = 'latin2';
 
 
 #Character ranges for lower --> upper-case conversion
@@ -94,6 +95,9 @@ $scextra = "s/\\337/ss/g";
 
 sub do_cmd_l { join('', &iso_map("l", "strok"), $_[0]);}
 sub do_cmd_L { join('', &iso_map("L", "strok"), $_[0]);}
+# inhibit later wrapping for an image
+$raw_arg_cmds{'l'} = $raw_arg_cmds{'L'} = -1 ;
+
 sub do_cmd_dh { join('', &iso_map("d", "strok"), $_[0]);}
 sub do_cmd_DH { join('', &iso_map("D", "strok"), $_[0]);}
 sub do_cmd_ss { join('', &iso_map("sz", "lig"), $_[0]);}

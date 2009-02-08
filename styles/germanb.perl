@@ -1,4 +1,4 @@
-# $Id: germanb.perl 12004 2004-02-20 13:13:29Z nxg $
+# $Id: germanb.perl,v 1.13 1998/08/24 12:50:20 RRM Exp $
 # GERMAN.PERL by Nikos Drakos <nikos@cbl.leeds.ac.uk> 25-11-93
 # Computer Based Learning Unit, University of Leeds.
 #
@@ -12,9 +12,9 @@
 #
 # Change Log:
 # ===========
-# $Log$
-# Revision 1.1  2004/02/20 13:13:28  nxg
-# Initial import
+# $Log: germanb.perl,v $
+# Revision 1.13  1998/08/24 12:50:20  RRM
+#  --  updated for the new Babel capabilities
 #
 # Revision 1.11  1998/06/26 06:07:35  RRM
 #  --  put \n before intro message
@@ -132,6 +132,8 @@ if ($CHARSET =~ /iso_8859_2/) {
 
 package main;
 
+if (defined &addto_languages) { &addto_languages('german') };
+
 sub do_cmd_flqq {
     if ($CHARSET =~ /iso_8859_2/) {
 	if ($HTML_VERSION > 2.1) {
@@ -194,12 +196,34 @@ sub german_titles {
     $app_title = "Anhang";
     $pre_title = "Vorwort";
     $foot_title = "Fu&szlig;noten";
+    $thm_title = "Satz";
     $fig_name = "Abbildung";
     $tab_name = "Tabelle";
-    $part_name = "Teil";
     $prf_name = "Beweis";
+    $date_name = "Datum";
+    $page_name = "Seite";
+  #  Sectioning-level titles
+    $part_name = "Teil";
+    $chapter_name = "Kapitel";
+    $section_name = "Abschnitt";
+    $subsection_name = "Unterabschnitt";
+    $subsubsection_name = "Unter Unterabschnitt";
+    $paragraph_name = "Absatz";
+  #  Misc. strings
     $child_name = "Unterabschnitte";
     $info_title = "&Uuml;ber dieses Dokument ...";
+    $also_name = "siehe auch";
+    $see_name = "siehe";
+  #  names in navigation panels
+    $next_name = "N&auml;chste Seite";
+    $up_name = "Aufw&auml;rts";
+    $prev_name = "Vorherige Seite";
+    $group_name = "gruppe";
+  #  mail fields
+    $encl_name = "Anlage(n)";
+    $headto_name = "An";
+    $cc_name = "Verteiler";
+
     @Month = ('', 'Januar', 'Februar', 'M&auml;rz', 'April', 'Mai',
 	      'Juni', 'Juli', 'August', 'September', 'Oktober',
 	      'November', 'Dezember');
@@ -215,7 +239,7 @@ sub german_titles {
 #JKR: Replace do_cmd_today (\today) with a nicer one, which is more
 # similar to the original. 
 #JCL introduced &get_date
-sub do_cmd_today {
+sub german_today {
     local($today) = &get_date;
     $today =~ s|(\d+)/0?(\d+)/|$2. $Month[$1] |;
     join('',$today,$_[0]);
@@ -225,6 +249,7 @@ sub do_cmd_today {
 &german_titles;
 $default_language = 'german';
 $TITLES_LANGUAGE = "german";
+$german_encoding = 'iso-8859-1';
 
 # MEH: Make iso_latin1_character_map_inv use more appropriate code
 $iso_latin1_character_map_inv{'&#171;'} ='\\flqq';

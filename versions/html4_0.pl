@@ -1,4 +1,5 @@
-
+# -*- perl -*-
+#
 ### File: html4.0.pl
 ### Language definitions for HTML 4.0
 
@@ -43,11 +44,14 @@ sub do_env_raggedright { &declared_env('flushleft', @_) }
 sub do_env_raggedleft { &declared_env('flushright', @_) }
 
 sub do_cmd_centering { 
-    local($_,*opentags)= @_; &declared_env('center', $_) }
+    # MRO *opentags has no effect
+    local($_)= @_; &declared_env('center', $_) }
 sub do_cmd_raggedright {
-    local($_,*opentags) = @_; &declared_env('flushleft', $_) }
+    # MRO *opentags has no effect
+    local($_) = @_; &declared_env('flushleft', $_) }
 sub do_cmd_raggedleftt {
-    local($_,*opentags) = @_; &declared_env('flushright', $_) }
+    # MRO *opentags has no effect
+    local($_) = @_; &declared_env('flushright', $_) }
 
 sub do_cmd_underline {
     &styled_text_chunk('U','','text','decoration','underline','',@_)}
@@ -484,6 +488,15 @@ $OL__TYPE = $numstyle_type;
 $OL_attribs_rx_list = ",START,";
 $OL__START_rx = $num_type;
 
+$OBJECT_attribs = ",DECLARE,";
+$OBJECT_attribs_rx_list = ",CLASSID,CODEBASE,DATA,TYPE,CODETYPE,ARCHIVE,STANDBY,HEIGHT,WIDTH,USEMAP,NAME,TABINDEX,";
+$OBJECT__CLASSID_rx = $OBJECT__CODEBASE_rx = $OBJECT__DATA_rx = $OBJECT__ARCHIVE_rx =
+  $OBJECT__USEMAP_rx = $URL_type;
+$OBJECT__TYPE_rx = $OBJECT__CODETYPE_rx = $OBJECT__STANDBY_rx = $string_type;
+$OBJECT__NAME_rx = $CDATA_type;
+$OBJECT__WIDTH_rx = $OBJECT__HEIGHT_rx = $length_type;
+$OBJECT__TABINDEX_rx = $num_type;
+
 $OPTION_attribs = ",SELECTED,";
 $OPTION_attribs_rx_list = ",VALUE,";
 $OPTION__VALUE = $string_type;
@@ -607,6 +620,19 @@ $VAR__DIR = $dir_type;
 $VAR_attribs_rx_list = $style_attribs;
 
 
+if ($FIGURE_CAPTION_ALIGN) {
+    if (!($TABLE_CAPTION_ALIGN =~ /^(TOP|BOTTOM|LEFT|RIGHT)/i))
+	{ &table_caption_warning('FIGURE') };
+} else { $FIGURE_CAPTION_ALIGN = 'BOTTOM' }
+
+if (($TABLE_CAPTION_ALIGN)&&!($TABLE_CAPTION_ALIGN =~ /^(TOP|BOTTOM|LEFT|RIGHT)/i))
+	{ &table_caption_warning('TABLE') };
+
+sub table_caption_warning {
+    local($which) = @_;
+    &write_warnings("\n \$${which}_CAPTION_ALIGN should be 'TOP' or 'BOTTOM'");
+}
+
 
 ###   HTML3.2  tables,  based upon...
 ###
@@ -624,7 +650,7 @@ $VAR_attribs_rx_list = $style_attribs;
 
 $content_mark = "<cellcontents>";
 $wrap_parbox_rx = "(\\\\begin$O\\d+${C}tex2html_deferred$O\\d+$C)?"
-    . "\\\\parbox(\\s*\[[^]]*])*\\s*$O(\\d+)$C([\\w\\W]*)$O\\3$C\\s*$O(\\d+)$C([\\w\\W]*)$O\\5$C"
+    . "\\\\parbox(\\s*\\\[[^]]*])*\\s*$O(\\d+)$C([\\w\\W]*)$O\\3$C\\s*$O(\\d+)$C([\\w\\W]*)$O\\5$C"
     . "(\\end<<\\d+>>tex2html_deferred<<\\d+>>)?";
 
 sub translate_colspec {
@@ -666,7 +692,7 @@ sub translate_colspec {
 	    $at_text = $after_text = '';
 	    $cols++;
 
-	} elsif ( $char eq "l" ) {
+	} elsif ( $char =~ /^(l|X)$/ ) {
 	    if ($at_text) { $at_text = $art_br.$at_text; $after_text = $art_br; }
 	    push(@colspec
 	        ,"$cellopen=\"LEFT\"$NOWRAP>$at_text$content_mark$after_text$cellclose");
@@ -820,8 +846,8 @@ sub translate_colspec {
 
 	    while ($repeat > 1) {
 		$colspec = $celldata . $colspec;
-#		&make_unique_p(*colspec) if ($colspec =~ /$OP/);
-#		&make_unique(*colspec) if ($colspec =~ /$O/);
+#		&make_unique_p($colspec) if ($colspec =~ /$OP/);
+#		&make_unique($colspec) if ($colspec =~ /$O/);
 		$repeat--;
 	    };
 	    $colspec = $celldata . $colspec;
@@ -849,7 +875,17 @@ sub do_cmd_mathon {
             , &translate_commands($_));
 }
 
+sub process_quote {
+    local($lquo, $text, $rquo) = @_;
+    local($lang) = &get_current_language();
+    join('','<Q', $lang , '>'
+	, &translate_commands( &translate_environments ($text))
+	, '</Q>' );
+}
+
 sub do_env_tabular { &process_tabular(0,@_[0]); }
+sub do_env_tabularx { &do_env_tabularstar(@_); }
+
 
 sub do_env_tabularstar {
     local($_) = @_;
@@ -885,7 +921,7 @@ sub do_cmd_tabletail {
 sub process_tabular {
     local($tab_width,$_) = @_;
     local(@save_open_tags_tabular) = @saved_tags;
-    local(@open_tags) = ();
+    local($open_tags_R) = [];
     local(@save_open_tags) = ();
 
     &get_next_optional_argument;
@@ -899,7 +935,10 @@ sub process_tabular {
     local($i,@colspec,$char,$cols,$cell,$htmlcolspec,$frames,$rules);
     local(@rows,@cols,$border,$frame);
     local($colspan,$cellcount);
-    
+
+    # set a flag to indicate whether there are any \multirow cells
+    my $has_multirow = 1 if (/\\multirow/s);
+
     # convert \\s inside \parbox commands to \newline s;
     # catch nestings
 
@@ -916,15 +955,29 @@ sub process_tabular {
     }
 
     # save start and end tags for cells, inherited from outside
-    @open_tags = @save_open_tags_tabular;
+    $open_tags_R = [ @save_open_tags_tabular ];
     local($closures,$reopens) = &preserve_open_tags;
-    @open_tags = @save_open_tags_tabular;
+    $open_tags_R = [ @save_open_tags_tabular ];
 
     if ($color_env) {
-	local($color_test) = join(',',@open_tags);
+	local($color_test) = join(',',@$open_tags_R);
 	if ($color_test =~ /(color{[^}]*})/g ) {
 	    $color_env = $1;
 	}
+    }
+
+    # catch outer captions, so they cannot get caught by sub-tabulars
+    local($table_captions);
+    if ($TABLE_CAPTIONS) { # captions for super-tabular environment
+	$cap_env = 'table' unless $cap_env;
+	$captions = $TABLE_CAPTIONS;
+	$TABLE_CAPTIONS = '';
+    }
+    if ($cap_env && $captions) {
+	$captions =~ s/\n+/\n/g;
+	$table_captions = "\n<CAPTION>$captions</CAPTION>";
+	$captions = '';
+#	$cap_anchors = '';
     }
 
     # *must* process any nested table-like sub-environments,
@@ -932,10 +985,12 @@ sub process_tabular {
     # using styles inherited from outside
 
     local($inside_tabular) = 1;
-    $_ = &translate_environments($_) if (/$begin_env_rx|$begin_cmd_rx/);
+    $_ = &translate_environments($_)
+	if (/$begin_env_rx|$begin_cmd_rx/);
 
     # kill all tags
-    @save_open_tags = @open_tags = ();
+    @save_open_tags = ();
+    $open_tags_R = [];
 
     $_ =~ s/<\#rm\#>/\\rm /g;
     # environments may be re-processed within a cell
@@ -969,28 +1024,33 @@ sub process_tabular {
 	$tab_width = " WIDTH=$tab_width";
     } else { $tab_width = '' }
 
-    if ($TABLE_CAPTIONS) { # captions for super-tabular environment
-	$cap_env = 'table' unless $cap_env;
-	$captions = $TABLE_CAPTIONS;
-	$TABLE_CAPTIONS = '';
-    }
-    if ($cap_env && $captions) {
-	$captions =~ s/\n+/\n/g;
+#    if ($TABLE_CAPTIONS) { # captions for super-tabular environment
+#	$cap_env = 'table' unless $cap_env;
+#	$captions = $TABLE_CAPTIONS;
+#	$TABLE_CAPTIONS = '';
+#    }
+
+    local($lang) = &get_current_language();
+    local($return);
+
+    if ($table_captions) {
 	$return = join('', (($cap_anchors)? "$cap_anchors\n" : '')
-		, "<TABLE$env_id CELLPADDING=3"
+		, "<TABLE$env_id$lang CELLPADDING=3"
 		, $border
 		, ($halign ? " ALIGN=\"$halign\"" : '')
 		, $tab_width, ">");
-	$return .= "\n<CAPTION>$captions</CAPTION>";
-	$captions = $env_id = '';
-	$cap_anchors = '';
+	$return .= $table_captions;
+#	$return .= "\n<CAPTION$lang>$captions</CAPTION>";
+#	$captions = '';
+#	$cap_anchors = '';
     } else { 
-	$return = join('', "<TABLE$env_id CELLPADDING=3"
+	$return = join('', "<TABLE$env_id$lang CELLPADDING=3"
 		, $border
 		, ($halign ? " ALIGN=\"$halign\"" : '')
 		, $tab_width, ">");
-	$env_id = '';
     }
+    $env_id = '';
+
     local($firstrow) = 1;
     local($lastrow) = '';
     local($headcell) = 0;
@@ -999,6 +1059,7 @@ sub process_tabular {
     @rows = (@rows, $table_tail_marker . $TABLE_TAIL_TEXT)
 	if ($TABLE_TAIL_TEXT);
 
+    local @row_spec = map {'0'} @colspec if ($has_multirow);
     foreach (@rows) {
 	#ignore lone <P> caused by extra blank line in table; e.g. at end
 	next if (/^\s*(<[<#]\d+[#>]>)<P[^>]*>\1\s*$/s);
@@ -1024,7 +1085,17 @@ sub process_tabular {
 	else { $valign = '' }
 	$return .= "\n<TR$valign>";
 	@cols = split(/$html_specials{'&'}/o);
+
+	if ($has_multirow) { 
+	    # decrement the counters for multi-row cells 
+	    my @trow_spec = map {$_>0? --$_ : 0 } @row_spec;
+	    @row_spec = @trow_spec;
+	}
+ 
 	for ( $i = 0; $i <= $#colspec; $i++ ) {
+	    # skip this cell if it is covered by a \multirow
+	    next if ($has_multirow && @row_spec[$i] > 0);
+
 	    $colspec = $colspec[$i];
 	    if (!($colspec =~ $content_mark)) {
 		# no data required in this column
@@ -1056,12 +1127,12 @@ sub process_tabular {
 	    if ($cell =~ /\s*\\(multicolumn|omit)/) {
 		$cell_done = 1 if ($1 =~ /omit/);
 		if(@save_open_tags_tabular) {
-		    @open_tags = (@save_open_tags_tabular);
-		    @save_open_tags = (@save_open_tags_tabular);
+		    $open_tags_R = [ @save_open_tags_tabular ];
+		    @save_open_tags = @save_open_tags_tabular;
 		}
 		$cell = &translate_environments($cell);
-		$cell = &translate_commands($cell);
-		$cell .= &close_all_tags() if (@open_tags);
+		$cell = $reopens . &translate_commands($cell);
+		$cell .= &close_all_tags() if (@$open_tags_R);
 	    } elsif ($colspec =~ /\\/g) {
 		local($tmp, $cmd, $endspec);
 		$colspec =~ /$content_mark/; $colspec = $`.$&;
@@ -1099,8 +1170,8 @@ sub process_tabular {
 
 		local($tmp) = ++$global{'max_id'};
 		if(@save_open_tags_tabular) {
-		    @open_tags = (@save_open_tags_tabular);
-		    @save_open_tags = (@save_open_tags_tabular);
+		    $open_tags_R = [ @save_open_tags_tabular ];
+		    @save_open_tags = @save_open_tags_tabular;
 		}
 		$colspec = &translate_environments("$OP$tmp$CP$colspec$OP$tmp$CP");
 		$colspec = &translate_commands($colspec);
@@ -1109,28 +1180,20 @@ sub process_tabular {
 		$* = 0;
 		$colspec = ';SPMnbsp;' if ($colspec =~ /^\s*$/);
 		$colspec = join('', $reopens, $colspec
-		        , ((@open_tags)? &close_all_tags() : '')
+		        , (@$open_tags_R ? &close_all_tags() : '')
 		        , $ecell, "\n" );
 		local($cell_done);
 	    } else {
 		local($tmp) = ++$global{'max_id'};
 		if(@save_open_tags_tabular) {
-		    @open_tags = (@save_open_tags_tabular);
-		    @save_open_tags = (@save_open_tags_tabular);
+		    $open_tags_R = [ @save_open_tags_tabular ];
+		    @save_open_tags = @save_open_tags_tabular;
 		}
 		$cell = &translate_environments("$OP$tmp$CP$cell$OP$tmp$CP");
 		$cell = &translate_commands($cell) if ($cell =~ /\\/);
 		$cell = join('', $reopens, $cell
-			, ((@open_tags)? &close_all_tags() : '')
+			, (@$open_tags_R ? &close_all_tags() : '')
 			);
-
-#		# allow external style when only a single-cell per row.
-# 		# inherit $reopens from  &translate_environments
-#		if (($#rows==0)&&($#colspec==0)&&($reopens)) {
-#		    $cell = join('', $reopens, $cell);
-#		    @open_tags = (@save_open_tags_tabular);
-#		    $cell .= &close_all_tags();
-#		}
 	    }
 	    # remove remains of empty braces
 	    $cell =~ s/(($O|$OP)\d+($C|$CP))//g;
@@ -1159,11 +1222,11 @@ sub process_tabular {
 	$return .= "</TR>";
 	$firstrow = 0;
     };
-    @open_tags = @save_open_tags_tabular;
+    $open_tags_R = [ @save_open_tags_tabular ];
     $TABLE_TITLE_TEXT = '';
     $TABLE_TAIL_TEXT = '';
     $return =~ s/$OP\d+$CP//g;
-    $return =~ s/<(T[DH])( [^>]+)?>\s*(<\/\1>)/<$1$2>;SPMnbsp;$3/g;
+    $return =~ s/<(T[DH])( [^>]+)?>\s*($content_mark)?(<\/\1>)/<$1$2>;SPMnbsp;$4/g;
     $return . "\n</TABLE>";
 }
 
@@ -1181,8 +1244,49 @@ sub do_cmd_multicolumn {
     $malign = &missing_braces unless (
 	(s/$next_pair_pr_rx/$malign=$2;''/eo)
 	||(s/$next_pair_rx/$malign=$2;''/eo));
+
+    # catch cases where the \textwidth has been discarded
+    $malign =~s!^(\w)($OP\d+$CP)\s*(\d|\d*\.\d+)\2$!$1\{$3\\textwidth\}!;
+
     ($dmy1,$dmy2,$dmy3,$dmy4,$colspec) = &translate_colspec($malign, $celltag);
     $text = &styled_text_chunk('SPAN','mcol','','','','', $_);
+    $text = &translate_commands($text) if ($text =~ /\\/);
+    $text;
+}
+sub do_cmd_multirow {
+    local($_) = @_;
+    local($dmy1,$dmy2,$dmy3,$dmy4,$spanrows,$pxs,$rwidth,$valign,$vspec,$text);
+    $spanrows = &missing_braces unless (
+	(s/$next_pair_pr_rx/$spanrows=$2;''/eo)
+        ||(s/$next_pair_rx/$spanrows=$2;''/eo));
+    my $rowspan = 0+$spanrows;
+    # set the counter for this column to the number of rows covered
+    @row_spec[$i] = $rowspan;
+
+    $colspec =~ /^<([A-Z]+)/;
+    local($celltag) = $1;
+
+    # read the width, save it for later use
+    $rwidth = &missing_braces unless (
+	(s/$next_pair_pr_rx/$rwidth=$2;''/eo)
+	||(s/$next_pair_rx/$rwidth=$2;''/eo));
+
+    # catch cases where the \textwidth has been discarded
+    $rwidth =~s!^(\w)($OP\d+$CP)\s*(\d|\d*\.\d+)\2$!$1\{$3\\textwidth\}!;
+
+    ($pxs,$rwidth) = &convert_length($rwidth);
+
+    $valign = &missing_braces unless (
+	(s/$next_pair_pr_rx/$valign=$2;''/eo)
+	||(s/$next_pair_rx/$valign=$2;''/eo));
+    $vspec = ' VALIGN="TOP"' if $valign;
+    if ($valign =~ /m/i) { $vspec =~ s/TOP/MIDDLE/ }
+    elsif ($valign =~ /b/i) { $vspec =~ s/TOP/BOTTOM/ }
+
+    $colspec =~ s/VALIGN="\w+"// if $vspec; # avoid duplicate tags
+    $colspec =~ s/>$content_mark/$vspec ROWSPAN=$rowspan WIDTH=$pxs$&/;
+
+    $text = &styled_text_chunk('SPAN','mrow','','','','', $_);
     $text = &translate_commands($text) if ($text =~ /\\/);
     $text;
 }
@@ -1340,10 +1444,11 @@ sub do_env_equation {
 
     # include the equation-number, using a <TABLE>
     local($halign) = " ALIGN=\"CENTER\"" unless $FLUSH_EQN;
+    local($lang) = &get_current_language();
     if ($EQN_TAGS =~ /L/) {
 	# equation number on left
 	($math_start,$math_end) =
-	    ("\n<TABLE$env_id WIDTH=\"100%\" ALIGN=\"CENTER\""
+	    ("\n<TABLE$env_id$lang WIDTH=\"100%\" ALIGN=\"CENTER\""
 		. (($border)? " BORDER=\"$border\"" : '')
 		. (($attribs)? " $attribs" : '')
 		. ">\n<TR VALIGN=\"MIDDLE\">". $seqno . $eqno
@@ -1353,7 +1458,7 @@ sub do_env_equation {
     } else {
 	# equation number on right
 	($math_start,$math_end) =
-	    ("\n<TABLE$env_id WIDTH=\"100%\" ALIGN=\"CENTER\""
+	    ("\n<TABLE$env_id$lang WIDTH=\"100%\" ALIGN=\"CENTER\""
 		. (($border)? " BORDER=\"$border\"" : '')
 		. (($attribs)? " $attribs" : '')
 		. ">\n<TR VALIGN=\"MIDDLE\"><TD></TD>"
@@ -1457,7 +1562,7 @@ sub do_env_eqnarray {
 	s/$htmlimage_pr_rx/$doimage .= $&;''/eo ; # force an image
 	local($sarray, $srow, $slcell, $elcell, $srcell, $ercell, $erow, $earray);
 	($sarray, $elcell, $srcell, $erow, $earray, $sempty) = ( 
-	    "\n<TABLE$env_id CELLPADDING=\"0\" ALIGN=\"CENTER\""
+	    "\n<TABLE$env_id$lang CELLPADDING=\"0\" ALIGN=\"CENTER\""
 	    , "</TD>\n<TD ALIGN=\"CENTER\" NOWRAP>"
 	    , "</TD>\n<TD ALIGN=\"LEFT\" NOWRAP>"
 	    , "</TD></TR>", "\n</TABLE>", "</TD>\n<TD>" );
@@ -1657,6 +1762,10 @@ sub do_env_eqnarraystar {
 	$_ =~ s/\n?[ \t]*/\n/;
 	join('', "<BR><P></P>\n<DIV$math_class>"
 	    , $_ ,"\n</DIV><P></P><BR CLEAR=\"ALL\">");
+    } elsif ($_ =~ s!(</TABLE></DIV>)\s*(<BR[^>]*><P></P>)?\s*$!$1!si) {
+	join('', $_ ,"<BR>\n");
+    } elsif ($_ =~ m!<P></P>\s*$!si) { # below-display space present 
+	$_
     } else {
 	join('', $_ ,"<BR CLEAR=\"ALL\"><P></P>");
     }

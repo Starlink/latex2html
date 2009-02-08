@@ -75,7 +75,8 @@ sub do_cmd_cline {
 # can only be an attempt until browsers start implementing units.
 # The returned values are: The length according to Netscape (in pixels
 # or percent) and the length according to HTML 3.0.
-sub convert_length {
+
+sub convert_length_table {
     local($_) = @_;
     local(%scale) = ("in",72,"pt",72.27/72,"pc",12,"mm",72/25.4,"cm",72/2.54,"\\hsize",100);
     local(%units) = ("in","in","pt","pt","pc","pi","mm","mm","cm","cm","\\hsize","%");
@@ -89,6 +90,8 @@ sub convert_length {
     };
     ($pxs,$len);
 }
+# should no longer be needed, as this is defined in latex2html.pin
+if (undefined &convert_length) { sub convert_length {&convert_length_table(@_)} }
 
 # Translates LaTeX column specifications to HTML. Again, Netscape
 # needs some extra work with its width attributes in the <td> tags.

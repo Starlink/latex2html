@@ -242,7 +242,6 @@ sections:
 
 $(TOP)/$(OVW).html:	$(OVW).tex $(TOP)/$(INT) \
 		$(TOP)/H$(INT) $(TOP)/E$(INT) $(TOP)/M$(INT) $(TOP)/P$(INT) $(TOP)/S$(INT)
-
 	$(MAKE)	O.stamp
 
 $(OVW):
