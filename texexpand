@@ -1,0 +1,310 @@
+#!/usr/local/bin/perl 
+
+# Accompanies LaTeX2HTML Version 95
+
+# Rewrite of texexpand.  Handles style files and \endinput at least
+# approximately right.
+
+# Copyright Robert Thau, MIT AI lab, 1993.
+# Unlimited reproduction is permitted as long as this notice is preserved.
+
+# Mon Nov 22 1993
+# Modified by Franz Vojik <vojik@de.tu-muenchen.informatik> to search
+# for TeX-files in subdirectories of the given directories.
+# Modified by Nikos Drakos <nikos@cbl.leeds.ac.uk> to look for 
+# <file> as well as <file>.tex when processing input and include commands.
+# Tue Nov 23
+# Modified by Nikos Drakos <nikos@cbl.leeds.ac.uk> to take an extra command line
+# argument -save_styles <file> which instructs it to save in <file> the names
+# of any style files or other included files.
+# Tue Dec  7
+# Modified by Nikos Drakos <nikos@cbl.leeds.ac.uk> to ignore comments!
+# Also modified so that \input and \include do not have to be in the 
+# beginning of a line. Text before or after such commands is preserved.
+# Thu Dec 9 
+# Modified by Nikos Drakos <nikos@cbl.leeds.ac.uk> to fix bug in the
+# mechanism for ignoring comments!
+# Wed Jan  5 1994
+# Modified by Sebastian Rahtz <spqr@uk.ac.tex.ftp>
+# to recognise the documentclass and usepackage commands of LaTeX2e
+# Also, modified by Nikos Drakos to print messages to STDERR.
+# Jan 27 1994 - Nikos Drakos - Modified to strip spaces out of $styles
+# Jan 28 1994 - Maximilian Ott <max@com.nec.nj.ccrl> - added test that 
+# checks for %'s before inluding|inputing files in include_line (otherwise
+# input|include statements in .sty files cause infinite loops)
+# Feb 14 1994 - Nikos Drakos - Fixed bug in code for checking for %'s 
+# which caused \input and \include commands NOT to work!
+# Also added support for \include'ing undelimited filenames.
+# Mar 1 1994 - Sebastian Rahtz - Modified it to regard the main document style
+# (eg book, report etc) as just another style that may have a corresponding
+# perl translation module.
+# June 11 1994 - Nikos Drakos - Special characters in names of style files
+# used in regular expressions are now escaped (eg c++.sty) and now (20 June)
+# are not escaped because this causes problems when reading other style files
+# July 27 1994 - Nikos Drakos - Changed it so that the arguments of 
+# documentclass and usepackage are processed correctly without being lost.
+# Also modified do_include to return success or failure. If there is a failure
+# then the corrsponding style file is added back in the options lists.
+# Also changed it TO AUTOMATICALLY EXCLUDE any .sty and any .cls files
+# December 21 1994 - Martin Boyer - Added search for filename with ".tex"
+# extension in do_include.
+
+@texinputs = (".");
+foreach $dir (split(/:/,$ENV{'TEXE_INPUTS'})) { push (@texinputs, $dir); }
+foreach $dir (split(/:/,$ENV{'TEXINPUTS'})) { push (@texinputs, $dir); }
+$homeDir = (getpwuid($<))[7];
+grep(s|^~/|$homeDir/|, @texinputs);
+grep((m|^~([^/]+)/|) && ($homeDir = (getpwnam($1))[7]) && (s||$homeDir/|), @texinputs);
+@dont_include = split(/:/,$ENV{'TEXE_DONT_INCLUDE'});
+
+while ($ARGV[0] =~ /^-/ && (! ($ARGV[0] =~ /^--$/)))
+{
+  $_ = shift;
+  if (/^-dont_include$/) { push(@dont_include, shift); }
+  elsif (/^-w$/) {}                     ### Compatibility hack.
+  elsif (/^-auto_exclude$/) { $auto_exclude++}
+  elsif (/^-save_styles$/) {$style_file = shift}
+  elsif (/^-debug$/) { $debug++; }
+  else { print STDERR "% --- WARNING:  Unrecognized option: $_ \n"; }
+}
+
+if ($debug)
+{
+  print STDERR "%TeX inputs are in:\n";
+  foreach $dir (@texinputs) { print STDERR "%--- $dir\n"; }
+
+  print STDERR "\n%Special names (not to be input or included):\n";
+  foreach $name (@dont_include) { print STDERR "%--- $name\n"; }
+
+  print STDERR "\n%Args:\n";
+  foreach $arg (@ARGV) { print STDERR "%--- $arg\n"; }
+
+  print "\n";
+}
+
+while (<>) {
+    $comments = '';
+    s/(^%.*\n|([^\\])%.*\n)/do {$comments = $1;''}/eo;
+    if (/\\(input|include)\W/)
+    { 
+	print STDERR ("%Found include at top-level: $_") if $debug;
+	&include_line ($_); 
+    }
+    elsif (/(\\document(style|class)\s*\[)(.*)(\]\s*\{)(.*)}/) {			        local ($before, $styles, $after) = ($`.$1, $3, $4.$5."}".$');			$styles =~ s/\s//go; # Strip spaces
+	&should_include ($5 . ".sty");
+	&include_styles($before, $styles, $after, ".sty");
+										    }
+# Package files are more complicated. we need to textually include them,
+# to get the definitions, but how do we process the options?
+# for now, we'll just lose the options. sorry 'bout that.
+#
+    elsif (/(\\usepackage.*\{)(.*)(\})/)
+    {
+	local ($before, $packages, $after) = ($`.$1, $2, $3.$');
+	print STDERR "%Found package(s): --- $packages \n" if $debug;
+	&include_styles($before, $packages, $after, ".sty");
+    }
+    else
+    {
+      print;
+  }
+    print "$comments";
+}
+
+sub include_styles 
+{
+    local ($before, $styles, $after, $ext) = @_;
+    local ($style, @styles, @print_styles, @inc_styles);
+    @styles = split(/,/, $styles);
+    print STDERR "%Found styles: --- $styles \n" if $debug;
+    foreach $style (@styles)
+    {
+      if (&should_include ($style . $ext)) { push (@inc_styles, $style); }
+      else { push (@print_styles, $style); }
+    }
+    foreach $style (@inc_styles) {
+	push (@print_styles, $style) unless &do_include ($style . $ext);
+    }
+    print $before . (join (',', @print_styles)) . $after;
+}
+
+
+    
+sub include_line {
+    local ($_) = @_;
+    local($line) = $_;
+    local ($filename, $found, $before, $after);
+    
+    if (s/\\input\s*\{([^}]*)\}//) {
+    ($filename,$before,$after) = ($1, $`, $')
+    }
+    elsif (s/\\input\s+(\S*)\s//) {
+	($filename,$before,$after) = ($1, $`, $')
+	}
+    elsif (s/\\include\s*\{([^}]*)\}//) {
+    ($filename,$before,$after) = ($1, $`, $')
+    }
+    elsif (s/\\include\s+(\S*)\s//) {
+    ($filename,$before,$after) = ($1, $`, $')
+    }
+    else {
+    print STDERR "texexpand --- COULDN'T FIND FILENAME in $_"
+    };
+   $filename =~ s/^\s*(\S*)\s*$/\1/;
+   print $line unless ((! ($before =~ /\s*[%]+\s*/)) &&
+    $filename && &should_include($filename) &&
+       &do_include ($filename, $before,$after));
+}
+
+# Returns success or failure
+sub do_include
+{
+  local ($filename,$before,$after) = @_;
+  local ($fname);
+  
+  
+  if ($auto_exclude && ($filename =~ /\.(sty|cls)$/)) {
+      print STDERR  "%--- ignoring $filename:  $_\n" if $debug;
+      return(0);
+  }
+  
+  print STDERR "%--- including $filename:  $_\n" if $debug;
+
+  $found = 0;
+
+  if ($filename =~ "^/")
+  {
+    $fname = $filename; $found = 1;
+    # See if adding the optional .tex extension yields a valid filename.
+    if (! -e $filename &&
+        (substr($filename, -4) ne '.tex') &&
+	-f $filename . '.tex') {
+	$fname = $filename . '.tex';
+    }
+  }
+  else
+  {
+    DIR:foreach $dir (@texinputs)
+    {
+	$fname = join ('/', $dir, $filename);
+	print STDERR "%--- checking for $fname\n" if $debug;
+
+	if (&file_or_ext)  { $found = 1; last DIR; }
+	# Check Subdirs of texinputs
+	else
+	{ opendir(SUBDIR,$dir);         # open directory
+	  while ($_=readdir(SUBDIR))    # read dir-entries
+	  {  (/\./ || /\.\./) && (next);  # do not check . and ..
+	     {  $dname = join ('/', $dir, $_);
+		if (-d $dname )         # check subdirs
+		{ $fname = join ('/', $dname, $filename);
+		  print STDERR "%--- checking for $fname\n" if $debug;
+		  if (&file_or_ext) { $found = 1; last DIR; }
+	      }
+	    }
+	 }
+      } 
+    }
+    # See if adding the optional .tex extension yields a valid filename.
+    if (! $found && (substr($filename, -4) ne '.tex')) {
+       DIR_TEX:foreach $dir (@texinputs)
+       {
+	   $fname = join ('/', $dir, $filename, '.tex');
+	   print STDERR "%--- checking for $fname\n" if $debug;
+
+	   if (&file_or_ext)  { $found = 1; last DIR_TEX; }
+	   # Check Subdirs of texinputs
+	   else
+	   { opendir(SUBDIR,$dir); # open directory
+	     while ($_=readdir(SUBDIR))	# read dir-entries
+	     {  (/\./ || /\.\./) && (next); # do not check . and ..
+		{  $dname = join ('/', $dir, $_);
+		   if (-d $dname ) # check subdirs
+		   { $fname = join ('/', $dname, $filename, '.tex');
+		     print STDERR "%--- checking for $fname\n" if $debug;
+		     if (&file_or_ext) { $found = 1; last DIR_TEX; }
+		 }
+	       }
+	    }
+	 } 
+       }
+     }
+  }
+
+  if (! $found)
+  {
+      print STDERR "texexpand --- COULDN'T FIND $filename!!!\n";
+  }
+  else
+  {
+    local (*incfile, $_);
+
+    if (!open (incfile, $fname))
+    {
+      print STDERR "texexpand --- COULDN'T OPEN $fname --- $! !!!\n"
+    }
+    else
+    {
+	local($comments);
+	print "$before";
+	print "\n%%% TEXEXPAND: INCLUDED FILE MARKER $fname\n";
+	while (<incfile>)
+	{
+	    $comments='';
+ 	    s/(^%.*\n|([^\\])%.*\n)/do {$comments = $1;''}/eo; 
+	    last if /\\endinput/;
+	    
+	    if (/\\(input|include)\W/) { &include_line ($_); }
+	    else { print }
+	    print $comments;
+	}
+	print "$after";
+	
+	close (incfile);
+    }				 
+}
+  $found;
+}				 
+
+sub should_include
+{
+  local ($_) = @_;
+  # Recognize standard style options ...
+  
+  print STDERR "% --- Checking $_ for standard style\n" if $debug;
+
+  #$_ = &escape_rx_chars($_);
+  s/.*\///; s/\.(sty|cls|tex)//;          ### Get base name ...
+
+  print STDERR "% --- Checking $_ for special style\n" if $debug;
+
+  do {
+      open (STYLES, ">>$style_file") ||
+	  print STDERR "Cannot open $style_file $!\n";
+      print STYLES "$_\n";
+      close(STYLES)
+      } if $style_file;
+  
+  if (/^(twoside|twocolumn|titlepage|openbib|leqno|fleqn|\d+pt)\.sty$/)
+  { return 0; }
+ 
+  local ($name) = $_;
+  return ((!grep (/^$name$/, @dont_include))
+	 );
+}
+
+sub file_or_ext {
+    # Modifies $fname
+    # if $fname exists return success otherwise
+    # if $fname.tex exists, then bind $fname to $fname.tex and return success
+    # else fail
+    ((-f $fname) || ( (-f "$fname.tex") ? $fname = "$fname.tex" : 0));
+}
+
+# When part of the input text contains special perl characters and the text 
+# is to be used as a pattern then these specials must be escaped.
+sub escape_rx_chars {
+    local($_) = @_;
+    s/(\W)/\\$1/g;
+    $_;
+}

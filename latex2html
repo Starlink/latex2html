@@ -1,0 +1,4618 @@
+#!/usr/local/bin/perl
+
+'di';
+'ig00';
+
+# This variable can be set manually or by the installation script
+# to point to the DIRECTORY where the latex2html files can be found.
+$LATEX2HTMLDIR='/usr/cblelca/nikos/scripts/tex2html';
+
+# LaTeX2HTML by Nikos Drakos <nikos@cbl.leeds.ac.uk>
+#
+# ****************************************************************
+# LaTeX To HTML Translation **************************************
+# ****************************************************************
+# LaTeX2HTML is a Perl program that  translates  LaTeX  source
+# files  into HTML (HyperText Markup Language). For each source 
+# file given as an argument the  translator  will  create  a  
+# directory  containing  the   corresponding HTML files. 
+#
+# The man page for this program is included at the end of this file
+# and can be viewed using 
+# %nroff -man latex2html
+#
+# For more information on this program and some examples of its
+# capabilities see 
+# http://cbl.leeds.ac.uk/nikos/tex2html/doc/latex2html/latex2html.html
+#
+# Written by Nikos Drakos, July 1993.
+#
+# Address: Computer Based Learning Unit
+#          University of Leeds
+#          Leeds,  LS2 9JT
+#          
+# Copyright (c) 1993. All rights reserved.
+# 
+# See general license below.
+#
+# ****************************************************************
+# General License Agreement and Lack of Warranty *****************
+# ****************************************************************
+#
+# This software is distributed in the hope that it will be useful
+# but WITHOUT ANY WARRANTY. The author(s) do not accept responsibility 
+# to anyone for the consequences of using it or for whether it serves 
+# any particular purpose or works at all. No warranty is made about 
+# the software or its performance. 
+# 
+# Use and copying of this software and the preparation of derivative
+# works based on this software are permitted, so long as the following
+# conditions are met:
+# 	o  The copyright notice and this entire notice are included intact
+# 	   and prominently carried on all copies and supporting documentation.
+# 	o  No fees or compensation are charged for use, copies, or
+# 	   access to this software. You may charge a nominal
+# 	   distribution fee for the physical act of transferring a
+# 	   copy, but you may not charge for the program itself. 
+# 	o  If you modify this software, you must cause the modified
+# 	   file(s) to carry prominent notices (a Change Log)
+# 	   describing the changes, who made the changes, and the date
+# 	   of those changes.
+# 	o  Any work distributed or published that in whole or in part
+# 	   contains or is a derivative of this software or any part 
+# 	   thereof is subject to the terms of this agreement. The 
+# 	   aggregation of another unrelated program with this software
+# 	   or its derivative on a volume of storage or distribution
+# 	   medium does not bring the other program under the scope
+# 	   of these terms.
+# 
+# This software is made available AS IS, and is distributed without 
+# warranty of any kind, either expressed or implied.
+# 
+# In no event will the author(s) or their institutions be liable to you
+# for damages, including lost profits, lost monies, or other special,
+# incidental or consequential damages arising out of or in connection
+# with the use or inability to use (including but not limited to loss of
+# data or data being rendered inaccurate or losses sustained by third
+# parties or a failure of the program to operate as documented) the 
+# program, even if you have been advised of the possibility of such
+# damages, or for any claim by any other party, whether in an action of
+# contract, negligence, or other tortious action.
+# 
+# Please send bug reports, comments, questions and suggestions to
+# nikos@cbl.leeds.ac.uk. We would also appreciate receiving any changes
+# or improvements you may make. 
+#
+############################# System Parameters ##########################
+# 
+# The $TEXEXPAND, $LATEX, and $DVIPS variables 
+# should be set in $HOME/.latex2html-init
+$TEXEXPAND = 'texexpand';
+$LATEX = 'latex';
+$DVIPS = 'dvips';
+
+$TEX2HTMLVERSION = '95 (Thu Jan 19 1995)';
+$TEX2HTMLADDRESS = "http://cbl.leeds.ac.uk/nikos/tex2html/doc/latex2html/latex2html.html";
+$AUTHORADDRESS = "http://cbl.leeds.ac.uk/nikos/personal.html";
+				
+push(@INC,$ENV{'HOME'});	
+
+$| = 1; # flush stdout with every print -- gives better feedback during
+        # long computations
+
+######################### Command Line Argument Defaults ########################
+
+# Destination directory
+$DESTDIR = '.';
+
+# Determines the level at which it will stop splitting sections
+# into individual files (e.g. $MAX_SPLIT_DEPTH =  0 will generate a single
+# HTML document, $MAX_SPLIT_DEPTH = 1 will split individual parts, etc.)
+$MAX_SPLIT_DEPTH = 8;	
+
+# Determines how much of the document structure to provide links to, from 
+# each node. A value of 0 will show NO links to child nodes, a value of
+# 1 will show only the immediate child nodes (as in Texinfo), etc. A value
+# at least as big as $MAX_SPLIT_DEPTH will produce a table of contents for
+# the tree structure rooted at any given node. 
+$MAX_LINK_DEPTH = 4;
+
+# Determines whether LaTeX should be invoked to process unknown environments.
+# It is useful to set it to 1 in order to get a quick draft of the basic 
+# Structure of a document without any fancy figures, tables etc. 
+$NOLATEX = 0;
+
+# Determines whether any generated images will be inlined or not.
+$EXTERNAL_IMAGES = 0;
+
+# If this flag is set, external postscript images are used rather than GIF's.
+$PS_IMAGES = 0;
+
+# Determines whether the navigation and cross-reference marks are iconic
+# or textual. In ascii mode the output of the translator can be used on
+# character based  browsers which do not support inlined images 
+# (the <IMG> tag). Setting this variable also sets the $EXTERNAL_IMAGES.
+$ASCII_MODE = 0;
+
+
+# The document title.
+$default_title = 'No Title';
+$TITLE = $default_title;
+
+#Determines whether to include navigation links.
+$NO_NAVIGATION = 0;
+
+#Determines whether to navigation links should be at the top or the bottom
+#of each page. The default is at the top.
+$TOP_NAVIGATION = 1;
+
+#Determines whether to navigation links should be at the top or the bottom
+#of each page. The default is at the top.
+$BOTTOM_NAVIGATION = 0;
+
+#Puts navigation links at the top of each page. If the page has more than
+#$WORDS_IN_PAGE it also puts one at the bottom.
+$AUTO_NAVIGATION = 1;
+$WORDS_IN_PAGE = 200;
+
+#Puts a link to the index in the navigation panel if there is one.
+$INDEX_IN_NAVIGATION = 1;
+
+#Puts a link to the table of contents in the navigation panel if there is one.
+$CONTENTS_IN_NAVIGATION = 1;
+
+#Puts a link to the next logical page in the navigation panel if there is one.
+#Next page will visit any subsections instead of the next section i.e.
+#it allows a depth first visiting order.
+$NEXT_PAGE_IN_NAVIGATION = 1;
+
+#Puts a link to the previous logical page in the navigation panel if there is one.
+$PREVIOUS_PAGE_IN_NAVIGATION = 1;
+ 
+
+# Information page
+# This causes a new part to be added to the document with information about
+# the source file, the translator etc.
+$INFO = 1;
+
+# Separator between the body of text in a page and the child links
+$CHILDLINE = "<BR><HR>\n";
+
+# Names of style-files and tex inputs that the translator should *not* look at
+# (because they contain macrology which is too complex for it to handle).
+
+# Commands defined by these styles and used in environments which don't
+# go to tex (i.e., outside of math, figures, tables, etc.) need to be
+# handled in some other way --- preferably by means of a &process_to_bitmap
+# routine analogous to &ignore (n.b. &process_to_bitmap doesn't exist yet).
+
+# For instance, the \psfig command defined by either of the following style
+# files is already special-cased below.
+
+$DONT_INCLUDE = "";
+
+# Image recycling
+$REUSE = 0;			# If 1 it Causes images to be reused  
+				# and switches off the interactive session
+
+# When this is 1, the section numbers are shown. The section numbers should 
+# then match those that would have bee produced by LaTeX.
+# The correct section numbers are obtained from the $FILE.aux file generated 
+# by LaTeX.
+# Hiding the seciton numbers encourages
+# use of particular sections as standalone documents. In this case the
+# cross reference to a section is shown using the default symbol rather
+# than the section number.
+$SHOW_SECTION_NUMBERS = 0;
+
+# This is the line width measured in pixels and it is used to right justify
+# equations and equation arrays; 
+$LINE_WIDTH = 450;	
+
+# This number will determine the size of the equations, special characters,
+# and anything which will be converted into an inlined image
+# *except* "image generating environments" such as "figure", "table" 
+# or "minipage".
+# Effective values are those greater than 0.
+# Sensible values are between 0.1 - 4.
+$MATH_SCALE_FACTOR = 1.6;
+
+# This number will determine the size of 
+# image generating environments such as "figure", "table" or "minipage".
+# Effective values are those greater than 0.
+# Sensible values are between 0.1 - 4.
+$FIGURE_SCALE_FACTOR = 1.6;
+
+# When $NO_IMAGES is set LaTeX2HTML will not attempt to produce any inlined images
+# The missing images can be generated "off-line" by restarting LaTeX2HTML
+# after setting $IMAGES_ONLY (see below);
+$NO_IMAGES = 0;
+
+# When $IMAGES_ONLY is set, LaTeX2HTML will only try to convert the inlined images
+# in the file "images.tex" which should have been generated automatically during
+# previous runs. This is very useful for correcting "bad LaTeX" in this file.
+# Warning: With Mosaic you will need to "Flush Image Cache" before you can see
+# the newly generated images. To do that select the appropriate option in the 
+# "Options" drop down menu bar.
+$IMAGES_ONLY = 0;
+
+# When this is set, the generated HTML files will be placed in the 
+# current directory. If set to 0 the default behaviour is to create (or reuse)
+# another file directory.
+$NO_SUBDIR = 0;
+
+# This affects ONLY the way accents are processed 
+$default_language = 'english';	
+
+# No arguments!!
+(&usage && die "No files to process!\n") unless @ARGV;	
+
+# Set $HOME to the environment variable just in case tries to use it!
+$HOME = $ENV{'HOME'};		
+
+# Author address
+@address_data = &address_data;
+
+# Trap errors if getcwd.pl is not found in the library
+eval "require 'getcwd.pl'";
+
+# Define GETCWD if we can't find it in the Perl library
+eval "sub getcwd { `pwd` };" unless (defined &getcwd);
+
+# Read latex2html.config
+require("$LATEX2HTMLDIR/latex2html.config") if
+    ((-f "$LATEX2HTMLDIR/latex2html.config") ||
+     die "LaTeX2HTML has not been installed correctly:".
+     "\nCould not find file $LATEX2HTMLDIR/latex2html.config\n");
+
+# Read .late2html-init file if one is found 
+require("$ENV{'HOME'}/.latex2html-init") if (-f "$ENV{'HOME'}/.latex2html-init");
+
+# Read .late2html-init file if one is found in current directory
+require("./.latex2html-init") if ( (! (&getcwd eq $ENV{'HOME'} )) &&
+				   (-f "./.latex2html-init"));
+
+$ADDRESS = "$address_data[0]\n$address_data[1]" unless $ADDRESS;
+
+
+# Process switches
+$argv = join(' ',@ARGV);			# Save the command line arguments
+while ($ARGV[0] =~ /^-/) {
+    $_ = shift;
+    if (/^-split$/) {
+	$_ = shift;
+	((($MAX_SPLIT_DEPTH) = /^(\d+)$/)
+	 || print("Unrecognised value for -split: $_\n")
+	 && &usage && die);
+	
+    }
+    elsif (/^-link$/) {
+	$_ = shift;
+	((($MAX_LINK_DEPTH) = /^(\d+)$/)
+	 || print("Unrecognised value for -link: $_\n")
+	 && &usage && die);
+    }
+    elsif (/^-nolatex$/) {
+	$NOLATEX = 1;
+    }
+    elsif (/^-external_images$/) {
+	$EXTERNAL_IMAGES = 1;
+    }
+    elsif (/^-ascii_mode$/) {
+	$ASCII_MODE = 1; $EXTERNAL_IMAGES = 1;
+    }
+    elsif (/^-ps_images$/) {
+      $PS_IMAGES = 1; $EXTERNAL_IMAGES = 1;
+    }
+    elsif (/^-no_navigation$/) {
+	$NO_NAVIGATION = 1;
+    }
+    elsif (/^-top_navigation$/) {
+	$TOP_NAVIGATION = 1;
+    }
+    elsif (/^-bottom_navigation$/) {
+	$BOTTOM_NAVIGATION = 1;
+    }
+    elsif (/^-auto_navigation$/) {
+	$AUTO_NAVIGATION = 1;
+    }
+    elsif (/^-index_in_navigation$/) {
+	$INDEX_IN_NAVIGATION = 1;
+    }
+    elsif (/^-contents_in_navigation$/) {
+	$CONTENTS_IN_NAVIGATION = 1;
+    }
+    elsif (/^-next_page_in_navigation$/) {
+	$NEXT_PAGE_IN_NAVIGATION = 1;
+    }
+    elsif (/^-previous_page_in_navigation$/) {
+	$PREVIOUS_PAGE_IN_NAVIGATION = 1;
+    }
+    elsif (/^-t$/) {
+	$_ = shift;
+        ((($TITLE) = /^(.+)$/)
+	 || print("No title for -t? $_\n")
+	 && &usage && die);
+    }
+    elsif (/^-dir$/) {
+	$_ = shift;
+	((($DESTDIR) = /^(.+)$/)
+	 || print("No directory for -d? $_\n")
+	 && &usage && die);
+	($DESTDIR) = &get_full_path($DESTDIR);
+    }
+    elsif (/^-address$/) {
+	$ADDRESS = shift;
+    }
+    elsif (/^-no_subdir$/) {
+ 	$NO_SUBDIR = 1;
+     }
+    elsif (/^-info$/) {
+	$_ = shift;
+	((($INFO) = /^(.+)$/)
+	 || print("No string for -info: Will not generate information page.\n")
+	 );
+    }
+    elsif (/^-dont_include/) {
+        $DONT_INCLUDE .= ':' . shift;
+    }
+    elsif (/^-reuse/) {
+        $REUSE = 1;
+    }
+    elsif (/^-no_reuse/) {
+        $REUSE = 0;
+    }
+    elsif (/^-no_images/) {
+        $NO_IMAGES = 1;
+    }
+    elsif (/^-images_only/) {
+        $IMAGES_ONLY = 1;
+    }
+    elsif (/^-show_section_numbers/) {
+        $SHOW_SECTION_NUMBERS = 1;
+    }
+    elsif (/^-init_file/) {
+        $init_file = shift;
+	require($init_file) if (-f $init_file);
+    }
+    elsif (/^-h(elp)?$/) {
+	&usage;
+    }
+    else {
+	&usage;
+	die "Unrecognised switch: $_\n";
+    }
+}
+
+$NO_NAVIGATION = 1 unless $MAX_SPLIT_DEPTH;
+$NO_FOOTNODE = 1 unless $MAX_SPLIT_DEPTH;
+$NO_SPLIT = 1 unless $MAX_SPLIT_DEPTH;
+
+# The mapping from numbers to accents.
+# These are required to process the \accent command, which is found in
+# tables of contents whenever there is an accented character in a
+# caption or section title.  Processing the \accent command makes
+# $encoded_*_number work properly (see &extract_captions) with
+# captions that contain accented characters.
+# I got the numbers from the plain.tex file, version 3.141.
+
+# Missing entries should be looked up by a native speaker.  
+# Have a look at generate_accent_commands and $iso_latin1_character_map.
+
+%accent_type = (
+ '18', 'grave',			# \`
+ '19', 'acute',			# `'
+ '20', '',			# \v (I don't know)
+ '21', '',			# \u (I don't know)
+ '22', 'overscore',		# \= (I'm not sure)
+ '94', 'circ',			# \^
+ '95', '',			# \. (I don't know)
+ '7D', '',			# \H (I don't know)
+ '7d', '',			# \H (I don't know)
+ '7E', 'tilde',			# \~
+ '7e', 'tilde',			# \~
+ '7F', 'uml',			# \"
+ '7f', 'uml',			# \"
+);
+
+&driver;
+
+# Process each file ...
+sub driver {
+    local($FILE, $texfilepath, $orig_cwd, %unknown_commands, $bbl_cnt);
+    $orig_cwd = &getcwd;
+    &initialise;		# Initialise some global variables
+    &ascii_mode if $ASCII_MODE;	# Must come after initialization
+    &titles_language($TITLES_LANGUAGE);
+    foreach $FILE (@ARGV) {
+	local($bbl_nr) = 1;
+	local($global_page_num) = (0); # The number of reused images and those in images.tex
+	local($new_page_num) = (0); # The number of images in images.tex
+	local($pid, $sections_rx, $sections_no_delim_rx,
+	      $outermost_level, %cached_env_img, %id_map, %latex_body,
+	      $latex_body, %symbolic_labels, %latex_labels,
+	      %encoded_section_number, 
+	      %verbatim, %new_command, %new_environment,
+	      $preamble);
+	($texfilepath, $FILE) = &get_full_path($FILE);
+	if (-f "$texfilepath/$FILE") {
+	    print "This is LaTeX2HTML Version $TEX2HTMLVERSION by Nikos Drakos, \nComputer Based Learning Unit, University of Leeds.\n\n";
+	    
+            # Tell texexpand which files we *don't* want to look at.
+            $ENV{'TEXE_DONT_INCLUDE'} = $DONT_INCLUDE;
+	    $FILE =~ s/.tex$//;
+	    $DESTDIR = $DESTDIR . "/". $FILE unless $NO_SUBDIR;
+	    print "OPENING $texfilepath/$FILE.tex \n";
+	    next unless &new_dir($DESTDIR);
+	    &deal_with_texinputs($texfilepath, $DESTDIR);
+	    # This needs $DESTDIR to have been created ...
+	    system("$TEXEXPAND -auto_exclude -save_styles $DESTDIR/TMP_styles $texfilepath/$FILE.tex > $DESTDIR/TMP_$FILE") && print "Error: $!\n";
+	    chdir($DESTDIR) || die "$!\n";
+	    $SIG{'INT'} = 'handler';
+	    &open_dbm_database;
+	    if ($IMAGES_ONLY) {
+		&make_off_line_images}
+	    else {
+		&rename_image_files;
+		&load_style_file_translations;
+		&make_language_rx;
+		&make_raw_arg_cmd_rx;
+		&translate_titles;
+		print "\nReading ...";
+		&slurp_input_and_partition_and_pre_process("TMP_$FILE");
+		&add_preamble_head;
+		# Create a regular expressions
+		&set_depth_levels; &make_sections_rx;
+		&make_order_sensitive_rx;
+		&add_document_info_page if $INFO;
+		&add_bbl_and_idx_dummy_commands;
+		&translate;		# Destructive!
+	     } 
+	    &cleanup;
+	    print "\n\n*********** WARNINGS ***********  \n$global{'warnings'}" if ($global{'warnings'} || $NO_IMAGES || $IMAGES_ONLY);
+	    &image_cache_message if ($NO_IMAGES || $IMAGES_ONLY);
+	    &image_message if ($global{'warnings'} =~ /Failed to convert/io);
+	    chdir($orig_cwd);# Go back to the source directory
+	    }
+	else {
+	    print "Cannot read $texfilepath/$FILE \n";}
+    }
+    print "\nUnknown commands: ". join(" ",keys %unknown_commands)
+	if %unknown_commands;
+    print "\nDone.\n";
+    $_;
+}
+
+sub open_dbm_database {
+    # These are DBM (unix DataBase Management) arrays which are actually 
+    # stored in external files. They are used for communication between
+    # the main process and forked child processes;
+    dbmopen(%verb, "TMP_verb",0755);
+    dbmopen(%verb_delim, "TMP_verb_delim",0755);
+    dbmopen(%expanded,"TMP_expanded",0755);
+    # Holds max_id, verb_counter, verbatim_counter, warnings
+    dbmopen(%global, "TMP_global",0755);
+
+    # Theses next two are used during off-line image conversion
+    # %new_id_map maps image id's to page_numbers of the images in images.tex
+    # %image_params maps image_ids to conversion parameters for that image
+    dbmopen(%new_id_map, ".ID_MAP",0755);
+    dbmopen(%img_params, ".IMG_PARAMS",0755);
+    dbmopen(%orig_name_map, ".ORIG_MAP",0755);
+    
+    $global{'max_id'} = ($global{'max_id'} | 0);
+    &read_mydb(*verbatim, "verbatim");
+    &read_mydb(*new_command, "new_command");
+    &read_mydb(*new_environment, "new_environment");
+    $preamble = &read_mydb(*preamble, "preamble");
+}
+
+sub close_dbm_database {
+    dbmclose(%verb); undef %verb;
+    dbmclose(%verb_delim); undef %verb_delim;
+    dbmclose(%expanded); undef %expanded;
+    dbmclose(%global); undef %global;
+    dbmclose(%new_id_map); undef %new_id_map;
+    dbmclose(%img_params); undef %img_params;
+    dbmclose(%orig_name_map); undef %orig_name_map;
+}
+
+sub clear_images_dbm_database {
+    # %new_id_map will be used by the off-line image conversion process
+    undef %new_id_map;
+    undef %img_params;
+    undef %orig_name_map;
+    dbmopen(%new_id_map, ".ID_MAP",0755);
+    dbmopen(%img_params, ".IMG_PARAMS",0755);
+    dbmopen(%orig_name_map, ".ORIG_MAP",0755);
+}
+
+# These three subroutines should have been handled within the DBM database.
+# Unfortunately if the contents of an array are more than ~900 (system 
+# dependent) chars long then dbm cannot handle it and gives error messages.
+# So here we save and then read the contents explicitly.
+sub write_mydb {
+    local($db, $key, $_) = @_;
+    open(DB,">>TMP_$db");
+    print DB join('', "\n$mydb_mark","#", $key, "#", $_);
+    close DB;
+}
+
+sub write_mydb_simple {
+    local($db, $_) = @_;
+    open(DB,">TMP_$db");
+    print DB $_;
+    close DB;
+}
+
+
+
+# Assumes the existence of a file TMP_verbatim which contains 
+# sequences of verbatim counters and verbatim contents.
+sub read_mydb {
+    local(*db,$name) = @_;
+    local($_,@tmp,$i,$tmp1,$tmp2);
+    return unless (-f "TMP_$name");
+    $_ = `cat TMP_$name`;
+    $| = 1;
+    @tmp = split(/\n$mydb_mark#([^#]*)#/);
+    $i = 1;	# Ignore the first element at 0
+    while ($i < scalar(@tmp)) {
+	$tmp1 = $tmp[$i]; $tmp2 = $tmp[++$i];
+	$db{$tmp1} = <<"_END_OF_STRING_";
+$tmp2
+_END_OF_STRING_
+	++$i;
+    };
+    undef @tmp;
+    $_;
+}
+	     
+
+# Reads in a latex generated file (e.g. .bbl or .aux) 
+# It returns success or failure
+# ****** and binds $_ in the caller as a side-effect ****** 
+sub process_ext_file {
+    local($ext) = @_;
+    local($found) = 0;
+    print "\nReading $FILE.$ext ...";
+    local($file) = &fulltexpath("$FILE.$ext");
+    $global{'warnings'} .=
+	"\n$FILE.tex is newer than $FILE.$ext: Please rerun latex" .
+	    (($ext =~ /bbl/) ? " and bibtex.\n" : ".\n") 
+	    if ( ($found = (-f $file)) &&
+		 &newer(&fulltexpath("$FILE.tex"), $file));
+    if ( $found ) { 
+	&slurp_input($file);
+	&pre_process;
+	&substitute_meta_cmds if /$meta_cmd_rx/;
+	&wrap_shorthand_environments;
+	$_ = &translate_commands(&translate_environments($_));
+    };
+    $found;
+}
+
+sub deal_with_texinputs {
+    local($source) = @_;
+    $ENV{'TEXINPUTS'} = join(":", $ENV{'TEXINPUTS'}, $source, ".",":");
+}
+    
+sub add_document_info_page {
+    # Uses $outermost_level
+    # Nasty race conditions if the next two are done in parallel 
+    local($X) = ++$global{'max_id'};
+    local($Y) = ++$global{'max_id'};
+    $_ = join('', $_, "\\$outermost_level$O$X$C $O$Y$C $info_title$O$Y$C $O$X$C \n \\textohtml_info_page");
+}
+
+# For each style file name in TMP_styles (generated by texexpand) look for a 
+# perl file in $LATEX2HTMLDIR/styles and load it.
+sub load_style_file_translations {
+    local($_, $file);
+    open(STYLES, "<TMP_styles");
+    while(<STYLES>) {
+	s/\s//g;
+	$file = $_;
+	if (-f ($_ = "$texfilepath/$file.perl"))  {
+	    print "\nLoading $_...\n";
+	    require ($_)}
+	elsif (-f ($_ = "$LATEX2HTMLSTYLES/$file.perl")) {
+	    print "\nLoading $_...\n";
+	    require($_)}
+    }
+    close(STYLES);
+}
+		
+################## Weird Special case ##################
+
+# The new texexpand can be told to leave in \input and \include
+# commands which contain code that the translator should simply pass
+# to latex, such as the psfig stuff.  These should still be seen by
+# TeX, so we add them to the preamble ... 
+
+sub do_include_lines {
+    while (s/$include_line_rx//o) {
+	local($include_line) = &revert_to_raw_tex($&);
+	&add_to_preamble ('include', $include_line);
+    }
+}
+
+########################## Preprocessing ############################
+
+# The \verb declaration and the verbatim environment contain simulated
+# typed text and should not be processed. Characters such as $,\,{,and }
+# loose their special meanings and should not be considered when marking
+# brackets etc. To achieve this \verb declarations and the contents of 
+# verbatim environments are replaced by markers. At the end the original
+# text is put back into the document.
+# The markers for verb and verbatim are different so that these commands
+# can be restored to what the raw input was just in case they need to 
+# be passed to latex.
+
+sub pre_process {
+    # Modifies $_;
+    &replace_html_special_chars;
+    s/\\\\/\\\\ /go;		# Makes it unnecessary to look for escaped cmds
+    local($next, $esc_del);
+    &normalize_language_changes;
+    while (/\\begin$verbatim_env_rx/o) {
+ 	local($before, $contents, $after, $env);
+	($before, $after, $env) = ($`, $', $1);
+ 	if ($after =~ /\s*\\end{$env[*]?}/) { # Must NOT use the s///o option!!!
+	    ($contents, $after) = ($`, $');
+ 	    $contents =~ s/^\n*//;
+	    $contents = &revert_to_raw_tex($contents)
+		if ($env =~ /rawhtml/i);
+	    #&warn_if_too_long(*contents,*env);
+ 	    #$verbatim{++$global{'verbatim_counter'}} = $contents;
+	    &write_mydb("verbatim", ++$global{'verbatim_counter'}, $contents);
+ 	    $after = join("",$verbatim_mark,$env,$global{'verbatim_counter'},$after);}
+     	else {			
+	    print "Cannot find \\end{$env}\n";
+	 }			
+	$_ = join("",$before,$after);
+     }
+    # Now do the \verb declarations
+    while ((($del) = /\\verb[*]?(.)/)) {
+	$esc_del = &escape_rx_chars($del);
+	last unless
+	    s/\\verb[*]?[$esc_del]([^$esc_del]*)[$esc_del]/$verb{++$global{'verb_counter'}}=$1;
+	$verb_delim{$global{'verb_counter'}}=$del;join('',$verb_mark,$global{'verb_counter'},$verb_mark)/e;
+	}
+    $* = 1;			# Multiline matching ON
+    s/^%.*\n|([^\\]%).*\n/$1\n/go; # Remove Comments but not % which may be meaningful
+    $* = 0;			# Multiline matching OFF
+    &mark_string;
+}
+
+sub warn_if_too_long {
+    local(*str,*type) = @_;
+    if (length($str) > 900) {
+	local($tmp) = &get_first_words($str, 7);
+	$global{'warnings'} .=
+	    "A $type environment is too long and may have disappeared\n" .
+	    "(causing \"dbm\" errors). Try separating it into smaller pieces.\n" .
+            "Potential DBM error:\n$tmp\n\n";
+	print "\nPotential DBM error >>>: \n$tmp\n<<<\n";
+
+    }
+}
+
+
+
+#################### Marking Matching Brackets ######################
+
+# Reads the entire input file and performs pre_processing operations
+# on it before returning it as a single string. The pre_processing is
+# done on separate chunks of the input file by separate Unix processes
+# as determined by LaTeX \input commands, in order to reduce the memory 
+# requirements of LaTeX2HTML. 
+sub slurp_input_and_partition_and_pre_process {
+   local($file) = @_;
+   local(%string, @files, $pos);
+   local ($count) =  1;
+   open(SINPUT,"<$file");
+   while (<SINPUT>) {
+       if (/TEXEXPAND: INCLUDED FILE MARKER (\S*)/) {
+	   # Forking seems to screw up the rest of the input stream
+	   # We save the current position ...
+	   $pos = tell SINPUT;
+	   &write_string_out($count);
+	   # ... so that we can return to it
+	   seek(SINPUT, $pos, 0);
+	   print STDERR "\nDoing $1";
+	   ++$count}
+       else {
+	   $string{'STRING'} .= $_}
+   }
+   &write_string_out($count);
+   @files = sort file_sort (<TMP-part*>);
+   foreach $file (@files) {
+       $_ .= `cat $file`;}
+}
+
+sub write_string_out {
+    local($count) = @_;
+    local($ppid) = TMP;
+    local($pid);
+    # All open unflushed streams are inherited by the child. If this is
+    # not set then the parent will *not* wait 
+    $| = 1;
+    # fork returns 0 to the child and PID to the parent
+    &close_dbm_database;
+    unless ($pid = fork) {
+    	local($_);
+	&open_dbm_database;
+	$_ = delete $string{'STRING'};
+	# Replace verbatim environments etc.	   
+	&pre_process;
+	# Handle newcommand, newenvironment ...
+	&substitute_meta_cmds;
+	open(OUTPUT, ">$ppid-part$count");
+	print OUTPUT $_;
+	close(OUTPUT);
+	&write_mydb_simple("preamble", $preamble);
+	&close_dbm_database;
+	exit 0;
+    };
+    waitpid($pid,0);
+    &open_dbm_database;
+    delete $string{'STRING'};
+}
+    
+# Reads the entire input file into a 
+# single string. 
+sub slurp_input  {
+    local($file) = @_;
+    local(%string);
+    open(INPUT,"<$file");
+    while (<INPUT>) {
+	$string{'STRING'} .= $_};
+    $_ = delete $string{'STRING'}; # Blow it away and return the result
+    
+}
+
+sub special { ($x) = @_; $y= $html_specials{$x}; ($y ? $y : $x)}
+sub special_inv { ($x) = @_; $y= $html_specials_inv{$x}; ($y ? $y : $x)}
+
+
+# Mark each matching opening and closing bracket with a unique id.
+sub mark_string {
+    # Modifies $_ in the caller;
+    $* = 1;			# Multiline matching ON
+    s/^\\{|([^\\])\\{/$1tex2html_escaped_opening_bracket/go;
+    s/^\\}|([^\\])\\}/$1tex2html_escaped_closing_bracket/go;
+    $* = 0;			# Multiline matching OFF
+    for (;;) {			# Infinite loop
+	last unless
+	    s/{([^{}]*)}/join("",$O,++$global{'max_id'},$C,$1,$O,$global{'max_id'},$C)/geo;
+    }
+    s/tex2html_escaped_opening_bracket/\\{/go;
+    s/tex2html_escaped_closing_bracket/\\}/go;
+}
+
+sub replace_html_special_chars {
+    # Replaces html special characters with markers unless preceded by "\"
+    $* = 1;			# Multiline matching ON
+    s/([^\\])(<|>|&|\")/&special($1).&special($2)/geo;
+    # MUST DO IT AGAIN JUST IN CASE THERE ARE CONSECUTIVE HTML SPECIALS 
+    s/([^\\])(<|>|&|\")/&special($1).&special($2)/geo;
+    s/^(<|>|&|\")/&special($1)/geo;
+    $* = 0;			# Multiline matching OFF
+}
+
+# The bibliography and the index should be treated as separate sections
+# in their own HTML files. The \bibliography{} command acts as a sectioning command
+# that has the desired effect. But when the bibliography is constructed 
+# manually using the thebibliography environment, or when using the
+# theindex environment it is not possible to use the normal sectioning 
+# mechanism. This subroutine inserts a \bibliography{} or a dummy 
+# \tex2htmlindex command just before the appropriate environments
+# to force sectioning.
+sub add_bbl_and_idx_dummy_commands {
+    local($id);
+    s/([\\]begin\s*$O\d+$C\s*thebibliography)/$bbl_cnt++; $1/eg;
+#print STDERR "\nthebibliography: $bbl_cnt\n";
+    #if ($bbl_cnt == 1) {
+	s/([\\]begin\s*$O\d+$C\s*thebibliography)/do { $id =  ++$global{'max_id'}; "\\bibliography$O$id$C$O$id$C $1"}/geo;
+    #}
+    s/([\\]begin\s*$O\d+$C\s*theindex)/\\tex2htmlindex $1/o;
+    s/[\\]printindex/\\tex2htmlindex /o;
+    &lib_add_bbl_and_idx_dummy_commands() if defined(&lib_add_bbl_and_idx_dummy_commands);
+}
+
+# Uses and modifies $default_language
+sub convert_iso_latin_chars {
+    local($_) = @_;
+    local($next_language, $pattern, $before, $after, $funct);
+    if (/$language_rx/o) {
+	($next_language, $pattern, $before, $after) = (($1||$2), $&, $`, $');
+	$before = &convert_iso_latin_chars($before);
+	$default_language = $next_language;
+	$_ = join($pattern, $before,
+		  &convert_iso_latin_chars($after));
+    }
+    else {
+	$funct = $language_translations{$default_language};
+	(defined(&$funct) ? $_ = &$funct($_) :
+	 do {$global{'warnings'} .= "\nCould not find translation function for $default_language.\n\n"
+		  unless $global{'warnings'} =~ /$default_language/})
+	}
+    $_;
+}
+
+# May need to add something here later
+sub english_translation {
+    $_[0];
+}
+
+# This replaces \setlanguage{\language} with \languageTeX
+# This makes the identification of language chunks easier.
+sub normalize_language_changes {
+    s/$setlanguage_rx/\\$1TeX/go;
+}
+    
+sub translate {
+    &tokenize($sections_no_delim_rx);	# Inserts space after a sectioning command
+    &normalize_sections;	# Deal with the *-form of sectioning commands
+    # Split the input into sections
+    local(@sections) = split(/$sections_no_delim_rx /, $_);
+    local($sections) = int(scalar(@sections) / 2);
+    # Initialises $curr_sec_id to a list of 0's equal to
+    # the number of sectioning commands.
+    local(@curr_sec_id) = split(' ', &make_first_key);
+    local($i, $current_depth) = (0,0);
+    local($curr_sec) = ($FILE);
+    local(%section_info, %toc_section_info, $CURRENT_FILE, %cite_info, %ref_files);
+    # These filenames may be set when translating the corresponding commands.
+    local($tocfile, $loffile, $lotfile, $footfile, $citefile, $idxfile,
+	  $figure_captions, $table_captions, $footnotes, $citations, %index,
+	  $t_title, $t_author, $t_date);
+    &process_aux_file  if (/\\ref/o || /\\caption/o || ($SHOW_SECTION_NUMBERS));
+    print "\nTranslating ...";
+    while ($i <= @sections) {
+	$_ = $sections[$i];
+	s/^[\s]*//;		# Remove initial blank lines
+	# The section command was removed when splitting ... 
+	s/^/\\$curr_sec /  if ($i > 0); # ... so put it back
+	if ($current_depth < $MAX_SPLIT_DEPTH)  {
+	    $CURRENT_FILE = &make_name($curr_sec, join('_',@curr_sec_id));
+	    open(OUTPUT, ">$CURRENT_FILE")
+		|| die "Cannot open $DESTDIR/$FILE $!";
+	};
+	&remove_document_env;
+        &wrap_shorthand_environments;
+	print $i/2 . "/$sections...";
+	# Must do this early ... It also sets $TITLE
+	&process_command($sections_rx, *_) if /$sections_rx/;
+	$_ = &translate_commands(&translate_environments($_));
+	print OUTPUT $_;
+	# Associate each id with the depth, the filename and the title
+	$TITLE = $CURRENT_FILE unless ($TITLE);
+	$toc_section_info{join(' ',@curr_sec_id)} =
+	    "$current_depth$delim$CURRENT_FILE$delim$TITLE";
+	$section_info{join(' ',@curr_sec_id)} =
+	     "$current_depth$delim$CURRENT_FILE$delim$TITLE" if 
+		($current_depth < $MAX_SPLIT_DEPTH);
+	++$i;
+	# Get the depth of the current section;
+	$curr_sec = $sections[$i];
+	$current_depth = $section_commands{$curr_sec};
+	@curr_sec_id = &new_level($current_depth, @curr_sec_id);
+	$TITLE = '';
+	++$i;
+    }
+    $_ = undef;
+    $_ = &make_footnotes if $footnotes;
+    print OUTPUT;
+    close OUTPUT;
+    &make_image_file;
+    &make_images;
+    # Link sections, add head/body/address do cross-refs etc
+    &post_process;
+    &save_labels_in_file if %ref_files;
+    &save_image_cache_in_file if %cached_env_img;
+}
+
+############################ Processing Environments ##########################
+
+sub wrap_shorthand_environments {
+    # This wraps a dummy environment around environments that do not use
+    # the begin-end convention. The wrapper will force them to be 
+    # evaluated by Latex rather than them being translated.
+    # Wrap a dummy environment around matching TMPs.
+    # s/^\$\$|([^\\])\$\$/{$1.&next_wrapper('tex2html_double_dollar')}/ge;
+    # Wrap a dummy environment around matching $s.
+    # s/^\$|([^\\])\$/{$1.&next_wrapper('$')}/ge;
+    # s/tex2html_double_dollar/\$\$/go;
+    # Do \(s and \[s
+    $* = 1;			# Multiline matching ON
+    s/(^\\[(])|([^\\])(\\[(])/{$2.&make_wrapper(1).$1.$3}/geo;
+    s/(^\\[)]|[^\\]\\[)])/{$1.&make_wrapper(0)}/geo;
+
+    s/(^\\[[])|([^\\])(\\[[])/{$2.&make_any_wrapper(1,"displaymath")}/geo;
+    s/(^\\[\]])|([^\\])(\\[\]])/{$2.&make_any_wrapper(0,"displaymath")}/geo;
+    $* = 0;			# Multiline matching OFF		       
+
+    $double_dol_rx = '(^|[^\\\\])\\$\\$';
+    $single_dol_rx = '(^|[^\\\\])\\$';
+
+    $_ = &wrap_math_environment;
+    $_ = &wrap_raw_arg_cmds;
+}
+
+sub wrap_math_environment {
+
+    # This wraps math-type environments
+    # The trick here is that the opening brace is the same as the close,
+    # but they *can* still nest, in cases like this:
+    #
+    # $ outer stuff ... \hbox{ ... $ inner stuff $ ... } ... $
+    #
+    # Note that the inner pair of $'s is nested within a group.  So, to
+    # handle these cases correctly, we need to make sure that the outer
+    # brace-level is the same as the inner. --- rst
+    #tex2html_wrap
+    # And yet another problem:  there is a scungy local idiom to do
+    # this:  $\_$ for a boldfaced underscore.  xmosaic can't display the
+    # resulting itty-bitty bitmap, for some reason; even if it could, it
+    # would probably come out as an overbar because of the floating-
+    # baseline problem.  So, we have to special case this.  --- rst again.
+
+    local ($processed_text, $before, $end_rx, $delim);
+    local ($underscore_match_rx) = "^\\s*\\\\\\_\\s*\\\$";
+    local ($wrapper);
+
+    while (/$single_dol_rx/) {
+        $processed_text .= $`.$1;
+        $_ = $';
+	$wrapper = "tex2html_wrap_inline";
+
+	$end_rx = $single_dol_rx;     # Default, unless we begin with $$.
+        $delim = "\$";
+
+        if (/^\$/ && (! $`)) {
+	    s/^\$//;
+	    $end_rx = $double_dol_rx;
+	    $delim = "";	# Cannot say "\$\$" inside displaymath
+	    $wrapper = "displaymath";
+	    
+        } elsif (/$underscore_match_rx/ && (! $`)) {
+
+            # Special case for $\_$ ...
+
+            s/$underscore_match_rx//;
+            $processed_text .= '\\_';
+            next;
+        }	
+
+        # Have an opening $ or $$.  Find matching close, at same bracket level
+	$processed_text .= &make_any_wrapper(1,$wrapper).$delim;
+
+        while (/$end_rx/) {
+	    # Forget the $$ if we are going to replace it with "displaymath"
+            $before = $` . (($wrapper eq "displaymath")? "$1" : $&);
+	    
+	    $processed_text .= $before; 
+            $_ = $';
+
+            # Found dollar sign inside open subgroup ... now see if it's
+            # at the same brace-level ...
+
+            local ($losing, $br_rx) = (0, '');
+            while ($before =~ /$begin_cmd_rx/) {
+                $br_rx = &make_end_cmd_rx($1);  $before = $';
+
+                if ($before =~ /$br_rx/) { $before = $'; }
+                else { $losing = 1; last; }
+            }
+
+            last unless $losing;
+
+            # It wasn't ... find the matching close brace farther on; then
+            # keep going.
+
+            /$br_rx/;
+            $processed_text .= $`.$&;
+            $_ = $';
+        }
+
+        # Got to the end.  Whew!
+
+        $processed_text .= &make_any_wrapper(0,$wrapper);
+    }
+
+    $processed_text . $_;
+}
+
+sub translate_environments {
+    local ($_) = @_;
+    local($tmp);
+    #print "\nTranslating environments ...";
+    for (;;) {
+	last unless (/$begin_env_rx/o);
+	local ($contents, $before, $br_id, $env, $after, $pattern);
+	# $1 : br_id (at the beginning)
+        # $2 : environment
+       	($before, $br_id, $env, $after, $pattern) = ($`, $1, $2, $', $&);
+	$contents = undef;
+	# Sets $contents and modifies $after
+	if (&find_end_env($env,*contents,*after)) {
+	    &process_command($counters_rx, *before)
+		if ($before =~ /$counters_rx/);
+	    # This may modify $before and $after
+	    &extract_captions($env) if ($env =~ /(figure)|(table)/o);
+	    # Modifies $contents
+	    $contents = &translate_environments($contents)
+		if (&defined_env($env) &&
+		    (! ($env =~ /latexonly/o)) &&
+		    (! $raw_arg_cmds{$env}));
+	    &process_environment($env, $br_id);
+	    undef $_;
+	    $_ = join("", $before, $contents, $after)}
+	### Evan Welsh <welsh@uk.ac.ed.epcc> added the next 24 lines ##
+	elsif (&defined_env($env)) {
+	    # If I specify a function for the environment then it
+	    # calls it with the contents truncated at the next section.
+	    # It assumes I know what I'm doing and doesn't give a
+	    # deferred warning.
+	    &extract_captions($env) if ($env =~ /(figure)|(table)/);
+	    $contents = $after;
+	    $contents = &process_environment($env, $br_id, $contents);
+	    $_ = join("", $before, $contents);
+	} elsif ($ignored{$env}) {
+	    # If I specify that the environment should be ignored then
+	    # it is but I get a deferred warning.
+	    $_ = join("", $before, $contents, $after);
+	    $global{'warnings'} .= "\n\\end{$env} not found (ignored).\n";
+	} elsif ($raw_arg_cmds{$env}) {
+	    # If I specify that the environment should be passed to tex
+	    # then it is with the environment truncated at the next
+	    # section and I get a deferred warning.
+	    &extract_captions($env) if ($env =~ /(figure)|(table)/);
+	    $contents = $after;
+	    $contents = &process_environment($env, $br_id, $contents);
+	    $_ = join("", $before, $contents);
+	    $global{'warnings'} .= "\n\\end{$env} not found (truncated at next section boundary).\n";}
+	else {
+	    $pattern = &escape_rx_chars($pattern); 
+	    s/$pattern//;
+	    print "Cannot find \\end{$env}\n";
+	}
+    }
+    $tmp = $_; undef $_;
+    &process_command($counters_rx, *tmp) if ($tmp =~ /$counters_rx/);
+    $_ = $tmp; undef $tmp;
+    $_
+}
+
+sub find_end_env {
+    local ($env, *ref_contents, *rest) = @_;
+    local ($be_rx) = &make_begin_end_env_rx ($env);
+    local ($count) = 1;
+
+    while ($rest =~ /$be_rx/) {
+	$ref_contents .= $`;
+
+	if ($1 eq "begin") { ++$count }
+	else { --$count };
+
+	$rest = $';
+	last if $count == 0;
+
+	$ref_contents .= $&; 
+    }
+
+    if ($count != 0) {
+	$rest = join('', $ref_contents, $rest);
+	$ref_contents = "";
+	return(0)}
+    else {
+	return(1)}
+}
+
+# MODIFIES $contents
+sub process_environment {
+    local($env, $id) = @_;
+    local($env_sub) = ("do_env_$env");
+    if (&defined_env($env)) {
+	print ".";
+	$contents = &$env_sub($contents);
+    }
+    elsif (&special_env) {	# &special_env modifies $contents
+    }
+    elsif ($ignore{$env}) {
+	""    }
+    else {			# Generate picture
+	$contents = &process_undefined_environment($env, $id, $contents);
+	$env_sub = "post_latex_$env_sub"; # i.e. post_latex_do_env_ENV
+        ( defined &$env_sub ? $contents = &$env_sub($contents) :
+	  do {$contents = join('',"<P>",$contents,"<P>") unless ($env =~ /tex2html_wrap/o)});
+    };
+}
+
+# The $<$, $>$, $|$ and $=>$, etc strings are replaced with their textual 
+# equivalents instead of passing them on to latex for processing in math-mode.
+# This will not be necessary when the mechanism for passing environments
+# to Latex is improved.
+# RETURNS SUCCESS OR FAILURE
+sub special_env {
+    # Modifies $contents in its caller
+    $contents =~ s/^\$(\s*($html_specials_inv_rx|[\da-z<>|=\-+,\s])+\s*)\$/<b>$1<\/b>/igo;
+}
+    
+sub defined_env {
+    local($env) = @_;
+    local($env_sub) = ("do_env_$env");
+    # The test using declarations should not be necessary but 'defined'
+    # doesn't seem to recognise subroutines generated dynamically using 'eval'.
+    # Remember that each entry in $declarations generates a dynamic prodedure ...
+    ((defined &$env_sub) || ($declarations{$env}));
+}
+
+sub process_undefined_environment {
+    local($env, $id, $contents) = @_;
+    local($name,$cached,$raw_contents,$uucontents) = ("$env$id");
+    $contents = "% latex2html id marker $id\n$contents" if
+	$contents =~ /$order_sensitive_rx/;
+    $contents = "\\begin{$env}$contents\\end{$env}";
+    $latex_body{$name} = $contents;
+    $uucontents = &encode($contents);
+    if ($NOLATEX) {
+	$id_map{$name} = "[$name]";}
+    elsif ($cached = $cached_env_img{$uucontents}) {
+	++$global_page_num;
+	($cached =~ s/(img\d+)\.gif/img$global_page_num.gif/o);
+	rename("$1.old", "img$global_page_num.gif");
+	$id_map{$name} = $cached;
+	#!1$orig_name_map{$new_id_map{$name}} = $cached;
+	$cached_env_img{$uucontents} = $cached;
+    }
+    else {
+	&clear_images_dbm_database unless $new_page_num;
+        $new_id_map{$name} = $id_map{$name} = ++$global_page_num . "#" . ++$new_page_num;
+	$orig_name_map{$id_map{$name}} = $name;
+	$img_params{$name} = join('#', &extract_parameters($contents));
+	$raw_contents = &revert_to_raw_tex($contents);
+	if ($env =~ /inline/) {
+	    $raw_contents = &make_box("$name", $raw_contents);
+	}
+	$raw_contents =~ s/\\pagebreak/\\\\/go;
+	$latex_body .= "{\\newpage\n\\clearpage\n\\samepage $raw_contents\n}\n\n";
+    }
+    &do_labels($contents,"$image_mark#$name#");	# Anchor the labels and put a marker in the text;
+}
+
+sub make_box {
+    local($id,$contents) = @_;
+    local($start) =  '\\setbox\\sizebox=\\hbox{';
+    local($end) = "}\\lthtmltypeout{latex2htmlSize :$id: \\the\\ht\\sizebox";
+    $end .= "::\\the\\dp\\sizebox.}\\box\\sizebox";
+    $start . $contents . $end;
+}
+
+sub make_image_file {
+    do {
+	print "\nWriting image file ...\n";
+	open(ENV,">images.tex") || die "Cannot open $name.tex $!\n";
+	print ENV &make_latex($latex_body);
+	print ENV "\n";
+	close ENV;
+	&copy_file($FILE, "bbl");
+	&copy_file($FILE, "aux");
+    } if ((%latex_body) && ($latex_body =~ /newpage/));
+}
+
+sub make_off_line_images {
+    local($name, $page_num);
+    do {
+	system("$LATEX images.tex");
+	print "\nGenerating postscript images using dvips ...\n";
+	&process_log_file("images.log"); # Get eqn size info
+	system("$DVIPS -M -S 1 -i -o $$\_image images.dvi") &&
+	    print "Error: $!\n";
+	open(IMAGE, "echo $$\_image* | tr -s ' \t\r\f' '\\012\\012\\012\\012'|");
+	while (<IMAGE>) {chop; rename($_, "$_.ps") if /\d\d\d$/};
+    } if  ((!$NOLATEX) && (-f "images.tex"));
+    while ( ($name, $page_num) = each %new_id_map) {
+	# Extract the page, convert and save it
+	&extract_image($page_num,$orig_name_map{$page_num});
+    }
+}
+
+# Generate images for unknown environments, equations etc, and replace
+# the markers in the main text with them.
+# - $cached_env_img maps encoded contents to image URL's
+# - $id_map maps $env$id to page numbers in the generated latex file and after
+# the images are generated, maps page numbers to image URL's
+# - $page_map maps page_numbers to image URL's (temporary map);
+# Uses global variables $id_map and $cached_env_img,
+# $new_page_num and $latex_body
+
+sub make_images {
+    local($name, $contents, $raw_contents, $uucontents, $page_num,
+	  $uucontents, %page_map, $img);
+    # It is necessary to run LaTeX this early because we need the log file
+    # which contains information used to determine equation alignment
+    if ( $latex_body =~ /newpage/) {
+	print "\n";
+	system("$LATEX images.tex");
+	&process_log_file("images.log"); # Get eqn size info
+    }
+    if ($NO_IMAGES) {
+	system("cp $LATEX2HTMLDIR/icons/image.gif .")
+	    if (-e "$LATEX2HTMLDIR/icons/image.gif")
+    }
+    elsif ((!$NOLATEX) && ($latex_body =~ /newpage/)) {
+   	print "\nGenerating postscript images using dvips ...\n";
+	system("$DVIPS -M -S 1 -i -o $$\_image images.dvi") &&
+	    print "Error: $!\n";
+	open(IMAGE, "echo $$\_image* | tr -s ' \t\r\f' '\\012\\012\\012\\012'|");
+	while (<IMAGE>) {chop; rename($_, "$_.ps") if /\d\d\d$/};
+    }
+    while ( ($name, $page_num) = each %id_map) {
+	$contents = $latex_body{$name};
+	if ($page_num =~ /^\d+\#\d+$/) { # If it is a page number
+	    do {   # Extract the page, convert and save it
+		$img = &extract_image($page_num,$orig_name_map{$page_num});
+		$uucontents = &encode($contents); # Arrggh
+		if (! ($contents =~ /$order_sensitive_rx/)) {
+		    $cached_env_img{$uucontents} = $img; }
+		else {
+		    # Blow it away so it is not saved for next time
+		    delete $cached_env_img{$uucontents} }
+		$page_map{$page_num} = $img;
+	    } unless ($img = $page_map{$page_num}); # unless we've just done it
+	    $id_map{$name} = $img;
+	}
+	else {
+	    $img = $page_num;}}	# it is already available from previous runs
+    $global{'warnings'} .=
+	"\nOne of the images is more than one page long.\n".
+	"This may cause the rest of the images to get out of sync.\n\n"
+	    if (-f sprintf("%s%.3d%s", "$$\_image", ++$new_page_num, ".ps"));
+    &cleanup;
+}
+
+sub process_log_file {
+    local($logfile) = @_;
+    local($name);
+    open(LOG, "$logfile") || die "Cannot find logfile $logfile";
+    while (<LOG>) {
+        if (/latex2htmlSize/) {
+	    /:([^:]*):/;
+	    $name = $1;
+	    /: ([0-9.]*)pt/;
+	    $height{$name} = $1;
+	    /::([0-9.]*)pt/;
+	    $depth{$name} = $1;
+	}
+    }
+    close(LOG);
+}
+
+# Uses $img_params
+sub extract_image {
+    local($page_num,$name) = @_;
+    local($scale, $external, $thumbnail, $map, $psimage, $global_num, $new_num);
+    # $global_num identifies this image in the original source file
+    # $new_num identifies this image in images.tex
+    ($global_num, $new_num) = split("#", $page_num);
+    $name =~ s/\*//;
+    local($env,$basename,$img) = ($name,"img$global_num");
+    $env =~ s/\d+$//;
+    $psname = sprintf("%s%.3d", "$$\_image", $new_num);
+    if ( $EXTERNAL_IMAGES && $PS_IMAGES ) {
+	$img =  "$basename.ps"; 
+	system("cp $psname.ps $img")}
+    else {
+	$img =  "$basename.gif";
+	($scale, $external, $thumbnail, $map, $psimage) = split('#', $img_params{$name});
+	if ($NO_IMAGES) {
+	    symlink("image.gif", $img);
+	    if ($thumbnail) {
+		symlink("image.gif", "T$img");
+		$thumbnail = "T$img";
+	    }
+	}
+	else {
+	    if ( ($name =~ /figure/) || $psimage
+		|| $scale || $thumbnail) {
+		$scale = $FIGURE_SCALE_FACTOR unless (defined $scale);
+		&convert_image("$psname.ps", $img, $scale, "");
+		if ($thumbnail) {	# $thumbnail contains the reduction factor
+		&convert_image("$psname.ps", "T$img", $thumbnail, "");
+		$thumbnail = "T$img"}}
+	    else {
+		&convert_image("$psname.ps", $img, $MATH_SCALE_FACTOR , 1)}
+	    if ($name =~ /(equation|eqnarray|displaymath)/) {
+		&right_justify($basename, $name)}
+	    if ($name =~ /inline/ && $depth{$name} != 0) {
+	        &top_justify($basename, $name)}
+	    if ($TRANSPARENT_FIGURES || (! $env =~/figure/o)) {
+		&make_transparent($img); 
+		&make_transparent("T$img") if $thumbnail; }
+	    $global{'warnings'} .= "\nFailed to convert image $psname.ps" if ! -r $img;
+	}  
+    }
+    &embed_image($img, $name, $external, $thumbnail, $map);
+}
+
+sub extract_parameters {
+    local($contents) = @_;
+    local($_, $scale, $external, $thumbnail, $map, $psimage);
+    $psimage++ if ($contents =~ /\.ps/);
+    $contents =~ s/$htmlimage_rx/$_ = $2;''/ego;
+    $contents =~ s/\s//g;	# Remove spaces
+    ($scale) = /scale=([\.\d]*)/;
+    $external = /external/;
+    ($thumbnail) = /thumbnail=([\.\d]*)/;
+    ($map) = /map=([^\s,]+)/;
+    ($scale, $external, $thumbnail, $map, $psimage);
+}
+    
+sub convert_image {
+    local($in_img, $out_img, $scale, $depth) = @_;
+    local($paperopt) = ( ($ENV{'PSTOPPM'} =~ /pstoppm\.ps/) ?
+			" -papersize $PAPERSIZE" : undef);
+    unlink $out_img;
+    system( "$PSTOGIF " .
+	   do {" -depth $depth " if $depth} .
+	   # This will work not work with pstoppm3.ps
+	   $paperopt .
+	   do {" -scale $scale " if ($scale > 0)} .
+	   " -out $out_img $in_img")
+	&& print "Error while converting image: $!\n";
+}
+
+sub make_transparent {
+    local($img) = @_;
+    if ($GIFTRANS) {
+	# Making the white color transparent - this may not
+	# always be a good idea...
+	system("$GIFTRANS -t '#ffffff' $img > TMP_tmp.gif")
+	    && do {print "Could not make $img transparent: $!\n";
+		   return};
+	# Make the background color gray anyway for broken browsers
+	system("$GIFTRANS -B '#bfbfbf' TMP_tmp.gif > $img");}
+    elsif ($NETPBM) {
+	system("$GIFTOPPM $img | $PPMTOGIF -trans '#ffffff' >  TMP_tmp.gif")
+	    && do {print "Could not make $img transparent: $!\n";
+		   return};
+	rename("TMP_tmp.gif", $img) ;
+
+    }
+}
+	       
+# This takes a filename (an GIF of an equation or equation array) and 
+# prepends enough whitespace so that it is right justified.
+# It uses the global variable $LINE_WIDTH and the pbmplus routines
+# giftoppm (to convert to ppm), pnmfile (to ask for its dimensions),
+# pnmtile (to replicate a blank PBM of 1 pixel), pnmcat 
+# (to prepend the replicated blank bitmap) and ppmtogif 
+# (to convert the result back to GIF).
+sub right_justify {
+    local($basename, $env) = @_;
+    local($_, $img_width, $justification_width) = (0,0);
+    system("$GIFTOPPM $basename.gif > $basename.ppm") &&
+	print "Error: $!\n";
+    $_ = `$PNMFILE $basename.ppm`;
+    s/([\d]+) by/$img_width = $1/eo;
+    do {
+	$justification_width = ($LINE_WIDTH -  $img_width);
+	$justification_width = ($justification_width / 2) if
+	    $env =~ /displaymath/;
+	     system("$PNMTILE $justification_width 1 $BLANKPBM |$PNMCAT -l - $basename.ppm|$PPMTOGIF - > $basename.gif") && print "Error: $!\n";
+	unlink "$basename.ppm";
+    } 
+    if ($img_width < $LINE_WIDTH);
+}
+
+sub top_justify {
+    local($basename, $env) = @_;
+    local($_, $img_height, $h, $d, $adjust) = (0,0);
+    system("$GIFTOPPM $basename.gif > $basename.ppm") &&
+	print "Error: $!\n";
+    $_ = `$PNMFILE $basename.ppm`;
+    s/by ([\d]+)/$img_height = $1/eo;
+    $h = $height{$name};
+    $d = $depth{$name};
+    $adjust = ($h - $d) * $img_height / ($h + $d);
+    $adjust = int($adjust + 0.99);
+    # Assumes $adjust is positive!
+    system("$PNMTILE 1 $adjust $BLANKPBM |$PNMCAT -tb $basename.ppm -|$PPMTOGIF - > $basename.gif") && print "Error: $!\n";
+    unlink "$basename.ppm";
+}
+
+sub process_in_latex {
+    # This is just a wrapper for process_undefined_environment.
+    # @[0] = contents
+    $global{'max_id'}++;
+    &process_undefined_environment('tex2html_wrap',$global{'max_id'},$_[0]);
+}
+
+sub copy_file {
+    local($file, $ext) = @_;
+    $file =  &fulltexpath("$FILE.$ext");
+    system("cp $file images.$ext") if (-e $file);
+}
+
+sub rename_image_files {
+    local($_, $old_name);
+    foreach (<img*.gif>) {
+	$old_name = $_;
+	s/\.gif$/\.old/o;
+	rename($old_name, $_);
+    }				
+}
+
+############################ Processing Commands ##########################
+
+sub translate_commands {
+    local ($_) = @_;
+    #print "\nTranslating commands ...";
+    &replace_strange_accents;
+    for (;;) {  # For each opening bracket ...
+	last unless (/$begin_cmd_rx/o);
+        local($before, $contents, $br_id, $after, $pattern);
+        ($before, $br_id, $after, $pattern) = ($`, $1, $', $&);
+	local($end_cmd_rx) = &make_end_cmd_rx($br_id);
+        if ($after =~ /$end_cmd_rx/) { # ... find the the matching closing one
+            ($contents, $after) = ($`, $');
+	    undef $_;
+	    $contents = &translate_commands($contents)
+                if ($contents =~ /$match_br_rx/o);
+	    # Modifies $contents
+	    &process_command($single_cmd_rx,*contents)
+		if ($contents =~ /\\/o);
+	    # THIS MARKS THE OPEN-CLOSE DELIMITERS AS PROCESSED
+	    $_ = join("", $before,"$OP$br_id$CP", $contents,"$OP$br_id$CP", $after);
+	}
+	else {
+	    $pattern = &escape_rx_chars($pattern);
+	    s/$pattern//;
+	    print "\nCannot find matching bracket for $br_id";
+	}
+    }
+    # Now do any top level commands that are not inside any brackets
+    # MODIFIES $_
+    &process_command($single_cmd_rx,*_);
+}
+
+# Modifies $contents
+sub process_command {
+    local ($cmd_rx, *ref_contents) = @_;
+    local($ref_before, $cmd, $after, $cmd_sub, $cmd_trans);
+    local (@open_font_tags);
+    $ref_contents = &convert_iso_latin_chars($ref_contents);
+    for (;;) {	# Do NOT use the o option
+	last unless ($ref_contents =~ /$cmd_rx/ );
+	($ref_before, $cmd, $after) = ($`, $1, "$2$'");
+	print(".");
+	$cmd = &normalize($cmd);
+	$after =~ s/^[ ]+/ /o;	# Collapse all spaces that follow a command
+	($cmd_sub, $cmd_trans) = ("do_cmd_$cmd", $declarations{$cmd});
+	if (defined &$cmd_sub) {
+	    # $ref_before may also be modified ...
+	    $after = &$cmd_sub($after, @open_font_tags);
+	} 
+	elsif ($cmd_trans) {	# One to one transform
+	    $after = "<$cmd_trans>" . $after . "</$cmd_trans>";
+	    push(@open_font_tags, $cmd) if ($cmd =~ /$fontchange_rx/o);}
+	elsif ($ignore{$cmd}) { # Ignored command
+	    print "."}
+	elsif ($cmd =~ /^the(.+)$/) { # Counter
+	    $counter = $1;
+	    $after = &do_cmd_thecounter($after);}
+	else {
+	    # Do not add if reading an auxiliary file
+	    ++$unknown_commands{$cmd} unless $AUX_FILE;
+	}
+	$ref_contents = join('', $ref_before, $after);
+    }
+    $ref_contents;
+}
+####################### Processing Meta Commands ############################
+# This is a specialised version of process_command above.
+# The special commands (newcommand, newenvironment etc.) 
+# must be processed before translating their arguments,
+# and before we cut up the document into sections 
+# (there might be sectioning commands in the new definitions etc.).
+# \newtheorem commands are treated during normal processing by 
+# generating code for the environments they define.
+
+sub substitute_meta_cmds {
+    local ($next_def); 
+    local ($cmd, $argn, $body, $before, $after, $new_cmd_rx, $new_env_rx);
+    &tokenize($meta_cmd_rx);	# Inserts a space after meta commands ...
+    print "\nProcessing macros ...";
+    while (/$meta_cmd_rx /o) {	# ... and uses the space
+	undef $_;
+	($before, $cmd, $after) = ($`, $1, $');
+	print ".";
+	$next_def = "\n\\$cmd";	
+	local($cmd_sub) = "get_body_$cmd";
+	$_ = join('',$before, &$cmd_sub(*after));
+	&add_to_preamble($cmd, $next_def);
+    }
+    # All the definitions have now moved to the $preamble and their bodies
+    # are stored in %new_command and %new_environment
+    #
+    # Now substitute the new commands and environments:
+    # (must do them all together because of cross definitions)
+    ($new_cmd_rx, $new_env_rx) = (&make_new_cmd_rx, &make_new_env_rx('begin'));
+    do {
+	while (($cmd, $code) = each %new_command) {
+	    if (! $expanded{"CMD$cmd"}++) {
+		$new_command{$cmd} = &expand_code($code);
+		&write_mydb("new_command", $cmd, $new_command{$cmd});
+	    }			
+	}
+	while (($cmd, $code) = each %new_environment) {
+	    if (! $expanded{"ENV$cmd"}++) {
+		$new_environment{$cmd} = &expand_code($code);
+		&write_mydb("new_environment", $cmd, $new_environment{$cmd});
+	    }
+	}
+	&tokenize($new_cmd_rx);	# Inserts a space after the new commands ...
+	print "+";
+	if ($new_cmd_rx) {
+	    while (/$new_cmd_rx /o && (($before, $cmd, $after) = ($`, $1, $'))) {
+		print ".";
+		$_ = join('',$before, &substitute_newcmd);}}
+	if ($new_env_rx) {
+	    while (/$new_env_rx/o && (($before, $cmd, $after) = ($`, $2, $'))) {
+		print ".";
+		$_ = join('',$before, &substitute_newenv);}}
+    } if (each %new_command || each %new_environment);
+}
+
+
+sub expand_code {
+    local($_) = @_;
+    # Uses $new_cmd_rx and $new_env_rx set in the caller
+
+    if ($new_cmd_rx eq "0") { $new_cmd_rx = "<<{this cant possibly match}>>"; }
+    if ($new_env_rx eq "0") { $new_env_rx = "<<{this cant possibly match}>>"; }
+
+    local($cmd, $before, $after);
+    &tokenize($new_cmd_rx);	# Inserts a space after the new commands ...
+    while ( ($new_cmd_rx && /$new_cmd_rx /) ||
+	    ($new_env_rx && /$new_env_rx/)) {
+	# $new_cmd_rx binds $1 and $new_env_rx binds $2 ...
+	$cmd = ($2 ? $2 : $1);
+	($before, $after) = ($`, $');
+	if ($new_command{$cmd}) {	# We have a command
+	    $_ = join('',$before, &substitute_newcmd);
+	}
+	elsif ($new_environment{$cmd}) {
+	    $_ = join('',$before, &substitute_newenv);
+	}
+	&tokenize($new_cmd_rx); # Must do it for any newly inserted code
+    }
+    $_;
+}
+
+
+# Removes the definition from the input string, adds to the preamble 
+# and stores the body in %new_command;
+sub get_body_newcommand {
+    local(*_) = @_;
+    local($argn,$cmd,$body,$tmp);
+    $cmd = &get_next(1); # Get command name
+    $cmd =~ s/^\s*\\//;
+    $argn = &get_next(0); # Get optional no. of args
+    $argn = 0 unless $argn;
+    # Get the body of the code and store it with the name and number of args
+    # UNLESS THE COMMAND IS ALREADY DEFINED
+    # (This is the mechanism with which raw html can be ignored in a Latex document
+    # but be recognised as such by the translator).
+    $body = &get_next(1);
+    $tmp = "do_cmd_$cmd";
+    $new_command{$cmd} = join(':!:',$argn,$body)
+	unless (defined &$tmp);
+    undef $body;
+    $_;
+}
+
+# Like get_body_newcommand above, but for simple raw TeX \defs
+
+sub get_body_def {
+    local(*_) = @_;
+    local($argn,$cmd,$body,$is_simple_def,$tmp);
+    $cmd = &get_next(2);
+    $cmd =~ s/^\s*\\//;
+    
+    $argn = &get_next(3);
+    $argn = 0 unless $argn;
+
+    $body = &get_next(1);
+    $tmp = "do_cmd_$cmd";
+    if ($is_simple_def && !defined (&$tmp))
+    { $new_command{$cmd} = join(':!:',$argn,$body); }
+    undef $body;
+    $_;
+}
+
+# Removes the definition from the input string, adds to the preamble 
+# and stores the body in %new_environment;
+sub get_body_newenvironment {	
+    local(*_) = @_;
+    local($argn,$env,$begin,$end,$tmp);
+    $env = &get_next(1); # Get the environment name
+    $env =~ s/^\s*\\//;
+    $argn = &get_next(0); # Get optional no. of args
+    $argn = 0 unless $argn;
+    # Get the body of the code and store it with the name and number of args
+    # UNLESS THE COMMAND IS ALREADY DEFINED (see get_body_newcommand)
+    $tmp = "do_env_$env";
+    $begin = &get_next(1); $end = &get_next(1);
+    $new_environment{$env} = join(':!:', $argn, $begin, $end)
+	unless defined &$tmp;
+    $_;
+}
+    
+sub get_body_renewcommand {
+    &get_body_newcommand($_[0]);
+}
+sub get_body_renewenvironment {	
+    &get_body_newenvironment($_[0]);
+}
+
+sub substitute_newcmd {
+    # Modifies $cmd and $after in the caller
+    # Get the body from the new_command array
+    local($argn, $_) = split(/:!:/, $new_command{$cmd});
+    local($arg);
+    foreach $i (1..$argn) {
+	$arg = $undef_mark;
+	$after =~ s/$next_pair_rx/$arg = $2;''/eo; # Get the next argument
+	# Next argument may not be in braces - get next character - ARGG!
+	$after =~ s/\s*(.)/$arg = $1;''/eo if ($arg eq $undef_mark);
+	s/\#$i/$arg/g;} # Substitute the arguments in the body
+    # Make the body unique (give unique id's to the brackets),
+    # translate, and return it
+    $_ = &revert_to_raw_tex($_);
+    &pre_process;
+    join('',$_,$after);
+}
+
+sub substitute_newenv {
+    # Modifies $cmd and $after in the caller
+    # Get the body from the new_environment array
+    local($argn, $begdef, $enddef) = split(/:!:/, $new_environment{$cmd});
+    local($arg,$new_def_rx);
+    # Note that latex allows argument substitution only in the
+    # \begin part of the new definition
+    local($_) = $begdef;
+    foreach $i (1..$argn) {
+	$after =~ s/$next_pair_rx/$arg = $2;''/eo; # Get the next argument
+	s/\#$i/$arg/g;} # Substitute the arguments in the body
+    # Make the body unique (Give unique id's to the brackets),
+    # translate, and return it
+    $_ = &revert_to_raw_tex($_);
+    &pre_process;		# Make uniqu
+    $begdef = $_;
+    # Now substitute the \end part:
+    $_ = &revert_to_raw_tex($enddef);
+    &pre_process;	# Make unique
+    $enddef = $_;
+    $new_def_rx = &make_end_env_rx($cmd);
+    $after =~ s/$new_def_rx/$enddef/;
+    join('',$begdef,$after);
+}
+
+# Instead of substituting as with newcommand and newenvironment, 
+# or generating code to handle each new theorem environment,
+# it now does nothing. This forces theorem environments to be passed
+# to latex. Although it would be possible to handle theorem 
+# formatting in HTML as it was done previously it is impossible 
+# to keep the theorem counters in step with other counters (e.g. equations)
+# to which only latex has access to. Sad...
+sub get_body_newtheorem {
+    local(*_) = @_;
+    # Just chop off the arguments and append to $next_def
+    &get_next(1);
+    &get_next(0);
+    &get_next(1);
+    &get_next(0);
+    $_;
+}     
+
+# Modifies $_ in the caller and as a side-effect it modifies $next_def
+# which is local to substitute_meta_cmds
+sub get_next {
+    local($what) = @_;
+    local($next, $pat, $tmp);
+    if ($what == 1) {
+	($next, $tmp, $pat) = &get_next_argument;}
+    elsif ($what == 2) {
+	($next, $pat) = &get_next_tex_cmd;}
+    elsif ($what == 3) {
+	($next, $pat) = &get_next_def_arg;}
+    else {
+	($next, $pat) =  &get_next_optional_argument;}
+    $next_def .= &revert_to_raw_tex($pat) if $pat;
+    $next =~ s/(^\s*)|(\s*$)//g;
+    $next;
+}
+
+# The following get_next_<something> ARE ALL DESTRUCTIVE.
+sub get_next_argument {
+    local($next, $br_id, $pat);
+    s/$next_pair_rx/$br_id=$1;$next=$2;$pat=$&;''/eo;
+    ($next, $br_id, $pat);
+}
+
+sub get_next_pair_or_char_pr {
+    local($next, $br_id, $pat, $epat);
+    if ( (/^\s*([\w])/o && (! $`))) {
+	($next, $pat) = ($1, $&) }
+    elsif ( /$next_pair_pr_rx/o && (! $`)) {
+	($next, $br_id, $pat) = ($2, $1, $&) };
+    $epat = &escape_rx_chars($pat);
+    s/$epat// if $pat;
+    ($next, $br_id, $pat);
+}
+
+sub get_next_optional_argument {
+    local($next, $pat);
+    s/$optional_arg_rx/$next=$1;$pat=$&;''/eo
+	if (/\s*[[]/ && (! $`)); # if the first character is a [
+        # (/^[]/ does not work because it may match the beginning of ANY line
+	    s/^\s*\[\]//g unless $pat; # This is not picked by $optional_arg_rx
+	    ($next, $pat);
+}
+
+sub get_next_tex_cmd {
+    local($next, $pat);
+    s/$single_cmd_rx/$next = $1; $pat=$&; ''/eo;
+    ($next, $pat);
+}
+
+sub get_next_def_arg {
+    local($next, $pat);
+   
+    # Sets is_simple_def for caller.  Start by turning it off, then
+    # turn it on if we find one of the "simple" patterns.
+
+    # This has got to be hit-or-miss to an extent, given the
+    # thoroughly incestuous relationship between the TeX macroprocessor
+    # ('mouth') and typesetting back-end ('stomach').  Anything which
+    # even does catcode hacking is going to lose BAD.
+    
+    s/^\s*//o;			# Remove whitespace
+
+    $is_simple_def = 0;
+
+    # no arguments
+
+    if (/^$O/ && (! $`)) { $next=0; $pat=''; $is_simple_def=1; $O }
+
+    # 'simple' arguments
+
+    if (! $is_simple_def && /$tex_def_arg_rx/o && (! $`)) {
+      s/$tex_def_arg_rx/$next=$1; $pat=$&; $is_simple_def=1; $O/eo; }
+
+    # MESSY arguments
+
+    if (! $is_simple_def) {
+ 	print "Arguments to $cmd are too complex ...\n";
+	print "It will not be processed unless used in another environment\n";
+	print "which is passed to LaTeX whole for processing.\n";
+
+	s/^[^<]*(<[^<]+)*<</$next=''; $pat=$&; $O/eo;
+    }
+
+    $pat =~ s/$O$//o;
+
+    ($next, $pat);
+}
+
+# Appends $next_def to the preamble if it is not already there.
+sub add_to_preamble {
+    local($type, $next_def) = @_;
+
+    local($name);
+    if ($type =~ /(renew)|(def)|(include)/) {
+        local($pat) = &escape_rx_chars ($next_def);
+        $preamble .= $next_def . "\n" unless ($preamble =~ /$pat/);
+    }
+    else {
+	($name) = $next_def =~ /$marker\s*({[^}]+})/; # matches type{name}
+        $name = &escape_rx_chars($name);
+        $preamble .= $next_def . "\n" unless ($preamble =~ /$marker\s*$name/);}
+}
+
+sub make_latex{
+# This is the environment in which to process constructs that cannot be
+# translated to HTML.
+# The environment tex2html_wrap will be wrapped around any shorthand 
+# environments (e.g. $, \(, \[).
+# The tex2html_wrap environment will be treated as an unrecognised 
+# evironment by the translator and its contents (i.e. the 'shorthand'
+# environment) will be passed to latex for processing as usual.
+    local($contents) = @_;
+    local($preamble) = $preamble;
+    # Make the @ character a normal letter ...
+    $preamble =~ s/(\\documentstyle(\[[^\]]+\])?\{\w+\})/$1\n\\makeatletter/;
+    # ... and make it special again after the preamble
+    ($DEBUG ? undef : "\\batchmode") .
+    "\n$preamble\n\\makeatother\n" .
+    "\\newenvironment{tex2html_wrap}{}{}\n" .
+    "\\newwrite\\lthtmlwrite\n" .
+    "\\def\\lthtmltypeout#1{{\\let\\protect\\string\\immediate\\write\\lthtmlwrite{#1}}}%\n" .
+    "\\newbox\\sizebox\n" .
+    # "\\textheight 250cm\n" .
+    "\\begin{document}\n" .
+    "\\pagestyle{empty}\n" .
+    "$contents\n".
+    "\\end{document}";
+}
+    
+# Given the depth of the current sectioning declaration and the current
+# section numbers it returns the new section numbers.
+# It increments the $depth-ieth element of the @curr_sec_id list and
+# 0's the elements after the $depth-ieth element.
+sub new_level {
+  local($depth, @curr_sec_id) = @_;
+  local($i) = 0;
+  grep( do { if ($i == $depth) {$_++ ;}
+	     elsif ($i > $depth) {$_ = 0 ;};
+	     $i++;
+	     0;
+	   },
+	   @curr_sec_id);
+  @curr_sec_id;
+}
+
+sub make_head_and_body {
+    local($title) = @_;
+    "<!DOCTYPE HTML PUBLIC \"-//W3O//DTD W3 HTML 2.0//EN\">\n" .
+    "<!Converted with LaTeX2HTML $TEX2HTMLVERSION by Nikos Drakos (nikos\@cbl.leeds.ac.uk), CBLU, University of Leeds >\n" .
+    "<HEAD>\n<TITLE>$title</TITLE>\n" .
+    "</HEAD>\n<BODY>\n" .
+    &meta_information($title) .
+    "\n";
+}
+
+sub make_address {
+    local($_) = $ADDRESS;
+    ($_ ? "<P><ADDRESS>\n$_\n</ADDRESS>" : "") . "\n</BODY>\n";
+}
+
+sub encode_title {
+    local($_) = @_;
+    $_ = &encode($_);
+    while (/(<[^<>]*>)/o) {s/$1//g};	# Remove HTML tags
+    s/#[^#]*#//g;               # Remove #-delimited markers
+    $_;
+}
+
+# Encodes the contents of enviroments that are passed to latex. The code
+# is then used as key to a hash table pointing to the URL of the resulting
+# picture. 
+sub encode {
+    local($_) = @_;
+    for (;;) {
+	# Remove invocation-specific stuff
+        last unless s/begin|end|<<\d+>>|tex2html_|wrap//go;
+    }
+    #$_ = pack("u*", $_);	# uuencode
+    s/\/|\\//g;	# remove funnies may cause problems in a hash key
+    s/\s*|\n//g;		# Remove spaces  and newlines
+    $_;
+}
+
+    
+##################### Hypertext Section Links ########################	
+sub post_process {
+    # Put hyperlinks between sections, add HTML headers and addresses,
+    # do cross references and citations.
+    # Uses the %section_info array created in sub translate.
+    # Binds the global variables
+    # $PREVIOUS, $PREVIOUS_TITLE
+    # $NEXT, $NEXT_TITLE
+    # $UP, $UP_TITLE
+    # $CONTENTS
+    # $INDEX
+    # $NEXT_GROUP, $NEXT_GROUP_TITLE
+    # $PREVIOUS_GROUP, $PREVIOUS_GROUP_TITLE
+    # Converting to and from lists and strings is very inefficient.
+    # Maybe proper lists of lists should be used (or wait for Perl5?)
+    local($_, $key, $depth, $file, $title, $header, @link, @old_link,
+	  $navigation, %done, @keys,
+	  @tmp_keys, $flag, $child_links);
+    @tmp_keys = @keys = sort numerically keys %section_info;
+    print "\nDoing section links ...";
+    while (@tmp_keys) {
+        $key = shift @tmp_keys;
+	print ".";
+	($depth, $file, $title) = split($delim,$section_info{$key});
+	unless ($done{$file}) {
+	    $PREVIOUS = $PREVIOUS_TITLE = $NEXT = $NEXT_TITLE = $UP = $UP_TITLE =
+            $CONTENTS = $INDEX = $NEXT_GROUP = $NEXT_GROUP_TITLE = 
+            $PREVIOUS_GROUP = $PREVIOUS_GROUP_TITLE =
+	    $_ = $navigation = undef;
+	    @link =  split(' ',$key);
+            ($PREVIOUS, $PREVIOUS_TITLE) =
+		&add_link($previous_page_visible_mark,$file,@old_link);
+	    @old_link = @link;
+
+	    $link[$depth]++;
+	    ($NEXT_GROUP, $NEXT_GROUP_TITLE)
+		= &add_link($next_visible_mark, $file, @link);
+	    
+	    
+	    $link[$depth]--;$link[$depth]--;
+	    ($PREVIOUS_GROUP, $PREVIOUS_GROUP_TITLE) =
+		&add_link($previous_visible_mark, $file,@link);
+	   
+	    $link[$depth] = 0;
+	    ($UP, $UP_TITLE) = 
+		&add_link($up_visible_mark, $file, @link);
+	    
+	    @link = split(' ',$tmp_keys[0]);
+	    ($NEXT, $NEXT_TITLE) = 
+		&add_link($next_page_visible_mark, $file,@link);
+	    
+	    $CONTENTS = &add_special_link($contents_visible_mark, $tocfile, $file)
+		if $CONTENTS_IN_NAVIGATION;
+	    $INDEX = &add_special_link($index_visible_mark, $idxfile, $file)
+		if $INDEX_IN_NAVIGATION;
+	    $navigation = &navigation_panel unless $NO_NAVIGATION;
+	    $_ = &make_head_and_body($title);
+	    $header = join(' ', $_);
+      	    $header = join(' ', $header, $navigation) if $TOP_NAVIGATION;
+	    rename($file, "TMP.$file");
+	    open(INPUT, "<TMP.$file") || die "Cannot open file TMP.$file $!";
+	    open(OUTFILE, ">$file") || die "Cannot open file $file $!";
+	    &slurp_input("TMP.$file");
+	    $child_links = &add_child_links(0,$depth, $key, @keys);
+	    $flag = (($BOTTOM_NAVIGATION || &auto_navigation) &&
+				  $navigation);
+	    $_ = join('', $_, $CHILDLINE)
+		if $child_links;
+	    $_ = join('', $header, $_, $child_links);
+	    $_ = join('', $_, $navigation) if ($flag);
+	    $flag = 0;
+	    $_ = join('', $_, $CHILDLINE)
+		unless $flag;
+	    &remove_markers;
+	    print OUTFILE $_;
+	    print OUTFILE &make_address;	
+	    close OUTFILE;
+	    $done{$file}++;
+	    &cleanup;
+	}
+    }
+}
+
+sub add_link {
+    # Returns a pair (iconic link, textual link) 
+    local($icon, $current_file, @link) = @_;
+    local($dummy, $file, $title) = split($delim,$section_info{join(' ',@link)});
+    if ($title) {
+	$title = &get_first_words($title, $WORDS_IN_NAVIGATION_PANEL_TITLES);
+        if ($file eq $current_file) {
+	    return (&make_href($EXTERNAL_UP_LINK, $icon),
+		    &make_href($EXTERNAL_UP_LINK, "$EXTERNAL_UP_TITLE"))
+		if ($EXTERNAL_UP_LINK && $EXTERNAL_UP_TITLE)}
+	else {			
+	    return (&make_href($file, $icon), &make_href($file, "$title"))
+	    }
+    }
+    (&inactive_img($icon), "");
+}
+
+sub add_special_link {
+    local($icon, $file, $current_file) = @_;
+    (($file && ($file ne $current_file)) ? &make_href($file, $icon) : undef)
+}
+
+sub remove_markers {
+    &remove_general_markers;
+    &text_cleanup;	
+    # Must NOT clean the ~'s out of the navigation icons (in panel or text),
+    # and must not interfere with verbatim-like environments
+    &remove_sensitive_markers;
+}
+
+sub remove_general_markers {
+    s/$lof_mark/<UL>$figure_captions<\/UL>/o;
+    s/$lot_mark/<UL>$table_captions<\/UL>/o;
+    &replace_citations if /$bbl_mark/;
+    &add_toc if (/$toc_mark/);
+    &add_idx if (/$idx_mark/);
+    &replace_cross_references if /$cross_ref_mark/;
+    &replace_external_references if /$external_ref_mark/;
+    &replace_cite_references if /$cite_mark/;
+}  
+
+sub remove_sensitive_markers {
+    &replace_images if /$image_mark/;
+    &replace_icons if /$icon_mark_rx/;
+    &replace_verbatim if /$verbatim_mark/;
+    &replace_verb if /$verb_mark/;
+    s/;SPM_/\&/go;
+    s/$percent_mark/%/go;
+}
+
+# This code is extremely inefficient. At least the subtrees should be
+# filtered according to $MAX_LINK_DEPTH before going into the 
+# inner loops. 
+sub add_child_links {
+    local($exclude, $depth, $current_key, @keys) = @_;
+    local($_, $child_rx, @subtree, $next, %open);
+    $child_rx = $current_key;
+    $child_rx =~ s/( 0)*$//; # Remove trailing 0's
+    foreach $next (@keys) {
+	if (($next =~ /^$child_rx /) && ($next ne $current_key)) {
+	    push(@subtree,$next);}}
+    # @subtree now contains the subtree rooted at the current node
+    if (@subtree) {
+	local($next_depth, $file, $title);
+	@subtree = sort numerically @subtree;
+	foreach $next (@subtree) {
+	    ($next_depth, $file, $title) = split($delim,$toc_section_info{$next});
+	    $file = "" if $NO_SPLIT;
+	    next if ($exclude eq $title);
+	    $file = join('', $file, "#SECTION", split(' ', $next));
+	    if (($next_depth > $depth) && (%open < $MAX_LINK_DEPTH) &&
+		($next_depth < $MAX_SPLIT_DEPTH)) {
+		$depth = $next_depth;
+		$open{$depth}++; 
+		$_ .= "<UL> \n";
+		$_ .= "<LI> ". &make_href($file,$title) . "\n";
+		}
+	    elsif (($next_depth <= $depth) && (%open <= $MAX_LINK_DEPTH)) {
+		while (($next_depth < $depth) && %open ) { # Backing out
+		    if ($open{$depth}) {
+			if (! $open{$next_depth})  {
+			    $open{$next_depth}++;
+			}
+			else {
+			    $_ .= "</UL> \n";
+			}
+			delete $open{$depth};};
+		    $depth--;}
+		$depth = $next_depth;
+		$_ .= "<LI> ". &make_href($file,$title) . "\n";}
+	}
+	$_ .= "</UL>\n" x %open;
+    }
+    $_;
+}
+
+sub top_page {
+    local($file, @navigation_panel) = @_;
+    # It is the top page if there is a link to itself
+    join('', @navigation_panel) =~ /$file/;
+}
+
+# Sets global variable $AUX_FILE
+sub process_aux_file {
+    local($_);			# To protect caller from &process_ext_file
+    $AUX_FILE = 1;
+    do {
+	print "\nCannot open $FILE.aux $!\n";
+	$global{'warnings'} .= "\nThe $FILE.aux file was not found," .
+	    " so sections will not be numbered \nand cross-references will be shown as icons.\n";
+	# i.e. undefined cross references will be shown as black arrows instead
+	# of using the LaTeX symbolic names.
+	}
+    unless (&process_ext_file("aux")); # Sets $_ as a side-effect!
+    $AUX_FILE = 0;
+}
+ 
+sub make_href {
+    local($link, $text) = @_;
+    $name++;
+    $link =~ s/&#126;/$percent_mark . "7E"/geo;
+    "<A NAME=tex2html$name HREF=\"$link\">$text</A>";
+}
+
+sub make_section_heading {
+    local($text, $level) = @_;
+    local($section_tag) = join('', @curr_sec_id);
+    join('',"<$level>","<A NAME=SECTION$section_tag>$text</A><\/$level>\n");
+}
+
+sub extract_captions {
+    # Uses and modifies $contents defined in translate_environments
+    # and modifies $figure_captions, $table_captions, $before and $after
+    local($env) = @_;
+    local(%captions, %optional_captions, $key, $caption, $optional_caption,
+	  $item, $type, $list, $number, @tmp, $_);
+    # associate the br_id of the caption with the argument of the caption
+    $contents =~ s/$caption_rx/do {
+	$optional_captions{$8} = ($2 ? $2 : $9);
+	$captions{$8} = $9; ''}/ego;
+    $after = join("","<P>",$after);
+    $before .= "<P>";
+    if ($env eq 'figure') {
+	$type = "Figure";
+	$list = "\$figure_captions";
+    }
+    elsif ($env eq 'table') {
+	$type = "Table";
+	$list = "\$table_captions";
+    }
+
+    foreach $key (sort {$a <=> $b;} keys %captions){ # Sort numerically
+	$caption =  &translate_commands(&translate_environments($captions{$key}));
+	$optional_caption =  &translate_commands(&translate_environments($optional_captions{$key}));
+	$item .= "<LI>" .
+	    &make_href("$CURRENT_FILE#$key", $caption) . "\n";
+	$before .= "<A NAME=$key>$anchor_mark</A>";
+	$_ = ($optional_caption || $caption);
+	&text_cleanup;
+	$_ = &encode_title($_);
+	@tmp = split(/$;/, eval ("\$encoded_$env" . "_number{\$_}"));
+	$number = shift(@tmp);
+	$number = "" if ($number eq "-1");
+	$warnings .= "No number for \"$caption\"\n" if (! $number);
+	eval("\$encoded_$env" . "_number{\$_} = join(\$;, \@tmp)");
+	undef $_;
+	undef @tmp;
+	$after = join("", "\n<BR><STRONG>$type",
+		      ($number ? " $number:" : ":"),
+		      "</STRONG> $caption<BR>\n", $after)}
+    eval "$list .= \$item";
+}
+
+
+# This processes \label commands found in environments that will
+# be handed over to Latex. Sets the table %symbolic_labels
+sub do_labels {
+    local($context,$new_context) = @_;
+    local($label);
+    $context =~ s/$labels_rx/do {
+	$label = &do_labels_helper($2);
+	$new_context = &anchor_label($label,$CURRENT_FILE,$new_context);""}/geo;
+    $new_context;
+}
+
+# This should be done inside the substitution but it doesn't work ...
+sub do_labels_helper {
+    local($_) = @_;
+    s/\W//g;
+    $symbolic_labels{$_} = $latex_labels{$_}; # May be empty;
+    $_;
+}    
+
+sub add_toc {
+    local($temp1, $temp2);
+    print "\nDoing table of contents ...";
+    local(@keys) = keys %toc_section_info;
+    @keys = sort numerically @keys;
+    $temp1 = $MAX_LINK_DEPTH; $temp2 = $MAX_SPLIT_DEPTH;
+    $MAX_SPLIT_DEPTH = $MAX_LINK_DEPTH = 1000;
+    s/$toc_mark/&add_child_links("Contents",0,$keys[0],@keys)/eo;
+    $MAX_LINK_DEPTH = $temp1; $MAX_SPLIT_DEPTH = $temp2;
+}
+
+# Assign ref value, but postpone naming the label
+sub make_half_href {
+    local($link) = $_[0];
+    $name++;
+    "<A NAME=tex2html$name HREF=\"$link\">";
+}
+
+
+sub add_idx {
+    print "\nDoing the index ...";
+    local($key, $str, @keys, $index, $level, $count, 
+	  @previous, @current);
+    @keys = keys %index;
+    @keys = sort keysort  @keys;
+    $level = 0;
+    foreach $key (@keys) {
+	@current = split(/!/, $key);
+	$count = 0;
+	while ($current[$count] eq $previous[$count]) {
+	    $count++;
+	}
+	while ($count > $level) {
+	    $index .= "<DL COMPACT>\n";
+	    $level++;
+	} 
+	while ($count < $level) {
+	    $index .= "</DL>\n";
+	    $level--;
+	} 
+	foreach $term (@current[$count .. $#current-1]) {
+	    # need to "step in" a little
+	    $index .= "<DT>" . $term . "\n<DL COMPACT>\n";
+	    $level++;
+	}
+	$str = $current[$#current];
+	$str =~ s/\#\#\#\d+$//o;  # Remove the unique id's
+	$index .= $index{$key} .
+	    # If it's the same string don't start a new line
+	    (&index_key_eq(join('',@current), join('',@previous)) ?
+	     ", <strong>" . $cross_ref_visible_mark . "</strong></A>\n" :
+	     "<DT><strong>" . $str . "</strong></A>\n");
+	@previous = @current;
+    }
+    while ($count < $level) {
+	$index .= "</DL>\n";
+	$level--;
+    } 
+    s/$idx_mark/<DL COMPACT>$index<\/DL>/o;
+}
+
+sub keysort {
+    local($x, $y) = ($a,$b);
+    $x = &clean_key($x);
+    $y = &clean_key($y);
+    "\L$x" cmp "\L$y";
+    }
+
+sub index_key_eq {
+    local($a,$b) = @_;
+    $a = &clean_key($a);
+    $b = &clean_key($b);
+    $a eq $b;
+}
+
+sub clean_key {
+    local ($_) = @_;
+    tr/A-Z/a-z/;
+    s/\s//;
+    s/\#\#\#\d+$//o;  # Remove the unique id
+    $_
+}
+
+    
+sub make_footnotes {
+    # Uses $footnotes defined in translate and set in do_cmd_footnote
+    # Also uses $footfile
+    local($_) = "<DL> $footnotes <\/DL>\n";
+    print "\nDoing footnotes ...";
+    &remove_markers;
+    &text_cleanup;
+    if ($footfile) {
+	&make_file($footfile, "Footnotes"); # Modifies $_;
+	$_ = ""
+	}
+    $_;
+}
+
+sub make_file {
+    # Uses and modifies $_ defined in the caller
+    local($filename, $title) = @_;
+    $_ = join('',&make_head_and_body($title),$_,&make_address);
+    &text_cleanup;
+    open(FILE,">$filename") || print "Cannot open $filename $!\n";
+    print FILE $_;
+    close(FILE);
+}
+
+sub replace_verbatim {
+    # Modifies $_
+    s/$verbatim_mark(verbatim)(\d+)/<PRE>$verbatim{$2}<\/PRE>/go;
+    s/$verbatim_mark(rawhtml)(\d+)/$verbatim{$2}/ego;	# Raw HTML
+}
+sub replace_verb {
+    # Modifies $_
+    s/$verb_mark(\d+)$verb_mark/<code>$verb{$1}<\/code>/go;
+}
+
+# This is used by revert_to_raw_tex
+sub revert_verbatim {
+    # Modifies $_
+     s/$verbatim_mark(verbatim)(\d+)/\\begin{verbatim}$verbatim{$2}\\end{verbatim}/go;
+    s/$verbatim_mark(rawhtml)(\d+)/\\begin{rawhtml}$verbatim{$2}\\end{rawhtml}/go;
+}
+
+sub revert_verb {
+    # Modifies $_
+    s/$verb_mark(\d+)$verb_mark/\\verb$verb_delim{$1}$verb{$1}$verb_delim{$1}/go;
+}
+
+sub replace_cross_references {
+    # Modifies $_
+    local($label,$id);
+    s/$cross_ref_mark#(\w+)#(\w+)>$cross_ref_mark/
+	do {($label,$id) = ($1,$2); '"' . "$ref_files{$label}#$label" . '">' .
+		&get_ref_mark($label,$id)}/geo;
+    # This is for pagerefs which cannot have symbolic labels
+    s/$cross_ref_mark#(\w+)#\w+>/
+	do {$label = $1; '"' . "$ref_files{$label}#$label" . '">'}/geo;
+}
+
+sub replace_external_references {
+    # Modifies $_
+    local($label);
+    s/$external_ref_mark#(\w+)#(\w+)>$external_ref_mark/
+	do {($label,$id) = ($1,$2); '"'. "$external_labels{$label}#$label" .
+		'">' . &get_ref_mark("userdefined$label",$id)}/geo;
+}
+
+sub get_ref_mark {
+    local($label,$id) = @_;
+    ( ($SHOW_SECTION_NUMBERS && $symbolic_labels{"$label$id"}) ||
+      $latex_labels{"userdefined$label$id"} ||
+      $symbolic_labels{"$label$id"} ||
+      $latex_labels{$label} ||
+      $cross_ref_visible_mark );
+}
+    
+sub replace_citations {
+    # Modifies $_
+    s/$bbl_mark#([^#]+)#/$citations{$1}/go;
+}
+
+sub replace_images {
+    # Modifies $_
+    s/$image_mark#([^#]+)#/$id_map{$1}/go;
+}
+
+sub replace_icons {
+    # Modifies $_
+    s/$icon_mark_rx/&img_tag($icons{$1})/ego;
+}
+
+sub replace_cite_references {
+    # Modifies $_
+    # Uses $citefile set by the thebibliography environment
+    s/#(\w+)#$cite_mark#([^#]+)#/<A HREF=\"$citefile{$2}#$1\">$cite_info{$1}<\/A>/g;
+}
+
+sub text_cleanup {
+    s/(\s*\n){2,}/\n<P>\n/go;	# Replace consecutive blank lines with a paragraph tag
+    s/$O\d+$C//go;		# Get rid of bracket id's
+    s/$OP\d+$CP//go;		# Get rid of processed bracket id's
+    # s/(\w\s*)?---?(\s*\w)?/$1-$2/go; # Dashes 
+    s/\\( |$)/ /go;	# Spacing commands
+    s/([^\\]?)%/$1/go;	# Remove the comment character
+    s/\\,/ /go;	# Cannot treat \, as a command because , is a delimiter ...
+    # Replace tilde's with spaces
+	 s/~/ /go;
+    #s/^~|([^\\])~/$1 /go;
+}
+
+# This is useful for getting words from a title which are not cluttered 
+# with tex2html markers or HTML constructs
+sub extract_pure_text {
+    &text_cleanup;		# Remove marking brackets
+    s/$image_mark#[^#]*#//g;	# Remove image marker
+    s/$bbl_mark#[^#]*#//g;	# Remove citations marker
+    s/tex2html[^$delimiters]*//g; # Remove other markers
+    s/<[^>]*>//g;		# Remove HTML constructs 
+}
+				 
+############################ Misc ####################################
+sub usage {			
+    print "This is LaTeX2HTML Version $TEX2HTMLVERSION by Nikos Drakos, \nComputer Based Learning Unit, University of Leeds.\nUsage: latex2html \n   [-split num] \n   [-link num]    \n   [-nolatex] \n   [-external_images] \n   [-ps_images] \n   [-ascii_mode] \n   [-t top_page_title] \n   [-dir output_directory] \n   [-no_subdir] \n   [-address author_address] \n   [-no_navigation] \n   [-top_navigation] \n   [-bottom_navigation]  \n   [-auto_navigation]  \n   [-index_in_navigation]  \n   [-contents_in_navigation]  \n   [-next_page_in_navigation] \n   [-previous_page_in_navigation] \n   [-info string] \n   [-dont_include file(s)] \n   [-reuse] \n   [-no_reuse] \n   [-no_images] \n   [-images_only] \n   [-show_section_numbers] \n   [-init_file Perl file] \n   [-h ] \n   file(s)\n"
+}
+
+# The bibliographic references, the appendices, the lists of figures and tables
+# etc. must appear in the contents table at the same level as the outermost
+# sectioning command. This subroutine finds what is the outermost level and
+# sets the above to the same level;
+sub set_depth_levels {
+    # Sets $outermost_level
+    local($level);
+    foreach $level ("part", "chapter", "section", "subsection",
+		    "subsubsection", "paragraph") {
+	last if (($outermost_level) = /\\($level)$delimiter_rx/);
+	}
+    $level = ($outermost_level ? $section_commands{$outermost_level} :
+	      do {$outermost_level = 'section'; 3;});
+    $MAX_SPLIT_DEPTH = $MAX_SPLIT_DEPTH + $level;
+    %section_commands = ('tableofcontents', $level, 'listoffigures', $level,
+			 'listoftables', $level, 'bibliography', $level,
+			 'tex2htmlindex', $level, %section_commands);
+}
+			
+# Now ignores accents which cannot be translated to ISO-LATIN-1 characters
+# Also replaces ?' and !' ....
+sub replace_strange_accents {
+    # Modifies $_;
+    s/\?`/&iso_map("questacute", "")/geo;
+    s/!`/&iso_map("exclamacute", "")/geo;
+    s/\\\^\\i /&iso_map("icirc", "")/geo;
+};
+			       	       
+# Creates a new directory 
+sub new_dir {
+    local($_) = @_;
+    local($answer);
+    mkdir($_, oct(755)) ||
+	do {print "Cannot create directory $_: $!\n";
+	    if ($REUSE) {
+		&reuse;}
+	    else {
+		while (! ($answer =~ /^[dqr]$/)) {
+		    print "(r) Reuse the images in the old directory OR\n".
+			"(d) *** DELETE *** $_ AND ITS CONTENTS OR\n".
+			    "(q) Quit ?\n:";
+		    $answer = scalar(<STDIN>);
+		    if ($answer =~ /^d$/) {
+			`rm -r $_`;	# ******
+			&new_dir($_);
+			return(1);}
+		    elsif ($answer =~ /^q$/) {
+			die "Bye!\n";}
+		    elsif ($answer =~ /^r$/) {
+			&reuse;
+			return(1);}
+		    else {print "Please answer r d or q!\n";};} };
+	};
+}
+
+sub reuse {
+   print "Reusing directory $_:\n";
+   local($key);
+   require("$_/images.pl") if (-f "$_/images.pl");
+   1;
+}
+
+# Given a filename or a directory it returns the file and the full pathname
+# relative to the current directory.
+sub get_full_path {
+    local($file) = @_;
+    local(@path, $path);
+    if (-d $file) {		# $file is a directory
+	$path = &make_directory_absolute($file);
+	$file = '';
+    }
+    elsif ($file =~ /\//) {
+	@path = split(m;/;,$file);
+	$file = pop(@path);
+	$path = join('/',@path);
+	chdir $path;
+	$path = &make_directory_absolute($path);
+    }
+    elsif (-f $file) {		# $file is a plain file
+	$path = &getcwd;
+    }
+    ($path, $file);
+}
+
+
+# Given a relative filename from the directory in which the original
+# latex document lives, it tries to expand it to the full pathname.
+sub fulltexpath {
+    # Uses $texfilepath defined in sub driver
+    local($file) = @_;
+    $file =~ s/\s//g;
+    $file = "$texfilepath/$file" unless ($file =~ /\//);  # name begins with a /
+    $file;
+}
+
+# This should not have been necessary if tokenization was done properly ...
+# It inserts a space after anything that $rx$delimiter_rx matches
+sub tokenize {
+    local($rx) = @_;
+    # Modifies $_;
+    if ($rx) {
+        # The repetition here is a massive hack to get around the problem
+        # I can't get the substitution to work on a string like
+        # "\me\myhost\me\myhost\me\myhost\me\myhost\me\myhost"
+	# in one go (where both me and myhost are in $rx)
+	s/$rx$delimiter_rx/\\$1 $2/g;
+	s/$rx$delimiter_rx/\\$1 $2/g;
+	}
+}
+
+# When part of the input text contains special perl characters and the text 
+# is to be used as a pattern then these specials must be escaped.
+sub escape_rx_chars {
+    local($_) = @_;
+    s/(\W)/\\$1/g;
+    $_;
+}
+
+# Does not do much but may need it later ...
+# The document environment has to be removed because it spans
+# more than one sections (the translator can only deal with
+# environments wholly contained with sections). 
+
+# (Does a little more now ... the end of the preamble is now marked
+# with an internally-generated command which causes all output
+# erroneously generated from unrecognized commands in the preamble
+# to vanish --- rst).
+
+sub remove_document_env {
+    s/\\begin$match_br_rx[d]ocument$match_br_rx/\\latextohtml_ditch_preceding /o;
+    s/\\end$match_br_rx[d]ocument$match_br_rx//o;
+}
+
+# And here's the code to handle the marker ...
+
+sub do_cmd_latextohtml_ditch_preceding {
+    $ref_before = '';
+    $_[0];
+}
+
+sub cleanup {
+    do {
+	open(FILE, "echo TMP* $$\* *.pbm *.dvi| tr -s ' \t\r\f' '\\012\\012\\012\\012'|");
+	while (<FILE>) {chop; `rm -f $_` if (-e $_);};
+	# open(FILE, "echo .*.dir .*.pag | tr -s ' \t\r\f' '\\012\\012\\012\\012'|");
+	# while (<FILE>) {chop; `rm $_` if (-z $_);}; # Delete if 0 size
+	close(FILE)}
+    unless $DEBUG;
+}
+
+sub handler {
+    print "\nLaTeX2HTML shutting down.\n";
+    &cleanup;
+    die;
+}
+
+sub make_name {
+    local($sec_name, $packed_curr_sec_id) = @_;
+    # Remove 0's from the end of $packed_curr_sec_id
+    $packed_curr_sec_id =~ s/(_0)*$//;
+    $packed_curr_sec_id =~ s/^0$//o; # Top level file
+    join("",($packed_curr_sec_id ? "node". ++$OUT_NODE : $sec_name), ".html");
+}
+
+sub make_first_key {
+    local($_);
+    $_ = ('0 ' x keys %section_commands);
+    chop;
+    $_;
+}
+ 
+# This copies the preamble into the variable $preamble.
+sub add_preamble_head {
+    $preamble = join ('', &revert_to_raw_tex(/$preamble_rx/o),
+				$preamble);
+}
+	
+# It is necessary to filter some parts of the document back to raw 
+# tex before passing them to latex for processing.
+sub revert_to_raw_tex {
+    local($_) = @_;
+    while (s/$O\s*\d+\s*$C/\{/o) {
+	s/$&/\}/;
+	}
+    # The same for processed markers ...
+    while (s/$OP\s*\d+\s*$CP/\{/o) {
+	s/$&/\}/;
+	}
+    # Replace any verbatim markers ...
+    &revert_verbatim;
+    &revert_verb;
+    s/$tex2html_wrap_rx//go;
+    s/($html_specials_inv_rx)/$html_specials_inv{$1}/geo;
+    s/$iso_latin1_character_rx/$iso_latin1_character_map_inv{$1}/geo;
+    # Need an ISO-LATIN-1 inverse mappin here ...
+    $global{'warnings'} .= "\nAn ISO-LATIN-1 character ($1) has crept in the source text."
+	if (/$iso_latin1_character_rx/o);
+    $_;
+}
+
+sub next_wrapper {
+    local($dollar) = @_;
+    local($_,$id);
+    $wrap_toggle = (($wrap_toggle eq 'end') ? 'begin' : 'end');
+    $id = ++$global{'max_id'};	   
+    $_ = "\\$wrap_toggle$O$id$C"."tex2html_wrap$O$id$C";
+    $_ = (($wrap_toggle eq 'end') ? $dollar.$_ : $_.$dollar);
+    $_;
+}
+
+sub make_wrapper {
+    &make_any_wrapper($_[0], "tex2html_wrap");
+}
+
+sub make_any_wrapper {
+    local($toggle,$kind) = @_;
+    local($max_id) = ++$global{'max_id'};	
+    '\\'. (($toggle) ? 'begin' : 'end') . "$O$max_id$C"."$kind$O$max_id$C";
+}
+
+sub get_last_word {
+    # Returns the last word in multi-line strings
+    local($_) = @_;
+    local ($word);
+    &extract_pure_text;
+    while (/\s(\S+)\s*$/g) {
+	$word = $1;}
+    $word;
+}
+
+sub get_first_words {
+    # Returns the first word 
+    local($_, $min) = @_;
+    local($words,$i);
+    &extract_pure_text;
+    foreach (/[\S]*\s*/g) {
+	$words .= $_; 
+	last if (++$i >= $min);
+    }
+    $words =~ s/\s*[,]\s*//;
+    $words;
+}
+
+sub replace_word {
+    # Replaces the LAST occurrence of $old with $new in $str;
+    local($str, $old, $new) = @_;
+    substr($str,rindex($str,$old),length($old)) = $new;
+    $str;
+}
+
+# Returns the recognised sectioning commands as a string of alternatives
+# for use in regular expressions;
+sub get_current_sections {
+    local($_, $key);
+    foreach $key (keys %section_commands) {
+	if ($key =~ /star/) {
+	    $_ = $key . "|" . $_}
+	else {
+	    $_ .= "$key" . '[*]?|';
+	}}
+    chop;			# Remove the last "|".
+    $_;
+}
+
+sub numerically { 
+    local(@x) = split(' ',$a);
+    local(@y) = split(' ',$b);
+    local($i, $result);
+    for($i=0;$i<$#x;$i++) {
+       last if ($result = ($x[$i] <=> $y[$i]));
+    }
+    $result
+}
+
+# Assumes that the files to be sorted are of the form
+# <NAME><NUMBER>
+sub file_sort {
+    local($i,$j) = ($a,$b);
+    $i =~ s/^[^\d]*(\d+)$/$1/;
+    $j =~ s/^[^\d]*(\d+)$/$1/;
+    $i <=> $j
+}
+
+# If a normalized command name exists, return it.
+sub normalize {
+    local($cmd) = @_;
+    local($ncmd);
+    # Escaped special LaTeX characters
+    if ($cmd =~ /^($latex_specials_rx)/) {
+	$cmd =~ s/&(.*)$/&amp;$1/o; 
+        $cmd =~ s/%/$percent_mark/o;
+	$after = join('', $cmd, $after);
+	$cmd = ""}
+    elsif ($ncmd = $normalize{$cmd}) {
+	$ncmd}
+    elsif ($cmd =~ s/[*]$/star/) {
+	$cmd }
+    elsif ($cmd =~ s/\@/tex/) {
+	$cmd}
+    else {$cmd}
+}
+
+sub normalize_sections {
+    s/$sections_rx/'\\' . &normalize($1) . $2/geo;
+}
+
+sub embed_image {
+    local($url,$name,$external,$thumbnail,$map) = @_;
+    local($extern_image_mark,$result);
+    local($border) = "BORDER=0" if $NETSCAPE_HTML;
+    if ($thumbnail) {
+	$extern_image_mark = "<IMG $border ALIGN=BOTTOM ALT=\"\" SRC=\"$thumbnail\">"}
+    else {
+# $type isn't used
+#	$type = "($type)" unless ($type =~ /tex2html_wrap/);
+	$extern_image_mark = &extern_image_mark;
+    }
+    if ($external || $thumbnail || $EXTERNAL_IMAGES) {
+	$result = &make_href($url, $extern_image_mark)}
+    else {
+        if ($name =~ /inline/ && $depth{$name} != 0) {
+	    $result = "<IMG $border ALIGN=MIDDLE ALT=\"".
+	       "\" SRC=\"$url\">";
+	}
+	else {
+	    $result = "<IMG $border ALIGN=BOTTOM ALT=\"".
+	       "\" SRC=\"$url\">";
+	    }
+	$result = &make_href(&revert_to_raw_tex($map), $result) if $map;
+    }
+    $result;
+}
+
+sub save_labels_in_file {
+    local($label,$file);
+    if (%ref_files) {
+	open(LABELS,">labels.pl");
+	print LABELS "# LaTeX2HTML $TEX2HTMLVERSION\n";
+	print LABELS "# Associate symbolic labels with physical files.\n\n";
+	while (($label,$file) = each %ref_files) {
+	    print LABELS "\$external_labels{\"$label\"} =" .
+		"\"\$URL/$file\"; \n"};
+	print LABELS "\n1;\n\n";
+    }
+}
+
+sub save_image_cache_in_file {
+    local($uutxt,$file);
+    if (%cached_env_img) {
+	open(FILE,">images.pl");
+	print FILE "# LaTeX2HTML $TEX2HTMLVERSION\n";
+	print FILE "# Associate image original text (scrambled) with physical files.\n\n";
+	while (($uutxt,$file) = each %cached_env_img) {
+	    print FILE "\$key = q/$uutxt/;\n";
+	    print FILE "\$cached_env_img{\$key} =" .
+		"\'$file\'; \n"};
+	print FILE "\n1;\n\n";
+    }
+}
+
+# returns true if $AUTO_NAVIGATION is on and there are more words in $_
+# than $WORDS_IN_PAGE
+sub auto_navigation {
+    # Uses $_;
+    local(@tmp) = split(/\W*\s+\W*/, $_);
+    ($AUTO_NAVIGATION && ( (scalar @tmp) > $WORDS_IN_PAGE));
+}
+
+# Returns true if $f1 is newer than $f2
+sub newer {
+    ($f1,$f2) = @_;
+    local(@f1s) = stat($f1);
+    local(@f2s) = stat($f2);
+    ($f1s[9] > $f2s[9]);
+};
+
+sub iso_map {
+    local($char, $kind) = @_;
+    $iso_latin1_character_map{"$char$kind"};
+}
+
+sub titles_language {
+    local($_) = @_;
+    local($lang) = $_ . "_titles";
+    if (defined(&$lang)) {
+	&$lang }
+    else {
+	&english_titles;
+	$warnings .= "\nThere is currently no support for the $tmp language." .
+	    "\nSee the file latex2html.config for examples on how to add it\n\n";
+    }
+}
+
+sub translate_titles {
+    $toc_title = &translate_commands($toc_title);
+    $lof_title = &translate_commands($lof_title);
+    $lot_title = &translate_commands($lot_title);
+    $idx_title = &translate_commands($idx_title);
+    $bib_title = &translate_commands($bib_title);
+    $info_title = &translate_commands($info_title);
+}
+####################### Code Generation Subroutines ############################
+# This takes a string of commands followed by optional or compulsory
+# argument markers and generates a subroutine for each command that will
+# ignore the command and its arguments.
+# The commands are separated by newlines and have the format:
+##      <cmd_name>#{}# []# {}# [] etc. 
+# {} marks a compulsory argument and [] an  optional one.
+sub ignore_commands {
+    local($_) = @_;
+    foreach (/.*\n?/g) {
+	s/\n//g;
+	# For each line
+	local($cmd, @args) = split('\s*#\s*',$_);
+	next unless $cmd;
+	$cmd =~ s/ //;
+	++$ignore{$cmd};
+	do {
+	    # Replace the argument markers with appropriate patterns
+	    grep(($_ = do { s/ //;
+			    if (/{}/) {
+				's/$next_pair_pr_rx//o || print "\nCannot find argument for $cmd!\n";';}
+			    elsif (/[[][]]/) {
+				'&get_next_optional_argument;';}
+			    else {	# We have arbitrary code - just add it
+				"$_".';';} # 
+			})
+		 ,@args);
+	    # Generate a new subroutine
+	    eval "sub do_cmd_$cmd {" . 'local($_) = @_;'  . join('',@args) . '$_}';
+	} if (@args);
+    }
+}
+
+sub ignore_numeric_argument {
+    # Chop this off
+    local($num) = '(width|height|plus|minus)*\s*[+-]?[\d\.]+(cm|em|ex|in|pc|pt|mm)?\s*';
+    s/^\s*=?\s*($num)*//o
+}
+  
+sub process_in_latex_helper {
+    local($cmd) = @_;
+    ($ASCII_MODE ? "[$cmd]" : &process_in_latex("\\$cmd"))
+    }
+	
+# *Generates* subroutines to handle each of the declarations 
+# like \em, \quote etc., in case they appear with the begin-end 
+# syntax.
+sub generate_declaration_subs {
+    local($key, $val);
+    while ( ($key, $val) = each %declarations) {
+	if ($val) {
+	    eval "sub do_env_$key {" 
+                      . 'local($_) = @_;' 
+		      . "\"<$val> " . '$_'  . "</$val>\"};";
+	}
+    }
+}
+
+# *Generates* subroutines to handle each of the sectioning commands.
+sub generate_sectioning_subs {
+    local($key, $val);
+    while ( ($key, $val) = each %section_headings) {
+	eval "sub do_cmd_$key {" 
+                      . 'local($after) = @_;'
+			  . '&do_cmd_section_helper(' . $val . ',' . $key . ');}';
+	# Now define the *-form of the same commands. The difference is that the 
+	# $key is not passed as an argument.
+	eval "sub do_cmd_$key" . "star {" 
+                      . 'local($after) = @_;'
+			  . '&do_cmd_section_helper(' . $val . ');}';
+    }
+}
+
+# Uses $after which is defined in the caller (the caller is a generated subroutine)
+# Also uses @curr_sec_id
+sub do_cmd_section_helper {
+    local($H,$key) = @_;
+    local($section_number, @tmp);
+    # if we have a $key the current section is not of the *-form, so we need
+    # to update the counters.
+    do {
+	$latex_body .= "\\stepcounter{$key}\n";
+    } if $key;
+    # Ignore optional toc entry
+    local($_) = $after; &get_next_optional_argument; $after = $_;
+    $after =~ s/$next_pair_rx/do {$TITLE = $2; ''}/eo;
+    $TITLE =~ s/\\(label|index)$any_next_pair_rx//;
+    $TITLE = &translate_commands(&translate_environments($TITLE));
+    $_ = $TITLE;  &extract_pure_text;
+    $TITLE = $_ ;
+    # This is the LaTeX section number read from the $FILE.aux file
+    @tmp = split(/$;/,$encoded_section_number{&encode_title($_)});
+    $section_number = shift(@tmp);
+    $section_number = "" if ($section_number eq "-1");
+    $encoded_section_number{&encode_title($_)} = join($;, @tmp);
+    $TITLE = "$section_number " . $_;
+    $after = join('', &make_section_heading($TITLE, $H), $after);
+    $TITLE =~ s/<P>//g;		# Remove newlines
+    $after;}
+    
+
+
+############################ Environments ################################
+
+# The following list environment subroutines still do not handle 
+# correctly the case where the list counters are modified (e.g. \alph{enumi})
+# and the cases where user defined bullets are mixed with the default ones.
+# e.g. \begin{enumerate} \item[(1)] one \item two \end{enumerate} will
+# not produce the same bullets as in the dvi output.
+sub do_env_itemize {
+    local($_) = @_;
+    if (/$item_description_rx/) { # Contains user defined optional labels
+	&do_env_description($_, "COMPACT")}
+    else {
+	&list_helper($_,'UL');
+    }
+}
+   
+sub do_env_enumerate {
+    local($_) = @_;
+    if (/$item_description_rx/) { # Contains user defined optional labels
+	&do_env_description($_, "COMPACT")}
+    else {
+	&list_helper($_,'OL');
+    }
+}
+
+sub do_env_list {
+    local ($_) = @_;
+    local ($list_type) = 'UL';
+
+    s/$next_pair_rx//;     # Ditch the label specifier
+    s/$next_pair_rx//;     # Ditto the length declarations ...
+                           # but we may want to switch to enumerated style
+                           # if they include a \usecounter.
+
+    $list_type = 'OL' if $1 =~ /\\usecounter/;
+
+    &list_helper($_, $list_type);
+}
+
+sub do_env_description {
+  local($_, $compact) = @_;
+  $compact = "" unless $compact;
+  $* = 1;			# Multiline matching ON
+  s/$item_description_rx/<DT>$1\n<DD>/g;
+  # and just in case the description is empty ...
+  s/\\item$delimiter_rx/<DT><DD>$1/g;
+  $* = 0;			# Multiline matching OFF
+  "<DL $compact>$_ \n </DL>";
+}
+
+sub list_helper {
+    local($_, $tag) = @_;
+    $* = 1;			# Multiline matching ON
+    # This deals with \item[xxx] ...
+    s/$item_description_rx/<DT>$1\n<DD>/g;
+    s/\\item$delimiter_rx/<LI>$1/g;
+    $* = 0;			# Multiline matching OFF
+    "<$tag>$_</$tag>";
+}
+
+sub do_env_cente {
+    local($_) = @_;
+    "<P>$_  <P>";
+}
+
+sub do_env_verse {
+    local($_) = @_;
+    "<P> \n$_  <P>";
+}
+
+sub do_env_abstract {
+    local($_) = @_;
+    &make_abstract($_);
+}
+
+sub do_env_minipage {
+    local($_) = @_;
+    &get_next_optional_argument;
+    s/$next_pair_rx//o;
+    $_;
+}
+
+sub do_env_thebibliography {
+    # Sets $citefile and $citations defined in translate
+    local($_) = @_;
+    $bibitem_counter = 0;
+    $citefile = $CURRENT_FILE;
+    $citefile{$bbl_nr} = $citefile;
+    s/$next_pair_rx//;
+    $* = 1;			# Multiline matching ON
+    s/^\s*$//g;	# Remove empty lines (otherwise will have paragraphs!)
+    $* = 0;			# Multiline matching OFF
+    $citations = join('',"<DL COMPACT>",
+		      &translate_commands(&translate_environments($_)),"</DL>");
+    $citations{$bbl_nr} = $citations;
+    $_ = join('','<P>' , "<A NAME=SECTIONREF><H2>$bib_title</H2></A><P>\n$bbl_mark#$bbl_nr#");
+    $bbl_nr++ if $bbl_cnt > 1;
+    $_;
+}
+
+# IGNORE the contents of this environment - We construct our own index
+sub do_env_theindex {
+    "";
+}
+
+
+# This is defined in html.sty
+sub do_env_comment {
+    "";
+}
+
+sub do_env_tabbing {
+    local($_) = @_;
+    &tabbing_helper($_);
+}
+
+sub tabbing_helper {
+    local($_) = @_;
+    $* = 1;			# Multiline matching ON
+    s/^.*\\kill[ \t]*$//;
+    s/\\\&gt;//go;
+    s/([^\\])\\[>]/$1\t\t/go;
+    s/\\>/\t\t/go;
+    s/\\\\/\n/og;
+    $* = 0;			# Multiline matching OFF
+    "<PRE><TT> $_ \n</TT></PRE>";
+}
+
+################# Post Processing Latex Generated Images ################
+
+# A subroutine of the form post_latex_do_env_<ENV> can be used to
+# format gifs that have come back from latex 
+
+# Do nothing (avoid the paragraph breaks)
+sub post_latex_do_env_figure {
+    $_[0];
+}
+sub post_latex_do_env_table {
+    $_[0];
+}
+
+
+
+############################ Commands ###################################
+  
+# Capitalizes what follows the \sc declaration
+# *** POTENTIAL ERROR ****
+# (This is NOT the correct meaning of \sc in the cases when it
+# is followed by another declaration (e.g. \em). 
+# The scope of \sc should be limited to the next occurence of a 
+# declaration.
+sub do_cmd_sc {
+    local($_) = @_;
+    local(@words) = split(" ");
+    # Capitalize the words which are not commands and do not contain any markers
+    grep (do {tr/a-z/A-Z/ unless /(^\\)|(tex2html)/}, @words); 
+    join(" ", @words);
+}	
+    
+# This is supposed to put the font back into roman.
+# Since there is no HTML equivalent for reverting 
+# to roman we keep track of the open font tags in 
+# the current context and close them.
+# *** POTENTIAL ERROR ****#  
+# This will produce incorrect results in the exceptional
+# case where \rm is followed by another context
+# containing font tags of the type we are trying to close
+# e.g. {a \bf b \rm c {\bf d} e} will produce
+#       a <b> b </b> c   <b> d   e</b>
+# i.e. it should move closing tags from the end 
+sub do_cmd_rm {
+    local($_, @open_font_tags) = @_;
+    local($next);
+    for $next (@open_font_tags) {
+	$next = ($declarations{$next});
+	s/<\/$next>//;
+	$_ = join('',"<\/$next>",$_);
+    }
+    $_;
+}
+
+sub do_cmd_title {
+    local($_) = @_;
+    &get_next_optional_argument;
+    local($rest) = $_;
+    $rest =~ s/$next_pair_pr_rx//o;
+    $_ = $&; &extract_pure_text;
+    ($t_title) = $_;
+    $TITLE = $t_title if ($TITLE eq $default_title);
+    $TITLE =~ s/<P>//g;		# Remove Newlines
+    $rest;
+}
+
+sub do_cmd_author {
+    local($_) = @_;
+    s/$next_pair_pr_rx//o;
+    ($t_author) = $&;
+    $_;
+}
+sub do_cmd_date {
+    local($_) = @_;
+    s/$next_pair_pr_rx//o;
+    ($t_date) = $&;
+    $_;
+}
+
+sub do_cmd_maketitle {
+    join('', "<H1>$t_title</H1>\n",
+	 "<P><STRONG>$t_author</STRONG><P>\n",
+	 do {"<P><STRONG>$t_date</STRONG><P>\n" if $t_date;}
+	 , $_[0]);
+}
+
+sub do_cmd_abstract {
+    local($_) = @_;
+    s/$next_pair_pr_rx//o;
+    local($abstract) = $&;
+    join('',&make_abstract($abstract), $_);
+}
+
+sub make_abstract {
+    local($_) = @_;
+    join('',"<H3>Abstract:</H3>\n<EM>$_</EM><P>\n");
+}
+
+sub do_cmd_today {
+    local($today) = (`date`);
+    join('',$today,$_[0]);
+}
+
+sub do_cmd_ldots {
+    join('',"...",$_[0]);
+}
+
+sub do_cmd_dots {
+    join('',"...",$_[0]);
+}
+
+sub do_cmd_hrule {
+    local($_) = @_;
+    &ignore_numeric_argument;
+    join('',"<BR><HR>", $_);
+}
+
+sub do_cmd_linebreak {
+    join('',"<BR>", $_[0]);
+}
+
+sub do_cmd_newline {
+    join('',"<BR>", $_[0]);
+}
+
+sub do_cmd_space {
+    join(''," ",$_[0]);
+}
+sub do_cmd_par {
+    join('',"<P>",$_[0]);
+}
+
+sub do_cmd_medskip {
+    join('',"<P>",$_[0]);
+}
+sub do_cmd_smallskip {
+    join('',"<P>",$_[0]);
+}
+sub do_cmd_bigskip {
+    join('',"<P>",$_[0]);
+}
+sub do_cmd_slash {
+    join('',"/",$_[0]);
+}
+sub do_cmd_esc_slash {
+    $_[0];
+}
+
+################## Commands to be processed by Latex #################
+#
+# The following commands are passed to Latex for processing.
+# They cannot be processed at the same time as normal commands 
+# because their arguments must be left untouched by the translator.
+# (Normally the arguments of a command are translated before the 
+# command itself).
+# 
+# In fact, it's worse:  it is not correct to process these
+# commands after we process environments, because some of them
+# (for instance, \parbox) may contain unknown or wrapped
+# environments.  If math mode occurs in a parbox, the
+# translate_environments routine should *not* process it, lest
+# we encounter the lossage outlined above.
+#
+# On the other hand, it is not correct to process these commands
+# *before* we process environments, or figures containing
+# parboxes, etc., will be mishandled.
+#
+# So, the only way to handle these commands is to wrap them up
+# in null environments, as for math mode, and let translate_environments
+# (which can handle nesting) figure out which is the outermost.
+#
+# Incidentally, we might as well make these things easier to configure...
+
+sub process_commands_in_tex {
+    local($_) = @_;
+    foreach (/.*\n?/g) {
+
+	chop;
+	# For each line
+
+	local($cmd, @args) = split('#',$_);
+	next unless $cmd;
+
+	$cmd =~ s/ //g;
+
+	# Build routine body ...
+
+	local ($body, $code) = ("", "");
+	foreach (@args) {
+	    if (/\{\}/) {
+		$body .= '$args .= $& if s/$next_pair_rx//o;' . "\n"
+	    } elsif (/\[\]/) {
+		$body .= '($dummy, $pat) = &get_next_optional_argument;' .
+		         "\n". '$args .= $pat;';
+	    } else {
+		$body .= $_ . "\n";
+	    }
+	}
+
+	# Generate a new subroutine
+	$code = "sub wrap_cmd_$cmd {" . "\n"
+	        .'local($cmd, $_) = @_; local ($args, $dummy, $pat) = "";' . "\n"
+	        .$body . "\n"
+	        .'(&make_wrapper(1) . $cmd.$args . &make_wrapper(0), $_)}'
+		."\n";
+	eval $code;
+
+	# And make sure the main loop will catch it ...
+
+	$raw_arg_cmds{$cmd} = 1;
+    }
+}
+
+# Used in initialisation to build a regexp ...
+
+sub get_raw_arg_cmds {
+    local($_, $key);
+    foreach $cmd (keys %raw_arg_cmds) {
+	$_ .= $cmd . "|";
+    }
+    chop;			# Remove the last "|".
+    $_;
+}
+
+# Invoked before actual translation; wraps these commands in
+# tex2html_wrap environments, so that they are properly passed to
+# TeX in &translate_environments ...
+
+sub wrap_raw_arg_cmds {
+    local ($processed_text, $delim, $cmd, $wrapper, $wrap);
+
+    while (/$raw_arg_cmd_rx/) {
+	$processed_text .= $`;
+	($cmd, $delim) = ($1, $2);
+	$wrapper = "wrap_cmd_$1";
+	($wrap, $_) = &$wrapper ("\\$cmd", "$delim$'");
+	$processed_text .= $wrap;
+    }
+
+    $processed_text . $_;
+}
+
+#########################################################################
+
+# To make a table of contents, list of figures and list of tables commands
+# create a link to corresponding files which do not yet exist.
+# The binding of the file variable in each case acts as a flag 
+# for creating the actual file at the end, after all the information 
+# has been gathered.
+
+sub do_cmd_tableofcontents {
+    local($_) = @_;
+    $tocfile = $CURRENT_FILE;
+    $TITLE = $toc_title;
+    join('', '<P>', &make_section_heading($toc_title, "H2"), $toc_mark, $_);
+}
+sub do_cmd_listoffigures {
+    local($_) = @_;
+    $TITLE = $lof_title;
+    $loffile = $CURRENT_FILE;
+    join('', '<P>' , &make_section_heading($lof_title, "H2"), $lof_mark, $_);
+}  
+sub do_cmd_listoftables {
+    local($_) = @_;
+    $TITLE = $lot_title;
+    $lotfile = $CURRENT_FILE;
+    join('', '<P>' , &make_section_heading($lot_title, "H2"), $lot_mark, $_);
+}
+
+# $idx_mark will be replaced with the real index at the end
+sub do_cmd_tex2htmlindex {
+    local($_) = @_;
+    $TITLE = $idx_title;
+    $idxfile = $CURRENT_FILE;
+    join('','<P>' , &make_section_heading($idx_title, "H2"), $idx_mark, $_);
+}
+
+sub do_cmd_footnote {
+    local($_) = @_;
+    s/$next_pair_pr_rx//o;
+    local($br_id, $footnote) = ($1, $2);
+    &process_footnote($footnote);
+    join('',&make_href("$footfile#$br_id",$footnote_mark),$_);
+}
+sub do_cmd_thanks {
+    &do_cmd_footnote(@_);
+}
+
+sub do_cmd_footnotemark {
+    local($_) = @_;
+    &get_next_optional_argument;
+    # Don't use ()'s for the optional argument!
+    s/\\footnotetext\[?[^]]*\]?\s*$any_next_pair_pr_rx//o;
+    local($br_id, $footnote) = ($1, $2);
+    if ($footnote) {
+	&process_footnote($footnote);
+	$_ = join('',&make_href("$footfile#$br_id",$footnote_mark),$_);}
+    else { print "\nCannot find \\footnotetext";};
+    $_;
+}
+
+# Under normal circumstances this is never executed. Any commands \footnotetext
+# should have been processed when the corresponding \footnotemark was
+# encountered. It is possible however that when processing pieces of text
+# out of context (e.g. \footnotemarks in figure and table captions) 
+# the pair of commands gets separated. Until this is fixed properly,
+# this command just puts the footnote in the footnote file in the hope 
+# that its context will be obvious ....
+sub do_cmd_footnotetext {
+    local($_) = @_;
+    s/$next_pair_pr_rx//o;
+    local($br_id, $footnote) = ($1, $2);
+    &process_footnote($footnote) if $footnote;
+    $_;
+}
+    
+sub process_footnote {
+    # Uses $before 
+    # Sets $footfile defined in translate
+    # Modifies $footnotes defined in translate
+    local($footnote) = @_;
+    local($last_word) = &get_last_word($ref_before);
+    local($space) = "<P>\n";
+    if (! $NO_FOOTNODE) {	
+        $footfile = "footnode.html";
+	$space = "<P>\n" x 30;
+    }
+    $footnotes .= "<A NAME=$br_id><DT>...$last_word <DD>" .
+	&translate_commands($footnote) . "</A>\n<PRE>" . $space . "</PRE>";
+}
+
+# This just changes the depth of section so that an appendix is at the
+# outermost level. 
+sub do_cmd_appendix {
+    $latex_body .= "\\appendix\n";
+    #$section_commands{'section'} = $section_commands{$outermost_level};
+    $_[0];
+}
+ 
+sub do_cmd_ref {
+   local($_) = @_;
+   &process_ref($cross_ref_mark,$cross_ref_mark);
+}
+
+sub do_cmd_pageref {
+   local($_) = @_;
+   &process_ref($cross_ref_mark,$cross_ref_visible_mark);
+}
+
+# This is used by external style files ...
+sub process_ref {
+    local($ref_mark, $visible_mark, $use_label) = @_;
+    local($label,$id);
+    s/$next_pair_pr_rx/($id, $label) = ($1, $2);''/eo;
+    if ($label) {
+	# if $use_label is 1 then $label is used as the cross_ref_mark
+	# elseif $use_label is a string then $use_label is used
+        # else the usual mark will be used
+	$use_label = ( (($use_label == 1) && $label) ||
+		       $use_label);
+	$label =~ s/\W//g;		# Remove non alphanumeric characters
+	$symbolic_labels{"$label$id"} = $use_label;
+	# The quotes around the HREF are inserted later
+	join('',"<A HREF=$ref_mark#$label#$id>$visible_mark<\/A>",$_);
+    }
+    else { print "Cannot find label argument after <$last_word>\n"; $_;}
+}
+
+# Uses $CURRENT_FILE defined in translate
+sub do_cmd_label {
+    local($_) = @_;
+    s/$next_pair_pr_rx//o;
+    local($label) = $2;
+    &anchor_label($label,$CURRENT_FILE,$_);
+}
+
+# This subroutine is also used to process labels in undefined environments
+sub anchor_label {
+    # Modifies entries in %ref_files defined in translate 
+    local($label,$filename,$context) = @_;
+    $label =~ s/\W//g;		# Remove non alphanumeric characters
+    # Associate the label with the current file
+    $ref_files{$label} = $filename;
+    join('',"<A NAME=$label>$anchor_mark</A>",$context);
+}
+
+# This just creates a link from a label (yet to be determined) to the 
+# cite_key in the citation file.
+sub do_cmd_cite {
+    local($_) = @_;
+    local($cite_key, @cite_keys);
+    local($optional_text,$dummy) =  &get_next_optional_argument;
+    $optional_text .= "," if $optional_text;
+    s/^\s*\\space//o;		# Hack - \space is inserted in .aux
+    s/$next_pair_pr_rx//o;
+    if ($cite_key = $2) {
+	@cite_keys = (split(/,/,$cite_key));
+	#Replace the keys...
+	grep(do { s/\W//g; $_ = "#$_#$cite_mark#$bbl_nr#";}, @cite_keys);
+	$optional_text = ", $optional_text" if $optional_text;
+	$_ = join('', "[", join(',',@cite_keys),  $optional_text, "]", $_);
+    }
+    else {print "Cannot find citation argument\n";}
+    $_;
+}
+
+sub do_cmd_index {
+    local($_) = @_;
+    s/$next_pair_pr_rx//o;
+    local($br_id, $str) = ($1, $2);
+    join('',&make_index_entry($br_id,$str),$_);
+}
+
+# This command will only be encountered inside a thebibliography environment.
+sub do_cmd_bibitem {
+    local($_) = @_;
+    # The square brackets may contain the label to be printed
+    local($label, $dummy) = &get_next_optional_argument;
+#print STDERR "bibitem($label, $dummy, $_)\n";+
+# Support for the "named" bibliography style
+    if ($label) {
+ 	$label =~ s/\\protect//o;
+ 	$label =~ s/\\citeauthoryear//o;
+    }
+    $label = ++$bibitem_counter unless $label; # Numerical labels 
+    s/$next_pair_pr_rx//o;
+#print STDERR "bibitem($label, $dummy, $1, $2, $3)\n";
+    $cite_key = $2;
+    if ($cite_key) {
+	$cite_key =~ s/\W//g;		# Remove non alphanumeric characters
+	# Associate the cite_key with the printed label.
+	# The printed label will be substituted back into the document later.
+	$cite_info{$cite_key} = &translate_commands($label);
+	# Create an anchor around the citation
+#print "Found bibitem labels: $label, $cite_key\n"; # AFEB added this line
+	join('',"<DT><A NAME=$cite_key><STRONG>$label</STRONG></A><DD>", $_);
+    } 
+    else {
+	print "Cannot find bibitem labels: $label\n";
+	join('',"<DT><STRONG>$label</STRONG><DD>", $_);	# AFEB added this line
+    }
+}
+
+# This just reads in the $FILE.bbl file if it is available and appends
+# it to the items that are still to be processed.
+# The $FILE.bbl should contain a thebibliography environment which will
+# cause its contents to be processed later in the appropriate way.
+# (Note that it might be possible for both the \bibliography command and
+# the thebibliography environment to be present as the former may have been 
+# added by the translator as a sectioning command. In this case (both present)
+# the $citefile would have already been set by the thebibliography environment)
+sub do_cmd_bibliography {
+    local($after) = @_;
+    $after =~ s/$next_pair_rx//o;
+    local($bibfile) = $2;
+    $TITLE = $bib_title;
+    do {
+	unless ($citefile) {
+	    $citefile = $CURRENT_FILE;
+	    if (&process_ext_file("bbl")) {	# *** BINDS $_ as a side effect ***
+		$after = join('',$_,$after);}
+	    else {
+		print "\nCannot open $FILE.bbl $!\n";
+		$global{'warnings'} .= "\nThe bibliography file was not found.";
+		$after = join('',"<H2>No References!</H2>\n", $after);
+	    }}
+    } if $bibfile;
+    $after;
+}
+
+sub do_cmd_textohtml_info_page {
+    local($_) = @_;
+    ( ($INFO == 1)
+     ? join('', "<STRONG>$t_title</STRONG><P>\nThis document was generated using the <A HREF=\"$TEX2HTMLADDRESS\"><STRONG>LaTeX</STRONG>2<tt>HTML</tt></A> translator Version $TEX2HTMLVERSION Copyright &#169; 1993, 1994,  <A HREF=\"$AUTHORADDRESS\">Nikos Drakos</A>, Computer Based Learning Unit, University of Leeds. <P> The command line arguments were: <BR>
+<STRONG>latex2html</STRONG> <tt>$argv</tt>. <P>The translation was initiated by $address_data[0] on $address_data[1]", $_)
+     : join('',$INFO,$_))
+}
+
+sub do_cmd_dbackslash {
+    local($_) = @_;
+    &get_next_optional_argument;
+    join('',"<BR>",$_); 
+}
+
+sub do_cmd_caption {
+    local($_) = @_;
+    local($caption);
+    s/$next_pair_pr_rx//o;
+    $caption = $2;
+    join('',"<BR>$caption<P>",$_); 
+}
+
+################## Commands used in the $FILE.aux file #######################
+
+# This is used in $FILE.aux 
+sub do_cmd_newlabel {
+    local($_) = @_;
+    local($label,$val,$tmp);
+    s/$next_pair_pr_rx/$label = $2;''/eo;
+    s/$next_pair_pr_rx/$tmp=$2;''/eo;
+    $tmp =~ s/$next_pair_pr_rx/$val=$2/eo;
+    $label =~ s/\W//g;		# Remove non alphanumeric characters
+    $latex_labels{$label} = $val;
+    $_;
+}
+
+# Before normalizing this was \@writefile
+# Sets %encoded_(section|figure|table)_number which maps encoded section titles to LaTeX numbers
+sub do_cmd_texwritefile {
+    local($after) = @_;
+    local($type,$arg,$tmp,$title,$number,%hash,$stype);
+    # The form of the expression is: 
+    # \@writefile{TOC}  {... {SECTION} {... {SECTION_NUMBER} TITLE}{PAGE}}
+    $after =~ s/$next_pair_pr_rx/$type = $2;''/eo; # Chop off {TOC}
+    $after =~ s/$next_pair_pr_rx/$arg = $2;''/eo; # Get {... {SECTION} {... }}
+    $hash{"toc"} = "section" if $SHOW_SECTION_NUMBERS;
+    $hash{"lof"} = "figure";
+    $hash{"lot"} = "table";
+    if ($type) {
+	$arg =~ s/$next_pair_pr_rx/$stype = $2; ''/eo; # This is section|subsection etc
+	$arg =~ s/$next_pair_pr_rx/$tmp = $2; ''/eo;
+	$tmp =~ s/$next_pair_pr_rx/$number = $2; ''/eo;
+	if ($type eq "toc" && $stype eq "part") {
+ 	    while ($tmp =~ s/$next_pair_pr_rx//o) {};
+  	    $number =~ tr/a-z/A-Z/;
+   	    $number = "Part $number:"}
+        # This cause problem when picking figure numbers...
+	# while ($tmp =~ s/$next_pair_pr_rx//o) {}; 
+	$_ = $tmp; &text_cleanup;
+	$title = &encode_title($_);
+	eval "\$encoded_$hash{$type}_number{\$title} =
+               ((\$encoded_$hash{$type}_number{\$title} ne \"\") ?
+               \$encoded_$hash{$type}_number{\$title} . \$; : \"\") .
+               ((\$number ne \"\") ? \$number : \"-1\")";
+	# printf STDERR "\nEncoded_figure_number:\n%s\n",
+	# 	      join("\n", keys(%encoded_figure_number));
+    }
+    $after;
+}
+########################### Counter Commands #################################
+sub do_cmd_newcounter {
+    local($_) = @_;
+    local($ctr,$dummy,$pat);
+    s/$next_pair_rx/$ctr=$2;''/eo;
+    ($dummy,$pat) = &get_next_optional_argument;
+    $latex_body .= &revert_to_raw_tex("\\newcounter{$ctr}$pat\n")
+	unless ($preamble =~ /\\newcounter{$ctr}/);
+    $_;
+}
+
+sub do_cmd_addtocounter {
+    local($_) = @_;
+    local($ctr,$num);
+    s/$next_pair_rx/$ctr = $2;''/eo;
+    s/$next_pair_rx/$num = $2;''/eo;
+    $latex_body .= &revert_to_raw_tex("\\addtocounter{$ctr}{$num}\n");
+    $_;
+}
+sub do_cmd_setcounter {
+    local($_) = @_;
+    local($ctr,$num);
+    s/$next_pair_rx/$ctr = $2;''/eo;
+    s/$next_pair_rx/$num = $2;''/eo;
+    $latex_body .= &revert_to_raw_tex("\\setcounter{$ctr}{$num}\n");
+    $_;
+}
+
+sub do_cmd_stepcounter {
+    local($_) = @_;
+    local($ctr);
+    s/$next_pair_rx/$ctr = $2;''/eo;
+    $latex_body .= &revert_to_raw_tex("\\stepcounter{$ctr}\n");
+    $_;
+}
+
+sub do_cmd_refstepcounter {
+    local($_) = @_;
+    local($ctr);
+    s/$next_pair_rx/$ctr = $2;''/eo;
+    $latex_body .= &revert_to_raw_tex("\\refstepcounter{$ctr}\n");
+    $_;
+}
+   
+sub do_cmd_arabic {
+    local($_) = @_;
+    local($ctr);
+    s/$next_pair_rx/$ctr = $2;''/eo;
+    join('',&process_in_latex_helper("arabic{$ctr}"),$_);
+}
+   
+sub do_cmd_roman {
+    local($_) = @_;
+    local($ctr);
+    s/$next_pair_rx/$ctr = $2;''/eo;
+    join('',&process_in_latex_helper("roman{$ctr}"),$_);
+}
+   
+sub do_cmd_Roman {
+    local($_) = @_;
+    local($ctr);
+    s/$next_pair_rx/$ctr = $2;''/eo;
+    join('',&process_in_latex_helper("Roman{$ctr}"),$_);
+}
+   
+sub do_cmd_alph {
+    local($_) = @_;
+    local($ctr);
+    s/$next_pair_rx/$ctr = $2;''/eo;
+    join('',&process_in_latex_helper("alph{$ctr}"),$_);
+}
+   
+sub do_cmd_Alph {
+    local($_) = @_;
+    local($ctr);
+    s/$next_pair_rx/$ctr = $2;''/eo;
+    join('',&process_in_latex_helper("Alph{$ctr}"),$_);
+}
+   
+sub do_cmd_fnsymbol {
+    local($_) = @_;
+    local($ctr);
+    s/$next_pair_rx/$ctr = $2;''/eo;
+    join('',&process_in_latex_helper("fnsymbol{$ctr}"),$_);
+}
+   
+sub do_cmd_thecounter {
+    # Uses $counter bound by the caller
+    join('',&process_in_latex_helper("the$counter"),@_);
+}
+
+################# Accent and Special Symbols ##################################
+
+sub do_cmd_LaTeX {
+   join('','LaTeX', $_[0]);
+}
+sub do_cmd_TeX {
+   join('','TeX', $_[0]);
+}
+
+# Generate code for the accents handling commands that are never
+# applied to i or j.
+sub generate_accent_commands {
+    local($accent);
+    foreach $accent  ("tilde", "ring", "overscore",
+		      "u", "v", "H", "t", "d", "b") {
+	eval "sub do_cmd_$accent {" . 'local($_) = @_;'  .
+	    "&replace_next_char($accent);" . '$_}';
+    }
+}
+
+# This handles the \c command
+sub do_cmd_c {
+    local($_) = @_;
+    &replace_next_char("cedil");
+    $_;
+}
+
+ # This handles the \pc command, which basically means \protect\c
+ sub do_cmd_pc {
+    local($_) = @_;
+    &replace_next_char("cedil");
+    $_;
+}
+
+# These handle accents, taking care of the dotless i's and j's that
+# may follow (even though accented j's are not part of any alphabet
+# that I know).
+#
+# Note that many forms of accents over dotless i's and j's are
+# handled:
+#   "\^\i rest"
+#   "\^\i 
+#    rest"
+#   "\^{\i}rest"
+#   "\^\i{}rest"
+# They all produce "&#238;rest".
+
+sub accent_safe_for_ij {
+    local($type) = @_;
+    local($arg, $first_char);
+    #print STDERR "\naccent_safe_for_ij: type: $type <$_>\n";
+    if (/^\\([ij])\s/) {
+	# Accent of this form: "\^\i rest"
+	($arg) =  &get_next_tex_cmd;
+	s/^[ \t]+//o;		# Get rid of whitespaces after \i
+	if (substr($_, 0, 2) =~ /[\n\r][^\n\r]/) {
+	    $_ = substr($_, 1); # Get rid of 1 newline after \i
+	}
+    } else {
+	# Accent of this form: "\^{\i}rest" or not an accent on i nor j
+	($arg) =  &get_next_pair_or_char_pr;
+    }
+    if ($arg eq '') {
+	# Accent of this form: "\^\i{}rest"
+	($arg) = &get_next_tex_cmd;
+	#print STDERR "\n*** Mark 100: |$arg|   _: |$_|\n";
+    }
+    #if ($arg eq '') {
+    #	print STDERR "\nAccent \"$type\" by itself!\n";
+    #	print STDERR "near |$_|\n";
+    #}
+    $arg =~ s/(\w)/$first_char = $1; ''/eo;
+    #print STDERR "\n*** arg: |$arg|   first_char: |$first_char|\n";
+    $_ = join('', (&iso_map($first_char, $type) || $first_char), $arg, $_);
+}
+
+sub do_cmd_i {
+    join('',"i",$_[0]);
+}
+# Modifies $_ in the caller
+sub do_cmd_j {
+    $_ = 'j';
+}
+
+#The \^, \`, \', and \" accents.
+sub do_cmd_circ {
+    local($_) = @_;
+    &accent_safe_for_ij('circ');
+    $_;
+}
+sub do_cmd_grave {
+    local($_) = @_;
+    &accent_safe_for_ij('grave');
+    $_;
+}
+sub do_cmd_acute {
+    local($_) = @_;
+    &accent_safe_for_ij('acute');
+    $_;
+}
+sub do_cmd_uml {
+    local($_) = @_;
+    &accent_safe_for_ij('uml');
+    $_;
+}
+
+sub do_cmd_accent {
+    local($_) = @_;
+    s/\s*(\d+)\s*//o;
+    local($number) = $1;
+    local($type) = $accent_type{$number};
+    #print STDERR "\ndo_cmd_accent: $number ($type) |$_|\n";    
+    if (! $type) {
+	$warnings .= "Accent number $number is unknown.\n";
+	return $_;
+    }
+    &accent_safe_for_ij($type);
+    $_;
+}
+
+sub do_cmd_ae {
+    join('', &iso_map("ae", "lig"), $_[0]);}
+sub do_cmd_AE {
+    join('', &iso_map("AE", "lig"), $_[0]);}
+sub do_cmd_aa {
+    join('', &iso_map("a", "ring"), $_[0]);}
+sub do_cmd_AA {
+    join('', &iso_map("A", "ring"), $_[0]);}
+sub do_cmd_o {
+    join('', &iso_map("o", "slash"), $_[0]);}
+sub do_cmd_O {
+    join('', &iso_map("O", "slash"), $_[0]);}
+sub do_cmd_ss {
+    join('', &iso_map("sz", "lig"), $_[0]);}
+
+sub do_cmd_pounds {
+    join('', &iso_map("pounds", ""), $_[0]);}
+sub do_cmd_S {
+    join('', &iso_map("S", ""), $_[0]);}
+sub do_cmd_copyright {
+    join('', &iso_map("copyright", ""), $_[0]);}
+sub do_cmd_P {
+    join('', &iso_map("P", ""), $_[0]);}
+
+# Modifies $_ in the caller
+sub replace_next_char {
+    local($type) = @_;
+    local($arg, $first_char);
+    ($arg) =  &get_next_pair_or_char_pr;
+    $arg =~ s/^(\w)/$first_char = $1; ''/eo;
+     $_ = join('', (&iso_map($first_char, $type) || $first_char), $arg, $_) 
+}
+
+sub brackets {
+    ($OP, $CP);
+}
+
+sub address_data {
+    local($user, $date, $_);
+    # Get author email address and current date.
+    ($user = (getpwuid ($<))[6]) =~ s/,.*//;
+    $date = (`date`) || print "Can't get current date\n";
+    chop($date);
+    ($user, $date);
+}
+
+# Given a directory name in either relative or absolute form, returns
+# the absolute form.
+sub make_directory_absolute {
+    local($path) = @_;
+    local($orig_cwd);
+    if (! ($path =~ /^\//)) {   # if $path doesn't start with '/'
+        $orig_cwd = &getcwd;
+        chdir $path;
+        $path = &getcwd;
+        chdir $orig_cwd;
+    }
+    $path;
+}
+
+#################################### LaTeX2e ##################################
+
+sub do_cmd_textbf {
+    local($_) = @_;
+    local($rest) = $_;
+    $rest =~ s/$next_pair_pr_rx//o;
+    join('',"<b>",$&,"<\/b>",$rest);
+}
+
+sub do_cmd_texttt {
+    local($_) = @_;
+    local($rest) = $_;
+    $rest =~ s/$next_pair_pr_rx//o;
+    join('',"<tt>",$&,"<\/tt>",$rest);
+}
+
+sub do_cmd_textit {
+    local($_) = @_;
+    local($rest) = $_;
+    $rest =~ s/$next_pair_pr_rx//o;
+    join('',"<i>",$&,"<\/i>",$rest);
+}
+
+sub do_cmd_textsl {
+    local($_) = @_;
+    local($rest) = $_;
+    $rest =~ s/$next_pair_pr_rx//o;
+    join('',"<i>",$&,"<\/i>",$rest);
+}
+
+sub do_cmd_textsc {
+    local($_) = @_;
+    local($rest) = $_;
+    $rest =~ s/$next_pair_pr_rx//o;
+    local($match) = $&;
+    $match =~ tr/a-z/A-Z/;
+    join('',$match,$rest);
+}
+
+sub do_cmd_emph {
+    local($_) = @_;
+    local($rest) = $_;
+    $rest =~ s/$next_pair_pr_rx//o;
+    join('',"<em>",$&,"<\/em>",$rest);
+}
+
+sub do_cmd_textsf {
+    local($_) = @_;
+    local($rest) = $_;
+    $rest =~ s/$next_pair_pr_rx//o;
+    join('',"<i>",$&,"<\/i>",$rest);
+}
+
+############################# Concessions to TeX #############################
+
+sub do_cmd_newdimen {
+    local($_) = @_;
+    local($name, $pat) = &get_next_tex_cmd;
+    &add_to_preamble("def", "\\newdimen$pat");
+    $_;
+}
+sub do_cmd_newbox {
+    local($_) = @_;
+    local($name, $pat) = &get_next_tex_cmd;
+    &add_to_preamble("def", "\\newbox$pat");
+    $_;
+}
+
+########################## Input and Include commands #########################
+
+sub do_cmd_input {
+    local($_) = @_;
+    local($file);
+    s/$next_pair_pr_rx/$file=$2;''/eo;
+    $file = &revert_to_raw_tex("\\input{$file}\n") if $file;
+    &add_to_preamble('include',$file);
+    $_;
+}
+
+sub do_cmd_include {
+    local($_) = @_;
+    local($file);
+    s/$next_pair_pr_rx/$file=$2;''/eo;
+    $file = &revert_to_raw_tex("\\include{$file}\n") if $file;
+    &add_to_preamble('include',$file);
+    $_;
+}
+
+############################ Initialization ####################################
+
+sub initialise {
+    ############################ Global variables ###############################
+    $OUT_NODE = 0;		# Used in making filenames of HTML nodes unique
+    ($O , $C, $OP, $CP) = ('<<' , '>>', '<#', '#>');	# Open/Close Markers
+    $name = 0;			# Used in the HREF NAME= field
+    $wrap_toggle = 'end';
+    $delim = '%:%';		# Delimits items of sectioning information 
+                                # stored in a string
+        
+    $cross_ref_mark = '<tex2html_cr_mark>';
+    $external_ref_mark = '<tex2html_ext_cr_mark>';
+    $cite_mark = '<tex2html_cite_mark>';
+    $bbl_mark = '<tex2html_bbl_mark>';
+    $toc_mark = '<tex2html_toc_mark>';
+    $lof_mark = '<tex2html_lof_mark>';
+    $lot_mark = '<tex2html_lot_mark>';
+    $idx_mark = '<tex2html_idx_mark>';
+    $verbatim_mark = '<tex2html_verbatim_mark>';
+    $verb_mark = '<tex2html_verb_mark>';
+    $image_mark = '<tex2html_image_mark>';
+    $mydb_mark =  '<tex2html_mydb_mark>';
+    $percent_mark = '<tex2html_percent_mark>';
+        
+    $bibitem_counter = 0;
+    $undef_mark = '<tex2html_undef_mark>';
+    
+    # This defines textual markers for all the icons 
+    # e.g. $up_visible_mark = '<tex2html_up_visible_mark>';
+    # They will be replaced with the real icons at the very end.
+    foreach $icon (keys %icons) {eval "\$$icon = '<tex2html_$icon>'"};
+
+    %declarations =
+    ('em' , 'em',
+     'it' , 'i',
+     'bf' , 'b',
+     'tt' , 'tt',
+     'sl' , 'i',		# Oops!
+     'sf' , 'i',		# Oops!
+     'boldmath' , 'b',
+     'quote', 'blockquote',
+     'quotation', 'blockquote',
+     'large', 'H5',
+     'Large', 'H4',
+     'LARGE', 'H3',
+     'huge', 'H2',
+     'Huge', 'H1',
+     %declarations		# Just in case someone extends it in the init file
+     );
+    &generate_declaration_subs;	# Generate code to handle declarations
+    
+    %section_commands =
+	('partstar' , '1' , 'chapterstar', '2', 'sectionstar', '3',
+	 'subsectionstar', '4', 'subsubsectionstar', '5', 'paragraphstar',
+	 '6', 'subparagraphstar', '7',
+	 'part' , '1' , 'chapter', '2', 'section', '3','subsection', '4',
+	 'subsubsection', '5', 'paragraph', '6', 'subparagraph', '7' ,
+	 'slidehead', '3');
+    # The tableofcontents, listoffigures, listoftables, bibliography and 
+    # tex2htmlindex are set after determining what is the outermost level
+    # in sub set_depth_levels. Appendix is implemented as a command. 
+        
+    %section_headings = 
+	('part' , 'H1' , 'chapter' , 'H1', 'section', 'H1', 'subsection', 'H2',
+	 'subsubsection', 'H3', 'paragraph', 'H4', 'subparagraph', 'H5');
+    &generate_sectioning_subs;	# Generates code to handle sectioning commands
+    %section_headings = 
+	('partstar' , 'H1' , 'chapterstar' , 'H1', 'sectionstar', 'subsectionstar',
+	 'H1', 'H2', 'subsubsectionstar', 'H3', 'paragraphstar',
+	 'H4', 'subparagraphstar', 'H5');
+    
+    # These need their own custom code but are treated as sectioning commands
+    %section_headings = 
+	('tableofcontents', 'H1', 'listoffigures', 'H1', 'listoftables', 'H1',
+	 'bibliography', 'H1', 'tex2htmlindex', 'H1', %section_headings);
+
+    &generate_accent_commands;	# Code to handle accent commands
+
+    # These are replaced as soon as the text is read in.
+    %html_specials = ('<', ';SPM_lt;' ,
+		      '>', ';SPM_gt;',
+		      '&', ';SPM_amp;',
+		      '"', ';SPM_quot;');
+    # This mapping is needed in sub revert_to_raw_tex 
+    # before passing stuff to latex for processing.
+    %html_specials_inv = ( ';SPM_lt;' ,'<',
+			  ';SPM_gt;','>',
+			  ';SPM_amp;','&',
+			  ';SPM_quot;','"');
+
+    # For some commands such as \\, \, etc it is not possible to define 
+    # perl subroutines because perl does not allow some non-ascii characters
+    # in subroutine names. So we define a table and a subroutine to relate
+    # such commands to ascii names. 
+    %normalize = ('\\', 'dbackslash',
+		  '/', 'esc_slash', "`", 'grave',
+		  "'", 'acute', "^", 'circ', '"', 'uml',
+		  '~', 'tilde', '.', 'ring', '=', 'overscore',
+		  '@', 'at');
+		  
+    # %languages_translations holds for each known language the 
+    # appropriate translation function. The function is called in
+    # slurp_input.
+    # The translation functions subtitute LaTeX macros
+    # with ISO-LATIN-1 character references
+    %language_translations =
+	('english',	'english_translation',
+	 'USenglish',   'english_translation',
+	 'original',	'english_translation',
+	 'german',	'german_translation',
+	 'austrian',	'german_translation',
+	 'french',      'french_translation'
+	 );
+        
+    # Inclusion in this list will cause a command or an environment to be ignored.
+    # This is suitable for commands without arguments and for environments.
+    # If however a do_env|cdm_<env|cmd> exists then it will be used.
+    %ignore = ('sloppypar', 1,  'document', 1,  'mbox', 1,  'newblock', 1, 
+	       ',', 1,  '@', 1, ' ', 1,  '-', 1,  'tiny', 1,  'scriptsize', 
+	       1,  'footnotesize', 1,  'small' , 1, 
+               'normalsize', 1,  'sloppy', 1,
+	       'hyphen', 1, 'titlepage', 1, 'htmlonly', 1,
+	       'flushleft', 1, 'flushright', 1, 'slide', 1, 
+	       %ignore);
+       
+    # Specify commands with arguments that should be ignored.
+    # Arbitrary code can be placed between the arguments
+    # to be executed while processing the command.
+    #
+    # Note that some commands MAY HAVE ARGUMENTS WHICH SHOULD BE LEFT AS TEXT 
+    # EVEN THOUGH THE COMMAND IS IGNORED (e.g. mbox, center, etc)
+
+&ignore_commands( <<_IGNORED_CMDS_);
+and # \$_ = join(''," - ",\$_)
+documentclass # [] # {}
+usepackage # [] # {}
+documentstyle # [] # {}
+pagestyle # {}
+thispagestyle # {}
+pagenumbering #{}
+nolinebreak# []
+pagebreak# [] # \$_ = join('',"<P>",\$_)
+nopagebreak #[]
+mbox
+makebox# []# []  
+newsavebox# {}
+sbox# {}
+savebox# {}# []# [] 
+usebox # {}
+newlength# {}
+setlength# {}# {}
+addtolength# {}# {}
+settowidth# {}# {}
+newlength # {}
+hspace # {}# &ignore_numeric_argument 
+hspacestar # {}# &ignore_numeric_argument
+vspace# {}# &ignore_numeric_argument
+vspacestar # {}# &ignore_numeric_argument
+newsavebox# {}
+samepage 
+newpage
+clearpage
+hfill
+vfill
+vfil
+vskip # &ignore_numeric_argument
+hskip # &ignore_numeric_argument
+penalty # &ignore_numeric_argument
+fill
+parindent # &ignore_numeric_argument
+nocite # {}
+bibliographystyle # {}
+center
+and
+makeindex
+marginpar
+reversemarginpar
+normalmarginpar
+markboth # {} # {}
+itemsep # &ignore_numeric_argument    
+marginparsep # &ignore_numeric_argument
+marginparwidth # &ignore_numeric_argument
+headheight # &ignore_numeric_argument 
+headsep # &ignore_numeric_argument
+textwidth # &ignore_numeric_argument
+textheight # &ignore_numeric_argument
+topskip # &ignore_numeric_argument
+footheight # &ignore_numeric_argument
+footskip  # &ignore_numeric_argument
+parskip # &ignore_numeric_argument
+baselineskip # &ignore_numeric_argument
+raise # &ignore_numeric_argument
+lower # &ignore_numeric_argument
+kern # &ignore_numeric_argument
+space 
+addcontentsline # {} # {} # {}
+addtocontents # {} # {}
+rule # [] # {} # {}
+centerline
+indent
+noindent
+oddsidemargin # &ignore_numeric_argument
+evensidemargin # &ignore_numeric_argument
+topmargin # &ignore_numeric_argument
+rightmargin # &ignore_numeric_argument
+leftmargin # &ignore_numeric_argument
+protect
+typeout # {}
+relax 
+numberline 
+string 
+ignorespaces 
+contentsline 
+bibdata
+bibstyle 
+citation 
+bibcite
+newfont # {} # {}
+end # {}
+addvspace # {} # &ignore_numeric_argument
+hyphenation # {}
+html
+citeauthoryear
+psfigurepath # {}
+pssilent
+psdraft
+global
+bgroup
+egroup
+_IGNORED_CMDS_
+
+    # Commands which need to be passed, ALONG WITH THEIR ARGUMENTS, to TeX.
+    # Note that this means that the arguments should *not* be translated,
+    # This is handled by wrapping the commands in the dummy tex2html_wrap
+    # environment before translation begins ...
+
+    # Also it can be used to specify environments which may be defined
+    # using do_env_* but whose contents will be passed to LaTeX and
+    # therefore should not be translated.
+
+    # Note that this code squeezes spaces out of the args of psfig;
+    # that's what the last round did ...
+
+    # The ugliness involving \special is there because a TeX file with
+    # a \special and nothing else in it generates no .dvi file (arguably
+    # a bug in my version of TeX).  So, we throw on a useless space ...
+
+
+    &process_commands_in_tex (<<_RAW_ARG_CMDS_);
+psfig # {} # \$args =~ s/ //g;
+fbox # {}
+framebox # [] # [] # {}
+parbox # [] # {} # {}
+special # {} 
+dag
+ddag
+l
+L
+oe
+OE
+_RAW_ARG_CMDS_
+    
+
+# This maps the HTML mnemonic names for the ISO-LATIN-1 character references
+# to their numeric values. When converting latex specials characters to
+# ISO-LATIN-1 equivalents I use the numeric values because this makes any
+# conversion back to latex (using revert_raw_tex) more reliable (in case
+# the text contains "&mnemonic_name"). Errors may occur if an environment
+# passed to latex (e.g. a table) contains the numeric values of character
+# references.
+
+%iso_latin1_character_map
+    = (				
+       'AElig', '&#198;', 	# capital AE diphthong (ligature) 
+       'Aacute', '&#193;', 	# capital A, acute accent 
+       'Acirc', '&#194;', 	# capital A, circumflex accent 
+       'Agrave', '&#192;', 	# capital A, grave accent 
+       'Aring', '&#197;', 	# capital A, ring 
+       'Atilde', '&#195;', 	# capital A, tilde 
+       'Auml', '&#196;', 	# capital A, dieresis or umlaut mark   
+       'Ccedil', '&#199;', 	# capital C, cedilla 
+       'ETH', '&#208;', 	# capital Eth, Icelandic 
+       'Eacute', '&#201;', 	# capital E, acute accent 
+       'Ecirc', '&#202;', 	# capital E, circumflex accent 
+       'Egrave', '&#200;', 	# capital E, grave accent 
+       'Euml', '&#203;', 	# capital E, dieresis or umlaut mark 
+       'Iacute', '&#205;', 	# capital I, acute accent 
+       'Icirc', '&#206;', 	# capital I, circumflex accent 
+       'Igrave', '&#204;', 	# capital I, grave accent 
+       'Iuml', '&#207;', 	# capital I, dieresis or umlaut mark 
+       'Ntilde', '&#209;', 	# capital N, tilde 
+       'Oacute', '&#211;', 	# capital O, acute accent 
+       'Ocirc', '&#212;', 	# capital O, circumflex accent 
+       'Ograve', '&#210;', 	# capital O, grave accent 
+       'Oslash', '&#216;', 	# capital O, slash 
+       'Otilde', '&#213;', 	# capital O, tilde 
+       'Ouml', '&#214;', 	# capital O, dieresis or umlaut mark 
+       'THORN', '&#222;', 	# capital THORN, Icelandic 
+       'Uacute', '&#218;', 	# capital U, acute accent 
+       'Ucirc', '&#219;', 	# capital U, circumflex accent 
+       'Ugrave', '&#217;', 	# capital U, grave accent 
+       'Uuml', '&#220;', 	# capital U, dieresis or umlaut mark 
+       'Yacute', '&#221;', 	# capital Y, acute accent 
+       'aacute', '&#225;', 	# small a, acute accent 
+       'acirc', '&#226;', 	# small a, circumflex accent 
+       'aelig', '&#230;', 	# small ae diphthong (ligature) 
+       'agrave', '&#224;', 	# small a, grave accent 
+       'amp', '&amp;', 	# ampersand 
+       'aring', '&#229;', 	# small a, ring 
+       'atilde', '&#227;', 	# small a, tilde 
+       'auml', '&#228;', 	# small a, dieresis or umlaut mark 
+       'ccedil', '&#231;', 	# small c, cedilla 
+       'eacute', '&#233;', 	# small e, acute accent 
+       'ecirc', '&#234;', 	# small e, circumflex accent 
+       'egrave', '&#232;', 	# small e, grave accent 
+       'eth', '&#240;', 	# small eth, Icelandic 
+       'euml', '&#235;', 	# small e, dieresis or umlaut mark 
+       'gt', '&#62;', 	# greater than 
+       'iacute', '&#237;', 	# small i, acute accent 
+       'icirc', '&#238;', 	# small i, circumflex accent 
+       'igrave', '&#236;', 	# small i, grave accent 
+       'iuml', '&#239;', 	# small i, dieresis or umlaut mark 
+       'lt', '&lt;', 	# less than 
+       'ntilde', '&#241;', 	# small n, tilde 
+       'oacute', '&#243;', 	# small o, acute accent 
+       'ocirc', '&#244;', 	# small o, circumflex accent 
+       'ograve', '&#242;', 	# small o, grave accent 
+       'oslash', '&#248;', 	# small o, slash 
+       'otilde', '&#245;', 	# small o, tilde 
+       'ouml', '&#246;', 	# small o, dieresis or umlaut mark 
+       'szlig', '&#223;', 	# small sharp s, German (sz ligature) 
+       'thorn', '&#254;', 	# small thorn, Icelandic 
+       'uacute', '&#250;', 	# small u, acute accent 
+       'ucirc', '&#251;', 	# small u, circumflex accent 
+       'ugrave', '&#249;', 	# small u, grave accent 
+       'uuml', '&#252;', 	# small u, dieresis or umlaut mark 
+       'yacute', '&#253;', 	# small y, acute accent 
+       'yuml', '&#255;',	# small y, dieresis or umlaut mark
+
+# These do not have HTML mnemonic names ...
+       'pounds', '&#163;',	# pound sign
+       'S', '&#167;',		# section mark
+       'copyright', '&#169;',	# copyright mark
+       'P', '&#182;',		# paragraph mark
+       'questacute', '&#191;',	# question mark - upside down
+       'exclamacute', '&#161;',	# exclamation mark - upside down
+
+# These are character types without arguments ...
+       'grave' , "`",
+       'acute' , "&#180;",
+       'circ', '^',
+       'tilde', '&#126;',
+       'ring', '&#183;',
+       'overscore' , '&#175;',
+       'H', "&#180;&#180;",
+       'cedil', "&#184;"
+       );
+
+# Global variable $iso_latin1_character_map_inv
+
+%iso_latin1_character_map_inv =
+    (
+     '&#198;' , '\AE',
+     '&#193;' , '\'{A}',
+     '&#194;' , '\^{A}',
+     '&#192;' , '\`{A}',
+     '&#197;' , '\AA',
+     '&#195;' , '\~{A}',
+     '&#196;' , '\"{A}',
+     '&#199;' , '\c{C}',
+     '&#201;' , '\'{E}',
+     '&#202;' , '\^{E}',
+     '&#200;' , '\`{E}',
+     '&#203;' , '\"{E}',
+     '&#180;' , "'",
+     '&#205;' , '\'{I}',
+     '&#206;' , '\^{I}',
+     '&#204;' , '\`{I}',
+     '&#207;' , '\"{I}',
+     '&#209;' , '\~{N}',
+     '&#211;' , '\'{O}',
+     '&#212;' , '\^{O}',
+     '&#210;' , '\'{O}',
+     '&#216;' , '\O',
+     '&#213;' , '\~{O}',
+     '&#214;' , '\"{O}',
+     '&#182;' , '\P',		
+     '&#167;' , '\S',
+     '&#218;' , '\'{U}',
+     '&#219;' , '\^{U}',
+     '&#217;' , '\`{U}',
+     '&#220;' , '\"{U}',
+     '&#221;' , '\'{Y}',
+     '&#225;' , '\'{a}',
+     '&#226;' , '\^{a}',
+     '&#230;' , '\ae',
+     '&#224;' , '\`{a}',
+     '&amp;' , '&',
+     '&#229;' , '\^{a}',
+     '&#227;' , '\~{a}',
+     '&#228;' , '\"{a}',
+     '&#231;' , '\c{c}',
+     '&#184;' , '\c',
+     '^' , '\^{}',
+     '&#169;' , '\copyright',
+     '&#233;' , '\'{e}',
+     '&#234;' , '\^{e}',
+     '&#232;' , '\`{e}',
+     '&#240;' , '\v{o}',
+     '&#235;' , '\"{e}',
+     '&#161;' , '!`',
+     '&#62;' , '>',
+     '&#237;' , '\'{i}',
+     '&#238;' , '\^{i}',
+     '&#236;' , '\`{i}',
+     '&#239;' , '\"{i}',
+     '&lt;' , '<',
+     '&#241;' , '\~{n}',
+     '&#243;' , '\'{o}',
+     '&#244;' , '\^{o}',
+     '&#242;' , '\`{o}',
+     '&#248;' , '\o',
+     '&#245;' , '\~{o}',
+     '&#246;' , '\"{o}',
+     '&#175;' , '\={}',
+     '&#163;' , '\pounds',
+     '&#191;' , '?`',
+     '&#183;' , '\^{}',
+     '&#223;' , '\ss',
+     '&#126;' , '\~{}',
+     '&#250;' , '\'{u}',
+     '&#251;' , '\^{u}',
+     '&#249;' , '\`{u}',
+     '&#252;' , '\"{u}',
+     '&#253;' , '\'{y}',
+     '&#255;' , '\"{y}'
+);
+   
+	
+    ################### Frequently used regular expressions ###################
+    # $1 : preamble  
+    
+    $preamble_rx = "(^[\\s\\S]*)\\\\begin\\s*$O\\d+$C\\s*document\\s*$O\\d+$C";
+
+    # \d (number) should sometimes also be a delimiter but this causes
+    # problems with command names  that are allowed to contain numbers (eg tex2html)
+    # \d is a delimiter with commands which take numeric arguments?
+    $delimiters = '\'\\s[\\]\\\\<>(=).,#;:~\/!-';
+    $delimiter_rx = "([$delimiters])";
+    
+    # $1 : br_id
+    # $2 : <environment>
+    $begin_env_rx = "[\\\\]begin\\s*$O(\\d+)$C\\s*([^$delimiters]+)\\s*$O\\1$C\\s*";
+
+    $match_br_rx = "\\s*$O\\d+$C\\s*";
+
+    $optional_arg_rx = "^\\s*\\[([^]]+)\\]";	# Cannot handle nested []s!
+    
+    # Matches a pair of matching brackets
+    # $1 : br_id
+    # $2 : contents
+    $next_pair_rx = "^[\\s%]*$O(\\d+)$C([\\s\\S]*)$O\\1$C";
+    $any_next_pair_rx = "$O(\\d+)$C([\\s\\S]*)$O\\1$C";
+    $any_next_pair_rx4 = "$O(\\d+)$C([\\s\\S]*)$O\\4$C";
+    $any_next_pair_rx5 = "$O(\\d+)$C([\\s\\S]*)$O\\5$C";
+
+    # $1 : br_id
+    $begin_cmd_rx = "$O(\\d+)$C";
+    
+    # $1 : largest argument number
+    $tex_def_arg_rx = "^[#0-9]*#([0-9])$O";
+
+    # $1 : declaration or command or newline (\\)
+    $cmd_delims = q|-#,.~/\'`^"=|;	# Commands which are also delimiters!
+    # The tex2html_dummy is an awful hack ....
+    $single_cmd_rx = "\\\\([$cmd_delims]|[^$delimiters]+|\\\\|(tex2html_dummy))"; 
+    
+    # $1 : description in a list environment
+    $item_description_rx =
+	"\\\\item\\s*[[]\\s*((($any_next_pair_rx4)|([[][^]]*[]])|[^]])*)[]]";
+    
+
+    $fontchange_rx = 'rm|em|bf|it|sl|sf|tt';
+
+    # Matches the \caption command
+    # $1 : br_id
+    # $2 : contents
+    $caption_rx = "\\\\caption\\s*([[]\\s*((($any_next_pair_rx5)|([[][^]]*[]])|[^]])*)[]])?$O(\\d+)$C([\\s\\S]*)$O\\8$C";
+
+    # Matches the \htmlimage command
+    # $1 : br_id
+    # $2 : contents
+    $htmlimage_rx = "\\\\htmlimage\\s*$O(\\d+)$C([\\s\\S]*)$O\\1$C";
+
+    # Matches a pair of matching brackets
+    # USING PROCESSED DELIMITERS;
+    # (the delimiters are processed during command translation)
+    # $1 : br_id
+    # $2 : contents
+    $next_pair_pr_rx = "^[\\s%]*$OP(\\d+)$CP([\\s\\S]*)$OP\\1$CP";
+    $any_next_pair_pr_rx = "$OP(\\d+)$CP([\\s\\S]*)$OP\\1$CP";
+    
+    # This will be used to recognise escaped special characters as such
+    # and not as commands
+    $latex_specials_rx = '[\$]|&|%|#|{|}|_';
+
+    # This is used in sub revert_to_raw_tex before handing text to be processed
+    # by latex. 
+    $html_specials_inv_rx = join("|", keys %html_specials_inv);
+
+    # This is also used in sub revert_to_raw_tex
+    $iso_latin1_character_rx = '(&#\d+;)';
+
+    # Matches a \begin or \end {tex2html_wrap}. Also used be revert_to_raw_tex
+    $tex2html_wrap_rx = '[\\\\](begin|end)\s*{\s*tex2html_wrap[_a-z]*\s*}';
+
+    $meta_cmd_rx = '[\\\\](renewcommand|renewenvironment|newcommand|newenvironment|newtheorem|def)';
+
+    # Matches counter commands - these are caught ealry and are appended to the 
+    # file that is passed to latex.
+    $counters_rx = "[\\\\](newcounter|addtocounter|setcounter|refstepcounter|stepcounter|arabic|roman|Roman|alph|Alph|fnsymbol)$delimiter_rx";
+
+    # Matches a label command and its argument
+    $labels_rx = "[\\\\]label\\s*$O(\\d+)$C([\\s\\S]*)$O\\1$C";
+
+    # Matches environments that should not be touched during the translation
+    $verbatim_env_rx = "\\s*{(verbatim|rawhtml|LVerbatim)[*]?}";
+
+    # Matches icon markers
+    $icon_mark_rx = "<tex2html_(" . join("|", keys %icons) . ")>";
+
+}
+
+# Frequently used regular expressions with arguments
+sub make_end_env_rx {
+    local($env) = @_;
+    $env = &escape_rx_chars($env);
+    "[\\\\]end\\s*$O(\\d+)$C\\s*$env\\s*$O\\1$C";
+}
+
+sub make_begin_end_env_rx {
+    local($env) = @_;
+    $env = &escape_rx_chars($env);
+    "[\\\\](begin|end)\\s*$O(\\d+)$C\\s*$env\\s*$O\\2$C(\\s*\$)?";
+}
+
+sub make_end_cmd_rx {
+    local($br_id) = @_;
+    "$O$br_id$C";
+}
+sub make_new_cmd_rx {
+    "[\\\\](". join("|", keys %new_command) . ")" 
+	if each %new_command;
+}
+
+sub make_new_env_rx {
+    local($where) = @_;
+    $where = &escape_rx_chars($where);
+   "[\\\\]$where\\s*$O(\\d+)$C\\s*(".
+       join("|", keys %new_environment) . 
+	   ")\\s*$O\\1$C\\s*"
+	       if each %new_environment;
+}
+
+sub make_sections_rx {
+    local($section_alts) = &get_current_sections;
+    # $section_alts includes the *-forms of sectioning commands
+    $sections_no_delim_rx = "\\\\($section_alts)";
+    $sections_rx = "\\\\($section_alts)$delimiter_rx"
+}
+
+sub make_order_sensitive_rx {
+    local(@theorem_alts, $theorem_alts);
+    @theorem_alts = ($preamble =~ /\\newtheorem\s*{([^\s}]+)}/og);
+    $theorem_alts = join('|',@theorem_alts);
+    $order_sensitive_rx =
+        "(equation|eqnarray|caption|ref|counter|\\\\the|\\\\stepcounter" .
+        "|\\\\arabic|\\\\roman|\\\\Roman|\\\\alph|\\\\Alph|\\\\fnsymbol)";
+    $order_sensitive_rx =~ s/\)/|$theorem_alts)/ if $theorem_alts;
+}
+
+sub make_language_rx {
+    local($language_alts) = join("|", keys %language_translations);
+    $setlanguage_rx = "\\\\setlanguage{\\\\($language_alts)}";
+    $language_rx = "\\\\($language_alts)TeX";
+}
+
+sub make_raw_arg_cmd_rx {
+    # $1 : commands to be processed in latex (with arguments untouched)
+    $raw_arg_cmd_rx = "\\\\(" . &get_raw_arg_cmds . ")([$delimiters]+|\\\\|#|\$)";
+}
+
+# Creates an anchor for its argument and saves the information in 
+# the array %index;
+# In the index the word will use the beginning of the title of
+# the current section (instead of the usual pagenumber).
+# The argument to the \index command is IGNORED (as in latex)
+sub make_index_entry {
+    local($br_id,$str) = @_;
+    # If TITLE is not yet available (i.e the \index command is in the title of the
+    # current section), use $ref_before.
+    $TITLE = $ref_before unless $TITLE;
+    # Save the reference
+    $str = "$str###" . ++$global{'max_id'}; # Make unique 
+    $index{$str} .= &make_half_href("$CURRENT_FILE#$br_id");
+    "<A NAME=$br_id>$anchor_invisible_mark<\/A>";
+}
+
+sub image_message {
+    print <<_EOM_
+
+To resolve the image conversion problems please consult
+the "Troubleshooting" section of your local User Manual 
+or follow the links to it at
+http://cbl.leeds.ac.uk/nikos/tex2html/doc/latex2html/latex2html.html
+
+_EOM_
+}
+
+sub image_cache_message {
+   print <<_EOM_
+
+If you are having problems displaying the correct images with Mosaic,
+try selecting "Flush Image Cache" from "Options" in the menu-bar 
+and then reload the HTML file.
+_EOM_
+
+}
+   
+###############################################################
+
+    # These next few lines are legal in both Perl and nroff.
+
+.00;                       # finish .ig
+ 
+'di           \" finish diversion--previous line must be blank
+.nr nl 0-1    \" fake up transition to first page again
+.nr % 0         \" start at page 1
+'; __END__ ##### From here on it's a standard manual page - VERSION #####
+.TH LaTeX2HTML 1 
+.AT 3
+.SH NAME
+latex2html \- translate LaTeX files to HTML (HyperText Markup Language)
+.SH SYNOPSIS
+.B 
+
+latex2html   
+   [-split num] 
+   [-link num]    
+   [-nolatex] 
+   [-external_images] 
+   [-ps_images] 
+   [-ascii_mode] 
+   [-t top_page_title] 
+   [-dir output_directory] 
+   [-address author_address] 
+   [-no_navigation] 
+   [-top_navigation] 
+   [-bottom_navigation]  
+   [-auto_navigation]  
+   [-index_in_navigation]  
+   [-contents_in_navigation]  
+   [-next_page_in_navigation] 
+   [-previous_page_in_navigation] 
+   [-info string] 
+   [-dont_include file(s)] 
+   [-reuse]
+   [-no_images]
+   [-images_only]
+   [-show_section_numbers] 
+   [-init_file Perl file] 
+   [-h ] 
+   file(s)
+
+
+.SH DESCRIPTION
+.I LaTeX2HTML
+is a Perl program that translates LaTeX source files into HTML. For each source 
+file given as an argument the translator will create a directory containing the 
+corresponding HTML files. 
+See the WWW online documentation or the <latex2htmldir>/doc/manual.ps 
+file for more detailed information and examples.
+
+.SH PROBLEMS
+For information on various problems and remedies see the WWW online documentation
+or the documents available in the distribution. An online bug reporting
+form and various archives are available at 
+http://cbl.leeds.ac.uk/nikos/tex2html/doc/latex2html/latex2html.html
+  
+.SH AUTHOR
+Nikos Drakos,  Computer Based Learning Unit, University of Leeds 
+<nikos@cbl.leeds.ac.uk>. Several people have contributed suggestions,
+ideas, solutions, support and
+encouragement.  
+
+The pstogif script uses the pstoppm.ps
+postscript program originally written by Phillip Conrad (Perfect Byte, Inc.)
+and modified by L.  Peter Deutsch (Aladdin Enterprises).  
+cd

@@ -1,0 +1,213 @@
+#!/usr/local/bin/perl
+
+# LaTeX2HTML Version 95 : install_test
+
+# This perl script substitutes the variable $LATEX2HTMLDIR in the main
+# latex2html script with the actual path to the latex2html distribution 
+# files. It then tests for the availability of the external support programs.
+
+# To do the installation manually:
+# (1) Edit the file latex2html.config to set the correct pathnames where 
+#     necessary
+# (2) Put the path to the latex2html source files in the variable 
+#     $LATEX2HTMLDIR in the main latex2html script 
+#     OR
+#     set an environment variable LATEX2HTMLDIR to point to the latex2html 
+#     source files.
+ 
+# Read latex2html.config to get the value of $LATEX2HTML
+&read_config_file;
+
+# Substitute the variable $LATEX2HTMLDIR
+print "\nMain script installation was " . (&substitute_dir_variable ? "" : "not ") .
+    "successful.\n\n";
+
+print "Testing availability of external programs...\n\n";
+&test_external_programs;
+
+sub read_config_file {
+    &deal_with_forward_references;
+    require("latex2html.config") if
+	((-f "latex2html.config") ||
+	 die "Could not find file latex2html.config\n");
+}
+
+# Changes lines of the form:
+# $LATEX2HTMLDIR = <SOMETHING> 
+# to
+# $LATEX2HTMLDIR = <current value of $LATEX2HTMLDIR> 
+sub substitute_dir_variable {
+    local($SUCCESS) = 0;
+    if ( (-f "$LATEX2HTMLDIR/latex2html") ||
+	die "\nCannot find $LATEX2HTMLDIR/latex2html\nPlease check the value of \$LATEX2HTMLDIR in latex2html.config\n") {
+	open(IN, "<$LATEX2HTMLDIR/latex2html")
+	    || die "Cannot open $LATEX2HTMLDIR/latex2html";
+	rename("$LATEX2HTMLDIR/latex2html","$LATEX2HTMLDIR/latex2html.bak");
+	open(OUT, ">$LATEX2HTMLDIR/latex2html")
+	    || die "Cannot open $LATEX2HTMLDIR/latex2html";
+	chmod 0755, "$LATEX2HTMLDIR/latex2html";
+	while (<IN>) {
+	    s/\$LATEX2HTMLDIR\s*=.*$/
+		do {$SUCCESS = 1;
+		    "\$LATEX2HTMLDIR='$LATEX2HTMLDIR';" .
+		    "# Inserted by installation script"}/eo;
+	    print OUT;
+	}
+	close IN;
+	close OUT;
+    }
+    $SUCCESS && (! &look_for("$LATEX2HTMLDIR/latex2html","exec",
+			     "LaTeX2HTML program in $LATEX2HTMLDIR"));
+}
+
+sub deal_with_forward_references {
+    foreach ("ignore_commands", "process_commands_in_tex") {
+	eval "sub $_ {}"}
+}
+
+sub test_external_programs {
+    local ($nolatex2html, $version, $revision, $nopic, $nojust, $tmp) = (0,0);
+    # Perl
+    $_ = `perl -v`;
+    s/Version\s*([\d\.]+)/$version = $1;/eio;
+    s/Revision:\s*([\d\.]+)/$revision = $1;/eio;
+    s/Patch level:\s*(\d+)/$patch = $1;/eio;
+    if ( ($patch && ($patch < 36) ) && (! ($version >= 5))) {
+	print "\n*** ERROR: You are using Perl $revision at Patch level $patch.\n".
+	    "\nThis may cause problems." .
+		"Please upgrade to version 4 at patch level 36\n\n";}
+    elsif ((! $patch)  && (! ($version >= 5))) {
+	print "Warning: Please make sure your Perl is at least version 4 at patch level 36.".
+	    "\nI was unable to verify this.\n\n";}
+    elsif ($patch) {
+	print "Perl version $revision at patch level $patch is OK.\n\n"}
+    elsif ($version) {
+   	print "Perl version $version is OK. \n\n"}
+
+    print "\n*** ERROR: Will not be able to run latex2html: ".
+	"Cannot find texexpand.\n\n"
+	    if ($nolatex2html = &look_for($TEXEXPAND, "exec", "texexpand"));
+
+    print "Checking for availability of DBM or NDBM (Unix DataBase Management)...\n";
+    print "*** ERROR: $@ \nYou will not be able to use latex2html.\n\n"
+	if  (eval 'dbmopen(%array, "DBM.tst",0755)' && $@);
+    # If there was no error, but we *cannot* write to DBM
+    if ((! $@) && eval "\$array{'abc'}=123" && $@) {
+	print "*** ERROR: $@ \nYou will not be able to use latex2html.\n\n"}
+    else {
+	dbmclose(%array);
+	unlink ('DBM.tst.dir', 'DBM.tst.pag');
+	print "DBM was found.\n\n";
+    }
+	
+    $_ = &get_first_line_of_stderr("$DVIPS -f DUMMY");
+    s/dvipsk?\s*([\d\.]+)/$version = $1;/eo;
+    $patch = $version;
+    if ($patch && ($patch < 5.516)) {
+	$nopic = 1;
+	print "\n*** Warning: You are using DVIPS $version.".
+	    "\nThis may cause problems when generating inlined images" .
+            "\nif your DVIPS does not support the command line options".
+            "\n-S, -i and -o".
+            "\nSee the manual for more details.\n\n";}
+    elsif (! $patch) {
+	print "Warning: Please make sure that your version of DVIPS".
+              "\nsupports the command line options -S, -i and -o.".
+	      "\nI was unable to verify this.\n\n";}
+    else {
+	print "DVIPS version $version is OK.\n\n"}
+   
+    $nopic = &look_for($PSTOGIF,"util", "pstogif");
+    foreach ($LATEX, $ENV{'GS'},$ENV{'PSTOPPM'},
+	     $ENV{'PNMCROP'}, $ENV{'PPMTOGIF'}) {
+	$tmp = &look_for($_, "util", $_);
+	$nopic = $tmp unless $nopic;
+    }
+    
+    print "Warning: May not be able to convert equations, figures, tables ".
+	"\nand unknown environments to inlined images.\n\n" if $nopic;
+
+    $gs = $ENV{'GS'};
+    $_ = `$gs -v`;
+    $version = 0;
+    s/version\s*([\d\.]+)/$version = $1;/eio;
+    if ($version ge 3.0) {
+	print "You are using GS version $version\n".
+	    "Updating pstoppm.ps in latex2html.config...\n";
+	print `perl -pi.bak -e "s/pstoppm.ps/pstoppm3.ps/;" latex2html.config`;
+	print "Done.\n\n";
+    }
+
+    print "Warning: Could not find 'giftrans'. Equations and other inlined images ".
+	"\nwill have ugly white backgrounds.\n\n"
+	    if ((! $USENETPBM)  &&
+		($not_found = &look_for($GIFTRANS, "util", "Giftrans")));
+
+    do {$_ = &get_first_line_of_stderr("$GIFTRANS")} if (-x $GIFTRANS);
+    print "Warning: Cannot find GIFTRANS or GIFTRANS does not accept the -t option."
+	if ((! $USENETPBM) && (! $not_found) && (! /-t/));
+    
+    foreach ($GIFTOPPM, $PNMFILE, $PNMTILE, $PNMCAT) {
+	$tmp = &look_for($_, "util", $_);
+	$nojust = $tmp unless $nojust;
+    }
+    
+    print "Warning: Will not be able to right justify equations.\n\n" if $nojust;
+    print "Warning: Please check the relevant pathnames in latex2html.config.\n\n"
+	if ($nojust || $nopic || $nolatex2html);
+
+    print "Warning: Will not be able to deal with some style files.\n\n"
+	if &look_for($LATEX2HTMLSTYLES, "dir", "Styles directory");
+}
+
+sub look_for {
+    local($what,$type, $name) = @_;
+    local($fail,$_);
+    if (($type eq "exec") && (! -x $what)) {
+	print "Making $what executable...\n\n";
+	chmod 0755, $what;
+	if (! -x $what) {
+	    $fail = "Error: Could not make $what executable.\n\n";
+	}
+    }
+    elsif (($type eq "util") && (! -f $what)) {
+	print "Looking for $name...\n";
+	$_ = `sh -c "type  $what"`;
+	chop;
+	if ((/no /) || (/not found/) || (/^\s*$/)) {
+	    $fail = "Warning: $name was * NOT * found.\n\n";}
+	else {
+	    $what = $_;}
+    }
+    elsif (($type eq "dir") && (! -d $what)) {
+	$fail = "Error: directory $name was * NOT * found.\n\n";
+    }
+    ($fail ? print $fail : print "$name was found.\n\n");
+    $fail;
+}	
+	
+# Page 164 of the Camel book.     
+sub get_first_line_of_stderr {
+    local($prog) = @_[0];
+    open(SO, ">&STDOUT");
+    open(SE, ">&STDERR");
+
+    open(STDOUT, ">/tmp/foo$$");
+    open(STDERR,">&STDOUT");
+
+    select(STDERR); $| = 1;
+    select(STDOUT); $| = 1;
+
+    `$prog`;
+
+    close(STDOUT);
+    close(STDERR);
+
+    open(STDOUT, ">&SO");
+    open(STDERR, ">&SE");
+
+    open(FOO,"</tmp/foo$$");
+    $_ = <FOO> ;
+    close(FOO);
+    $_;
+}

@@ -1,0 +1,7 @@
+total 15
+-rw-rw-r--   1 ctan     system       341 Jan 20 06:14 00Contents
+-rw-r--r--   1 ctan     TeX         1072 Jan 19 15:23 changebar.perl
+-rw-r--r--   1 ctan     TeX         1084 Jan 19 15:23 french.perl
+-rw-r--r--   1 ctan     TeX         2705 Jan 19 15:23 german.perl
+-rw-r--r--   1 ctan     TeX         2538 Jan 19 15:23 html.perl
+-rw-r--r--   1 ctan     TeX         3353 Jan 19 15:23 makeidx.perl
