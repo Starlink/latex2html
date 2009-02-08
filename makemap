@@ -1,0 +1,102 @@
+#!/usr/local/bin/perl
+
+### File:  makemap
+### Written by Herbert W. Swan <dprhws@edp.Arco.com>
+### Version 1.0,  December 22, 1995
+### This is part of the 96.1 release of LaTeX2HTML by Nikos Drakos
+
+## Copyright (C) 1995 by Herbert W. Swan
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+#  LaTeX2HTML image map script
+#
+
+#  NOTE:  The following configuration variable MUST be set to either
+#	"NCSA" or "CERN" to reflect the type of server you are using.
+$SERVER = "NCSA";
+
+#
+#  Get the command-line arguments:
+#
+die "Usage:  makemap map_template [dest_directory]\n" unless @ARGV;
+$template_file = $ARGV[0];
+$dest_dir = ".";
+$dest_dir = $ARGV[1] if ($#ARGV >= 1);
+# print $#ARGV, ":", $dest_dir, "\n";
+$map_file = "";
+$Date = `date`;
+#
+#  Next, try to open the template file.
+#
+open (TEMPLATE, "<$template_file") || die "Can't open $template_file\n";
+while (<TEMPLATE>) {
+    next if (/(^#|^\s*$)/);		# Ignore comments;
+#
+#  Associate the contents of a labels.pl file with a URL.
+#
+    if (/^\+(\S+)\s+(\S+)/) {
+	$labels = "${1}labels.pl";
+	$URL    = $2;
+	open (LABELS, "<$labels") || die "Can't open $labels\n";
+	while (<LABELS>) {
+	    eval if (/^\$/);
+	    }
+	close (LABELS);
+	next;
+	}
+#
+#  Proceed to the next map file.
+#
+    elsif (/(\S*):\s*$/) {
+	close (MAP) if (length($map_file));
+	$map_file = "$dest_dir/$1";
+	open (MAP, ">$map_file") || 
+	    die "Can't open $map_file for output.";
+	print (MAP "# Created by makemap 1.0\n");
+	print (MAP "# ", $Date);
+	print (MAP "#\n\n\n");
+	next;
+	}
+#
+#  Continue mapping coordinates to URL's:
+#
+    else {
+	$url = $_;
+	@array = split(/[ \t\n]+/);
+	$op    = @array[1];
+	if (!/\//) {
+	    ($symbol = @array[0]) =~ s/://g;
+	    $url = $symbol unless ($url = $external_labels{$symbol});
+	    next unless $url;
+	    if ($SERVER eq "NCSA") {
+		print MAP ("$op $url @array[2..$#array]\n");
+		}
+	    else {
+		print MAP ("$op @array[2..$#array] $url\n");
+		}
+	    }
+#
+#  Explicit URL's simply get copied.
+#
+	else {
+	    print MAP ("$op @array[0] @array[2..$#array]\n");
+	    }
+	}
+    }
+#
+#  EOF on input.  Finish up.
+#
+
+close (TEMPLATE);
+close (MAP) if (length($map_file));

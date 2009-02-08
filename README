@@ -1,4 +1,4 @@
-LaTeX2HTML Version 95 : README
+LaTeX2HTML Version 96.1 : README
 
 Contents
 ********
@@ -51,28 +51,27 @@ The translator:
 Pointers to the User Manual
 ***************************
 
-The latex2html program includes its own manual page. 
+The LaTeX2HTML program includes its own manual page. 
 The manual page can be viewed by saying %nroff -man latex2html.  
 
 See the online documentation at 
-http://cbl.leeds.ac.uk/nikos/tex2html/doc/latex2html/latex2html.html
-or the <latex2htmldir>/doc/latex2html.tex 
-file for more information and examples.
+http://www-dsed.llnl.gov/files/programs/unix/latex2html/manual/
+or the doc/latex2html.tex file for more information and examples.
 
 See below on how to make your own local copy of the manual in HTML.
 
 Requirements
 ************
 
-  Please consult the section "Requirements" of the online manual at
-http://cbl.leeds.ac.uk/nikos/tex2html/doc/manual/manual.html
+Please consult the section "Requirements" of the online manual at
+http://www-dsed.llnl.gov/files/programs/unix/latex2html/manual/
 for more information as well as *active* links to any utilities
 that you may require. You may use Archie to find the source code 
 of any utilities you might need. Archie is at 
 http://hoohoo.ncsa.uiuc.edu/cgi-bin/archie.html
 
-The requirements for using LaTeX2HTML
-depend on the kind of translation it is asked to perform as follows: 
+The requirements for using LaTeX2HTML depend on the kind of
+translation it is asked to perform as follows: 
 
  1. LaTeX commands but without equations, figures, tables, etc. 
     o Perl (version 4.0 - RCSfile: perl.c,v - Revision: 4.0.1.8 -
@@ -88,9 +87,10 @@ depend on the kind of translation it is asked to perform as follows:
 
  2. LaTeX commands with equations, figures, tables, etc. 
    As above plus 
-    o latex, 
+    o latex (version 2e recommended but 2.09 acceptable), 
     o dvips (version 5.516 or later) or dvipsk. 
-    o gs (Ghostscript version 2.6.1 or later). 
+    o gs (Ghostscript version 2.6.1 or later), with the ppmraw
+      device driver. 
     o The pbmplus OR netpbm library. Some of the filters in
       those libraries are used during the postscript to GIF conversion.
 
@@ -118,15 +118,15 @@ Installation
 ************
 
 Please consult the section "Installing LaTeX2HTML" of the online manual at
-http://cbl.leeds.ac.uk/nikos/tex2html/doc/manual/manual.html
+http://www-dsed.llnl.gov/files/programs/unix/latex2html/manual/
 for more information.
 
 To install LaTeX2HTML you MUST do the following: 
 
  1. Specify where Perl is on your system. 
    In each of the files latex2html, texexpand, pstogif and 
-   install-test, modify the first line saying where Perl is on your
-   system. 
+   install-test and makemap, modify the first line saying where
+   Perl is on your system. 
 
    Some system administrators do not allow Perl programs to run as shell
    scripts. This means that you may not be able to run any of the above
@@ -143,7 +143,7 @@ To install LaTeX2HTML you MUST do the following:
 
  2. Specify where the external utilities are on your system. 
    In the file latex2html.config give the correct pathnames for
-   some directories (the latex2html directory and the pbmplus or 
+   some directories (the LaTeX2HTML directory and the pbmplus or 
    netpbm library) and some executables (latex, dvips, gs).
    Note that it is possible to use LaTeX2HTML even if you don't have
    some of the external programs. While you're at it you may want to
@@ -155,11 +155,6 @@ To install LaTeX2HTML you MUST do the following:
    (specified during the previous step) are correct. It will not actually
    install the external utilities. 
 
-   Don't forget to make install-test executable (using the 
-   chmod command) before using it if necessary. You may also need to
-   make the files pstogif, texexpand and latex2html
-   executable if install-test fails to do it for you. 
-
    If for any reason you have trouble running install-test do not
    despair. Most of what it does is to do with checking your installation
    rather than actually installing anything. To do a manual installation just
@@ -170,12 +165,57 @@ To install LaTeX2HTML you MUST do the following:
 This is enough for the main installation but you may also want to do some of
 the following: 
 
- o To use the new LaTeX commands which are defined in 
-   html.sty: 
+ o To use the new LaTeX commands which are defined in html.sty: 
    Make sure that LaTeX knows where the html.sty file is, either by
    putting it in the same place as the other style files on your system, or
    by changing your TEXINPUTS shell environment variable, or by
    copying html.sty in the same directory as as your LaTeX source file. 
+
+ o If you are a LaTeX 2.09 user, you must change the texinputs/html.sty
+   link from html2e.sty to html209.sty.  You will not be able to use
+   the document segmentation feature until you upgrade to LaTeX2e.
+
+ o Also make sure that TEXINPUTS includes ``.:..'' or LaTeX2HTML
+   won't work properly!.  On some systems, the command ``latex''
+   is really a shell script which sets some environment variables and
+   calls the real LaTeX.  If this is so, make sure that this shell
+   script sets TEXINPUTS properly.  This environment variable
+   is not to be confused with the LaTeX2HTML installation
+   variable $TEXINPUTS described next.
+
+ o The installation variable HTML_VERSION in latex2html.config causes
+   LaTeX2HTML to generate table in HTML and supports textual font
+   size changes if it is set to 3.0.  Otherwise, tables will be
+   processes in LaTeX and come out as GIF files.
+
+ o There is an installation variable in latex2html.config
+   called $TEXINPUTS, which tells LaTeX2HTML where to
+   look for LaTeX input files to process. This variable is
+   overidden by the environment variable of the same name if it is set.
+
+ o The installation variable $PK_GENERATION specifies which
+   fonts are used in the generation of mathematical equations.  A value
+   of ``0'' causes the same fonts to used as those for the default
+   printer.  Because they were designed for a printer of much greater
+   resolution than the screen, equations will generally appear to be
+   of a lower quality than is possible.  To cause LaTeX2HTML to
+   dynamically generate fonts that are designed specifically for the
+   screen, you should specify a value of ``1'' for this variable.
+   If you do, then check to see whether your version of dvips
+   supports the command line option -mode.  If it does,
+   then also set the installation variable $DVIPS_MODE to
+   a low resolution entry from modes.mf, such as `toshiba'.
+   If dvips does not support the -mode switch, then leave $DVIPS_MODE
+   undefined, and verify that the .dvipsrc file points to the
+   correct screen device and its resolution.
+
+ o On certain Linux systems it is necessary to uncomment the line
+   "use GDBM_File" in the latex2html and install-test scripts, to define
+   the interface to the database management routines.
+
+ o The makemap script also has a configuration variable,
+   $SERVER, which must be set to either "CERN" or "NCSA", depending
+   on the type of web server you are using.
 
  o To set up different initialisation files: 
    For a ``per user'' initialisation file, copy the file 
@@ -203,10 +243,89 @@ the following:
    server being operational in the first place. 
 
  o To make your own local copy of the LaTeX2HTML documentation: 
-   This will also be a good test of your installation. To do it run LaTeX2
-   HTML on the file doc/manual.tex. You will get better results if
+   This will also be a good test of your installation. To do it run
+   LaTeX2HTML on the file doc/manual.tex. You will get better results if
    you run LaTeX first on the same file in order to create some auxiliary
    files. 
+
+Troubleshooting
+***************
+
+ o Cannot run any of the Perl programs
+   -----------------------------------
+   If your Perl installation is such that Perl programs are not allowed 
+   to run as shell scripts you may be unable to run latex2html, texexpand,
+   pstogif, install-test. In this case change the first line in each of
+   these programs from
+
+   #!/usr/local/bin/perl
+   \end{verbatim}
+
+   to
+
+   \begin{verbatim}
+   : # *-*-perl-*-*
+   eval 'exec perl -S  $0 "$@"'
+   if $running_under_some_shell; 
+
+ o The install-test script gives uninformative error messages
+   ----------------------------------------------------------
+   If for any reason you have trouble running install-test,
+   do not despair. Most of what it does is to do with checking
+   your installation rather than actually installing anything.
+   To do a manual installation just change the variable
+   LATEX2HTMLDIR in the beginning of the file latex2html
+   to point to the directory where the latextohtml files can be found.
+
+   Also, make sure that the files pstogif, texexpand and latex2html
+   are executable, and if necessary use the Unix chmod command to make
+   them executable.
+
+ o It crashes (dumps core) as soon as it starts perl
+   -------------------------------------------------
+   Update your Perl 4 to patch level 36 or later (Perl 5).
+   You can check which version of Perl you are using by invoking Perl
+   with the -v option.
+
+ o It produces "out of memory" errors on reasonable small documents
+   ----------------------------------------------------------------
+   It has been reported that Perl 5.001 or later makes more efficient
+   use of memory than perl 4.036.  Upgrade to Perl 5, and see whether
+   that helps.
+
+   Try splitting your source file into more than one files using the
+   latex commands input or include. Also, use the -no_images option.
+
+   As a last resort you may consider increasing the virtual memory
+   (swap space) of your machine. As an indication 
+   of what you might be able to do on your machine,
+   a very long book (about 1000 printed pages) required about 
+   24MB of RAM and over 150MB of swap space to convert on a local
+   Sun Sparc ELC running SunOS 4.1.3.
+
+ o It gives ``dbm'' related error messages.
+   ----------------------------------------
+   LaTeX2HTML 0.7 and later requires the Unix DataBase Management system
+   (DBM or NDBM) in order to run.  This is usually part of each Unix
+   operating system but if you don't have it then you may need to get it.
+   On Linux systems, it may be necessary to uncomment the line,
+
+   use GDBM_File;
+
+   in the files, latex2html and install-test.
+
+ o Cannot convert postscript images
+   --------------------------------
+
+   This might happen is that your shell environment variable 
+   TEXINPUTS} is undefined. This is not always 
+   fatal but if you have problems you can use full
+   pathnames for included postscript files (even when the postscript
+   files are in the same directory as the LaTeX source file).
+   Alternatively try setting TEXINPUTS to ".:..:". 
+
+A more extensive troubleshooting guide is found in the latex
+documentation included with this distribution.
 
 
 Support and More Information

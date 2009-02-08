@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 
-# LaTeX2HTML Version 95 : install_test
+# LaTeX2HTML Version 96.1 : install_test
 
 # This perl script substitutes the variable $LATEX2HTMLDIR in the main
 # latex2html script with the actual path to the latex2html distribution 
@@ -15,14 +15,18 @@
 #     set an environment variable LATEX2HTMLDIR to point to the latex2html 
 #     source files.
  
+# 
+# Uncomment the following statement if your Linux system requires it.
+# use GDBM_File;
+
 # Read latex2html.config to get the value of $LATEX2HTML
 &read_config_file;
 
 # Substitute the variable $LATEX2HTMLDIR
 print "\nMain script installation was " . (&substitute_dir_variable ? "" : "not ") .
-    "successful.\n\n";
+    "successful.\n";
 
-print "Testing availability of external programs...\n\n";
+print "Testing availability of external programs...\n";
 &test_external_programs;
 
 sub read_config_file {
@@ -68,38 +72,30 @@ sub deal_with_forward_references {
 sub test_external_programs {
     local ($nolatex2html, $version, $revision, $nopic, $nojust, $tmp) = (0,0);
     # Perl
-    $_ = `perl -v`;
-    s/Version\s*([\d\.]+)/$version = $1;/eio;
-    s/Revision:\s*([\d\.]+)/$revision = $1;/eio;
-    s/Patch level:\s*(\d+)/$patch = $1;/eio;
-    if ( ($patch && ($patch < 36) ) && (! ($version >= 5))) {
-	print "\n*** ERROR: You are using Perl $revision at Patch level $patch.\n".
+    $ver = $] * 1.0;
+    $vers = sprintf("%4.3f", $ver);
+    if ($ver < 4.036) {
+    print "\n*** ERROR: You are using Perl version $vers\n".
 	    "\nThis may cause problems." .
-		"Please upgrade to version 4 at patch level 36\n\n";}
-    elsif ((! $patch)  && (! ($version >= 5))) {
-	print "Warning: Please make sure your Perl is at least version 4 at patch level 36.".
-	    "\nI was unable to verify this.\n\n";}
-    elsif ($patch) {
-	print "Perl version $revision at patch level $patch is OK.\n\n"}
-    elsif ($version) {
-   	print "Perl version $version is OK. \n\n"}
+		"Please upgrade to version 4 at patch level 36\n";}
+    else {print "Perl version $vers is OK. \n"}
 
     print "\n*** ERROR: Will not be able to run latex2html: ".
-	"Cannot find texexpand.\n\n"
+	"Cannot find texexpand.\n"
 	    if ($nolatex2html = &look_for($TEXEXPAND, "exec", "texexpand"));
 
     print "Checking for availability of DBM or NDBM (Unix DataBase Management)...\n";
-    print "*** ERROR: $@ \nYou will not be able to use latex2html.\n\n"
+    print "*** ERROR: $@ \nYou will not be able to use latex2html.\n"
 	if  (eval 'dbmopen(%array, "DBM.tst",0755)' && $@);
     # If there was no error, but we *cannot* write to DBM
     if ((! $@) && eval "\$array{'abc'}=123" && $@) {
-	print "*** ERROR: $@ \nYou will not be able to use latex2html.\n\n"}
+	print "*** ERROR: $@ \nYou will not be able to use latex2html.\n"}
     else {
 	dbmclose(%array);
 	unlink ('DBM.tst.dir', 'DBM.tst.pag');
-	print "DBM was found.\n\n";
+	print "DBM was found.\n";
     }
-	
+    $version=undef;
     $_ = &get_first_line_of_stderr("$DVIPS -f DUMMY");
     s/dvipsk?\s*([\d\.]+)/$version = $1;/eo;
     $patch = $version;
@@ -109,37 +105,44 @@ sub test_external_programs {
 	    "\nThis may cause problems when generating inlined images" .
             "\nif your DVIPS does not support the command line options".
             "\n-S, -i and -o".
-            "\nSee the manual for more details.\n\n";}
+            "\nSee the manual for more details.\n";}
     elsif (! $patch) {
-	print "Warning: Please make sure that your version of DVIPS".
+        print "Warning:  I was not able to find DVIPS. ".
+ 	      "\nPlease make sure that your version of DVIPS".
               "\nsupports the command line options -S, -i and -o.".
-	      "\nI was unable to verify this.\n\n";}
+	      "\nVersion 5.516 or higher is OK.".
+              "\nI was unable to verify your your version.\n";}
     else {
-	print "DVIPS version $version is OK.\n\n"}
+	print "DVIPS version $version is OK.\n"}
    
     $nopic = &look_for($PSTOGIF,"util", "pstogif");
-    foreach ($LATEX, $ENV{'GS'},$ENV{'PSTOPPM'},
+    foreach ($LATEX, $ENV{'GS'},
 	     $ENV{'PNMCROP'}, $ENV{'PPMTOGIF'}) {
 	$tmp = &look_for($_, "util", $_);
 	$nopic = $tmp unless $nopic;
     }
     
     print "Warning: May not be able to convert equations, figures, tables ".
-	"\nand unknown environments to inlined images.\n\n" if $nopic;
+	"\nand unknown environments to inlined images.\n" if $nopic;
 
     $gs = $ENV{'GS'};
-    $_ = `$gs -v`;
+    $_ = `$gs -sDEVICE=ppmraw < /dev/null | grep -e "Unknown device"`;
     $version = 0;
     s/version\s*([\d\.]+)/$version = $1;/eio;
-    if ($version ge 3.0) {
-	print "You are using GS version $version\n".
-	    "Updating pstoppm.ps in latex2html.config...\n";
-	print `perl -pi.bak -e "s/pstoppm.ps/pstoppm3.ps/;" latex2html.config`;
-	print "Done.\n\n";
+    if ($? eq 0) {
+	print "*** ERROR:\n",
+		"Your version of GS may not support DEVICE=ppmraw.\n",
+		"You may need to obtain a new binary, or rebuild GS.\n";
     }
+#    if ($version ge 3.0) {
+#	print "You are using GS version $version\n".
+#	    "Updating pstoppm.ps in latex2html.config...\n";
+#	print `perl -pi.bak -e "s/pstoppm.ps/pstoppm3.ps/;" latex2html.config`;
+#	print "Done.\n";
+#    }
 
     print "Warning: Could not find 'giftrans'. Equations and other inlined images ".
-	"\nwill have ugly white backgrounds.\n\n"
+	"\nwill have ugly white backgrounds.\n"
 	    if ((! $USENETPBM)  &&
 		($not_found = &look_for($GIFTRANS, "util", "Giftrans")));
 
@@ -147,16 +150,16 @@ sub test_external_programs {
     print "Warning: Cannot find GIFTRANS or GIFTRANS does not accept the -t option."
 	if ((! $USENETPBM) && (! $not_found) && (! /-t/));
     
-    foreach ($GIFTOPPM, $PNMFILE, $PNMTILE, $PNMCAT) {
+    foreach ($GIFTOPPM, $PNMFILE, $PNMTILE, $PNMCAT, $PNMFLIP) {
 	$tmp = &look_for($_, "util", $_);
 	$nojust = $tmp unless $nojust;
     }
     
-    print "Warning: Will not be able to right justify equations.\n\n" if $nojust;
-    print "Warning: Please check the relevant pathnames in latex2html.config.\n\n"
+    print "Warning: Will not be able to right justify equations.\n" if $nojust;
+    print "Warning: Please check the relevant pathnames in latex2html.config.\n"
 	if ($nojust || $nopic || $nolatex2html);
 
-    print "Warning: Will not be able to deal with some style files.\n\n"
+    print "Warning: Will not be able to deal with some style files.\n"
 	if &look_for($LATEX2HTMLSTYLES, "dir", "Styles directory");
 }
 
@@ -164,10 +167,10 @@ sub look_for {
     local($what,$type, $name) = @_;
     local($fail,$_);
     if (($type eq "exec") && (! -x $what)) {
-	print "Making $what executable...\n\n";
+	print "Making $what executable...\n";
 	chmod 0755, $what;
 	if (! -x $what) {
-	    $fail = "Error: Could not make $what executable.\n\n";
+	    $fail = "Error: Could not make $what executable.\n";
 	}
     }
     elsif (($type eq "util") && (! -f $what)) {
@@ -175,14 +178,14 @@ sub look_for {
 	$_ = `sh -c "type  $what"`;
 	chop;
 	if ((/no /) || (/not found/) || (/^\s*$/)) {
-	    $fail = "Warning: $name was * NOT * found.\n\n";}
+	    $fail = "Warning: $name was * NOT * found.\n";}
 	else {
 	    $what = $_;}
     }
     elsif (($type eq "dir") && (! -d $what)) {
-	$fail = "Error: directory $name was * NOT * found.\n\n";
+	$fail = "Error: directory $name was * NOT * found.\n";
     }
-    ($fail ? print $fail : print "$name was found.\n\n");
+    ($fail ? print $fail : print "$name was found.\n");
     $fail;
 }	
 	

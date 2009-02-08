@@ -11,8 +11,12 @@
 # Modifications:
 #
 # nd = Nikos Drakos <nikos@cbl.leeds.ac.uk>
+# hs = Herb Swan    <dprhws@edp.Arco.com>
+# mg = Michel Goossens <goossens@cern.ch>
 #
 # nd  4-AUG-94 - Created
+# hs 20-DEC-95 - Removed arguments from chgbarwidth and chgbarsep
+# mg 14-Jan-96 - added more commands for Braams's changebar package
 
 package main; 
 
@@ -25,8 +29,15 @@ sub do_cmd_chgbarend {
 }
 
 &ignore_commands( <<_IGNORED_CMDS_);
-chgbarwidth # {}
-chgbarsep # {}
+chgbarwidth
+chgbarsep
+driver
+changebarwidth
+changebarsep
+changebargrey
+deletebarwidth
+outerbars
+nochangebars
 _IGNORED_CMDS_
 
 

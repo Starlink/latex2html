@@ -51,7 +51,141 @@
 # psm = Peter Magnusson <psm@sics.se>
 #  mb = Martin Boyer <gamin@ireq-robot.hydro.qc.ca>
 #segal= Mark Segal <segal@spud.asd.sgi.com>
-
+# jmn = Mark Noworolski <jmn@eecs.berkeley.edu>
+# meh = Marcus Hennecke <marcush@crc.ricoh.com>
+# hws = Herbert W Swan <dprhws@edp.Arco.com>
+# jkr = Jens Krinke <krinke@ips.cs.tu-bs.de>
+# sid = Sidik Isani <isani@cfht.hawaii.edu>
+# rml = Rob Malouf <malouf@csli.stanford.edu>
+# jtc = Ted Cox <jtcox@gumby.syr.edu>
+# pns = Paulo Ney de Souza <desouza@math.berkeley.edu>
+# tkm = Tom Miller <tkm@eos.ncsu.edu>
+# alo = Alex Lopez-Ortiz <alopez-o@barrow.uwaterloo.ca>
+# mg  = Michel Goossens <Michel.Goossens@cern.ch>
+# ays = Andreas Schott <schott@rzg.mpg.de>
+# jfr = J. Freeman <jfreeman@ms.com>
+# mer = Michael Ernst <mernst@cs.rice.edu>
+#
+#--------- v96.1
+#    05-Feb-96
+#       tkm - Fixed bug which prevented &make_transparent from non-figure
+#          environments when $TRANSPARENT_FIGURES is set to zero.
+#	hws - Fixed bug in htmllist.perl:  ~'s in $ICONSERVER were
+#	   being converted to blanks.  Made latex2html die more
+#	   gracefully upon interrupt.  Specified that environments
+#	   floatingfigure and wrapfigure are to be passed to TeX.
+#	   Fixed bug in pstogif which caused ppmquant never to be called!
+#	   Moved all command line defaults to latex2html.config.
+#	   Added a -debug command line switch.  Support the alltt package.
+#	   Removed command line switch "dont_include".  (Not needed.)
+#	   Updated the manual (again) and included changebar.sty.
+#	   Added the ability to segment documents.  This required the
+#	   addition of five new command-line switches.  Image recycling
+#	   now works even if a filename prefix is used.  Added ability
+#	   to pass starred versions of commands to TeX, and added 
+#	   \includegraphics and \includegraphics* to graphic[s,x].perl.
+#	   Support unbreakable spaces.  Guard against HTML tags appearing
+#	   in up and down titles.  Moved raw TeX support to texdefs.perl,
+#	   and made it optional.  Added better control over LaTeX font size.
+#	mg  - Converted manual to standard LaTeX2e.  Added epsfig.perl,
+#	   color.perl.  Removed duplicate entries in graphics.perl.
+#	meh - Made command parsing more like LaTeX's.  Added commands
+#	   \makeatletter and \makeatother.  Fixed bug which caused HTML
+#	   3.0 table conversion to sometimes omit the caption.
+#	   Provide support for HTML 2.1, with ISO 10646 Unicodes.
+#	   Support itallic correction.
+#	ays - Added forgotten ${PREFIX} for footnode.html.  Added missing 
+#          $abs_title instead of Abstract.  Created french_titles and moved
+#          french do_cmd_today to french.perl.  Created links to
+#	   germanb.perl and francais.perl for the sake of the babel
+#	   package.  Allowed other extensions than .tex for top-level-file.
+#	jfr - Fix a bug in getting current working directory.
+#	mer - Added calls to &pre_pre_process and &post_post_process
+#	   for specialized user-defined applications.  Typeset only
+#	   the alphabetic portion of simple math expressions in itallic.
+#	   Added installation variable $AUTO_PREFIX.
+#
+#--------- v96.1-beta
+#    15-Jan-96
+#	hws - Fixed \htmladdimg, broken by a patch in v95.3. \labels,
+#	   equations and images in section headings now work (Really!)
+#	   Additional inline math equations can now be set in HTML.  The
+#	   "scale=" option of \htmlimage is fixed.
+#	rml - The comment removal regular expression in text_cleanup 
+#	   missed comments that occur on the first line of an included file.
+#	   HTML 3.0 tabular not inside table inherited previous caption (fixed).
+#	   I also added a call to replace_user_refereces, to allow style
+#	   files to add new types of crossreferences.
+#	jkr - Now LaTeX2HTML uses two panels, one for the top and one for
+#	   the bottom of the document.  Made the translation of \today more
+#	   similar to LaTeX's.  Patched the verbatim-counter patch of
+#	   #EI#.  Removed the expansion of '\\' to '\\ ' in \verbatim.
+#	   Added support for the TeX \char command.
+#	meh - Fixed treatment of @{} expressions in HTML 3.0 tables.
+#	   Fixed treatment of \circ in math mode.  Made german.perl
+#	   compatible with HTML math 3.0 changes.  Added width and
+#	   height attributes to navigation panel icons.  Replaced
+#	   all occurences of tex2htmlindex with textohtmlindex.
+#	   Added a check that compares the actual image files to
+#	   remove duplicate images.
+#	dkw - Added a new command \latexhtml{LaTeX}{html} to process
+#	   something in LaTeX one way, and in HTML another way.
+#	hws - Added a "flip=" option in \htmlimage.  Caused \htmlref, etc.
+#	   to use an external reference if an internal one is not found.
+#	   Added support for \ensuremath and floating/wrapped figures.
+#	   Ignore input after first /end{document} not shielded by
+#	   verbatim or \verb.  Overhauled method of image sharing and
+#	   recycling.   Made -reuse switch accept a reuse_option.
+#	   Added installation variables $TEXINPUTS and $DVIPS_MODE.
+#	   Made the .tex filename suffix optional.  Provided support
+#	   for \special's outside of defined environments.  Supplied
+#	   additional optional style files, htmllist and heqn.  Updated the
+#	   manual.  Ignore "| and "- constructs in german.perl.  Support
+#	   the LaTeX2e babel package.  Fixed bug in &read_mydb which
+#	   appended redundant newlines to macro expansions.  User-defined
+#	   commands and environments can now have an optional argument.
+#	   Provided stubs tor \suppressfloats and \enlargethispage.
+#	   Added support for the LaTeX2e graphics package.  Added command
+#	   line switch -prefix.  Changed TeX mode to \nonstopmode if
+#	   $DEBUG is set.  Made treatment of \document(style|class)
+#	   consistent.  Added \providecommand.  Provided the makemap
+#	   utility to construct active image maps.
+#	jtc - Added comment about the possible need to insert 
+#	   "use GDBM_File" for Linux platforms.
+#	pns - Improved error reporting in install-test.  Corrected errors
+#	   in &iso_latin1_character_map and &iso_latin1_character_map_inv.
+#	tkm - Remove optional space argument to \\ in 3.0 tables.
+#	   Even the inter-item spacing in list environments.
+#	   Made description tags be bold (as in LaTeX).
+#	alo - Corrected bugs in &write_string_out, &special_env,
+#	   and &make_new_cmd_rx.  Fixed bug in macro tokenization,
+#	   which sometimes caused macros not to be expanded in math mode.
+#	sid - Corrected an error in the making of transparent images.
+#	   Added more error checking in install-test.
+#
+#--------- v95.3
+#   15-Nov-95 meh really - added tables (HTML 3.0) support. And support
+#	for math format too - not enabled by default. Wow!
+#	Made pstogif/latex2html detect blank images and remove IMG tags 
+#	pointing to them.
+#	Added two switches: up_url and up_title - to spec the parent document
+#	jmn - updated pstogif to use the ppmraw driver in ghostscript -
+#	currently, DEPTH value is silently ignored - default gif output is
+#	the same as it was before (except now it works on my decstation).
+#	Also added in badfree perl5 patches from the ftp site. removed 
+#	references to pstoppm.ps in install-test
+#	hws - Added an optional argument align=<arg> to \htmlimage for 
+#	the alignment of table and figure gif files. Added dbmclose calls.
+#	Improved support for active image maps.
+# 	krn - numerous minor fixes including language support, comment 
+#	stripping, removal of extraneous spaces, and LATEX2HTMLSTYLES as a 
+#	path list
+#	sid - Patch to generate fonts at appropriate scales for screen 
+#	viewing. Note that this uses a .dvipsrc file in the latex2html 
+#	directory. This is probably a bad idea, but some dvips versions
+#	unfortunately don't handle the -mode option.
+#--------- v95.1
+#   20-Jan-95 nd - Fixed spurious syntax error in latex2html.config
 #--------- v95
 #   13-Jan-95 mb - Added ppmquant filter in pstogif to make sure the GIF
 #        images contain less than 256 colors

@@ -48,11 +48,43 @@ sub do_cmd_externallabels{
     if (-f "$labelfile") {
 	require($labelfile)}
     else {
-	$warnings .= "Could not find the external label file!\n" ;
+	$global{'warnings'} .= 
+	    "Could not find the external label file: $labelfile\n" ;
     }
     $_;
 }
 
+sub do_cmd_htmlhead {
+    local($_) = @_;
+    local(@tmp, $section_number, $sec_id);
+    s/$next_pair_pr_rx//o; $curr_sec = $2;
+    s/$next_pair_pr_rx//o; $TITLE = $2;
+    @tmp = split(/$;/, $encoded_section_number{&encode_title($TITLE)});
+    $section_number = shift(@tmp);
+    $TITLE = "$section_number " . $TITLE if $section_number;
+    join('', '<P>' , &make_section_heading($TITLE, "H2"), $_);
+}
+
+sub do_cmd_internal{
+    local($_) = @_;
+    local($type, $prefix, $file, $var, $buf);
+    $type = "internals";
+    s/$optional_arg_rx/$type = $1; ''/eo;
+    s/$next_pair_pr_rx/$prefix = $2; ''/eo;
+    $file = "${prefix}$type.pl";
+    if (! ($type =~ /(figure|table)/)) {
+	require ($file) if (-f $file);
+	}
+    elsif (-f $file && $type =~ /(figure|table)/ ) {
+	$var = "${type}_captions";
+	open (CAPTIONS, $file);
+	$buf = join('', <CAPTIONS>);
+	eval "\$$var .= '$buf'";
+	close (CAPTIONS);
+	}
+    $_;
+    }
+	
 sub do_cmd_externalref{
     local($_) = @_;
     &process_ref($external_ref_mark,$external_ref_mark);
@@ -90,7 +122,7 @@ sub do_cmd_latexonly {
 sub do_cmd_htmlimage {
     local($_) = @_;
     s/$next_pair_pr_rx//o;
-    $warnings .= "\nThe command \"htmlimage\" is only effective inside an
+    $global{'warnings'} .= "\nThe command \"htmlimage\" is only effective inside an
 environment which generates an image (eg \"figure\")\n";
     $_;
 }

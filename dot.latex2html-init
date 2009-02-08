@@ -1,4 +1,4 @@
-#LaTeX2HTML Version 95 : dot.latex2html-init
+#LaTeX2HTML Version 96.1 : dot.latex2html-init
 #
 ### Command Line Argument Defaults #######################################
 
@@ -17,7 +17,7 @@ $PS_IMAGES = 0;
 
 $TITLE = $default_title;      # The default is "No Title" 
 
-$DESTDIR = '.';         # Put the result in this directory 
+$DESTDIR = '';         # Put the result in this directory 
 
 # When this is set, the generated HTML files will be placed in the 
 # current directory. If set to 0 the default behaviour is to create (or reuse)
@@ -48,15 +48,8 @@ $PREVIOUS_PAGE_IN_NAVIGATION = 1;
 
 $INFO = 1;              # 0 = do not make a "About this document..." section 
 
-# Do not try to translate these style files. 
-# Complex TeX style files may cause the translator to hang.
-# If this occurs add the style file here.
-$DONT_INCLUDE = "memo:psfig:dvipsfig:epsf:a4:memo:makeidx:times:margins:aaii2:" .
-                "preprint:revtex:eqsecnum:aps:html:pictex:german:french:art12:" .
-		"12pt:doublespace:float:harvard:tabls:twoside";
-
 # Reuse images generated during previous runs
-$REUSE = 1;
+$REUSE = 2;
 
 # When this is 1, the section numbers are shown. The section numbers should 
 # then match those that would have bee produced by LaTeX.
@@ -97,7 +90,7 @@ $MATH_SCALE_FACTOR = 1.6;
 # image generating environments such as "figure", "table" or "minipage".
 # Effective values are those greater than 0.
 # Sensible values are between 0.1 - 4.
-$FIGURE_SCALE_FACTOR = 0;
+$FIGURE_SCALE_FACTOR = 1.6;
 
 
 #  If this is set then intermediate files are left for later inspection.
