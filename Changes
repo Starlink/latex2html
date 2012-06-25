@@ -1,4 +1,3 @@
-
 # LaTeX2HTML by Nikos Drakos <nikos@cbl.leeds.ac.uk>
 # **************************************************
 # Change Log ***************************************
@@ -84,6 +83,7 @@
 #  bv = Boris Veytsman <boris@plmsc.psu.edu>
 #  kr = Keith Refson <Keith.Refson@earth.ox.ac.uk>
 #  uw = Uli Wortmann <uli12@bonk.ethz.ch>
+# jos = Julius Smith <jos@ccrma.stanford.edu>
 #
 #
 #------------------- Test Suite Manifest ----------------------------------
@@ -112,6 +112,33 @@
 # A more detailed log history can be found within the particular files, near
 # the top.
 #
+#
+#--------- v2006.1 (compiled by jos) -----
+# UNOFFICIAL RELEASE 
+# (However, there seems to be no official release these days)
+#
+#       jos   prefs.pm:
+#               - removed -Ppdf option from $DVIPSOPT because it
+#                 results in alt-rule.pro being loaded by dvips, which results in
+#                 black bars under equations.
+#             latex2html.pin:
+#               - fixed unequal parens bug in small-caps 
+#               - fixed left-aligned address bug (under centered title and author)
+#             pstoimg.pin:
+#               - fixed grey-background in images bug caused by incorrect search
+#                 for "TeXcolorgray" in PS files by pstoimg
+#             All changes can be found by searching for "jos:" in source.
+#             All of the above bugfixes were reported to latex2html mailing list
+#             and various bugzilla posts years ago, some repeatedly, but no action 
+#             was ever taken on any of them, hence this forklet based on v2002-2-1.
+#
+#--------- v2002-2-1
+#
+#       Either no change-logs in this file between v98.1 and v2002-2-1, or perhaps
+#       they are the same release simply renamed. However, my guess is that the
+#       official CVS repository for latex2html died a quiet death after v98.1, 
+#       and that the v2002-2-1 release, the latest I could find, is
+#       rrm's latest available release, which was maintained up through 2002.
 #
 #--------- v98.1 (compiled by jcl)
 #

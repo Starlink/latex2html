@@ -1,6 +1,12 @@
 #- -*- perl -*-
 #
-# $Id: latex2html.pin,v 1.71 2004/01/06 23:49:54 RRM Exp $
+# $url: svn+ssh://ccrma-gate.stanford.edu/user/j/jos/svnrc/latex2html $
+# $Rev: $
+# $Date: 2006-12-15 14:44:58 -0800 (Fri, 15 Dec 2006) $
+# --------------------------------------------------------------------
+#
+# SVN repo started from Id: latex2html.pin,v 1.70 2002/08/22 15:14:08 RRM Exp
+# with patches merged in from Red Hat FC6 version 1.71
 #
 # Comprises patches and revisions by various authors:
 #   See Changes, the log file of LaTeX2HTML.
@@ -12386,7 +12392,8 @@ sub do_cmd_author {
 	    $t_author = &translate_environments($_);
 	    $t_author =~ s/\s+/ /g;
 	    $t_author = &simplify(&translate_commands($t_author));
-	    ($t_author,$t_affil,$t_address) = split (/\s*<BR>s*/, $t_author);
+	    #jos: Added trailing argument '3':
+	    ($t_author,$t_affil,$t_address) = split (/\s*<BR>s*/, $t_author, 3);
 	    push @authors, $t_author;
 	    push @affils, $t_affil;
 	    push @addresses, $t_address;
@@ -12395,7 +12402,8 @@ sub do_cmd_author {
 	$_ = &translate_environments($next);
 	$next = &translate_commands($_);
 	($t_author) = &simplify($next);
-	($t_author,$t_affil,$t_address) = split (/\s*<BR>s*/, $t_author);
+	#jos: Added trailing argument '3':
+	($t_author,$t_affil,$t_address) = split (/\s*<BR>s*/, $t_author, 3);
 	push @authors, $t_author;
 	push @affils, $t_affil if $t_affil;
 	push @addresses, $t_address if $t_address;
@@ -12558,10 +12566,12 @@ sub make_singleauthor_title {
     if ($t_date&&!($t_date=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
 	$t_title .= "\n<P$alignc><STRONG>$t_date</STRONG></P>";}
     if ($t_address&&!($t_address=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
-	$t_title .= "\n<P$alignl><SMALL>$t_address</SMALL></P>";
+	#jos: replaced alignl with alignc
+	$t_title .= "\n<P$alignc><SMALL>$t_address</SMALL></P>";
     }  # else { $t_title .= "\n<P$alignl>"}
     if ($t_email&&!($t_email=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
-	$t_title .= "\n<P$alignl><SMALL>$t_email</SMALL></P>";
+	#jos: replaced alignl with alignc
+	$t_title .= "\n<P$alignc><SMALL>$t_email</SMALL></P>";
     }  # else { $t_title .= "</P>" }
     join("\n", $s_author_info, $t_title, $e_author_info);
 }
@@ -15286,7 +15296,8 @@ sub process_smallcaps {
     # MRO: replaced $* with /m
     while ($text =~ /(\\[a-zA-Z]+|[&;]SPM\w+;|<[^>]+>)+/m ) {
 	$scbef = $`; $special = $&; $text = $';
-	while ( $scbef =~ /(&#\d+;|[a-z$sclower])+[a-z\W\d$sclower]*/m) {
+        #jos: replaced \W with \s (to fix unequal parens bug):
+	while ( $scbef =~ /(&#\d+;|[a-z$sclower])+[a-z\s\d$sclower]*/m) {
 	    $scstr .= $`; $scbef = $';
 	    $next = $&; 
 	    $next =~ s/&#(\d+);/&lowercase_entity($1)/egm;
@@ -15297,7 +15308,8 @@ sub process_smallcaps {
 	$scstr .= $scbef . $special;
     }
     if ($text) {
-	while ( $text =~ /(&#\d+;|[a-z$sclower])+[a-z\W\d$sclower]*/m) {
+        #jos: replaced \W with \s (to fix unequal parens bug):
+	while ( $text =~ /(&#\d+;|[a-z$sclower])+[a-z\s\d$sclower]*/m) {
 	    $scstr .= $`; $text = $';
 	    $next = $&;
 	    $next =~ s/&#(\d+);/&lowercase_entity($1)/egm;

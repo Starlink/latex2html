@@ -17,6 +17,12 @@
 # Changes History
 #
 # $Log: install.pl,v $
+# $Revision : 2006/12/18 jos
+#      new release version:  2006-1
+#
+#  --  new Subversion repository based on v2002-2-1.  
+#      No prior CVS versions available here.
+#
 # Revision 1.12  2002/04/27 11:31:23  RRM
 #      new release version:  2002-1
 #
@@ -444,7 +450,7 @@ sub install_recurse {
   my @subdirs = ();
   my $item;
   while(defined($item = readdir(DIR))) {
-    next if($item =~ /^(\.{1,2}|CVS)$/);
+    next if($item =~ /^(\.{1,2}|CVS|\.svn)$/);
     my $full = "$dir/$item";
     if(-d $full) {
       push(@subdirs,$full);
