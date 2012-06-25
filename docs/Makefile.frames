@@ -3,7 +3,7 @@
 #
 #    LaTeX2HTML  documentation & User Manual
 #
-#  by  Ross Moore <ross@mpce.mq.edu.au>
+#  by  Ross Moore <ross@maths.mq.edu.au>
 #  and  Herb Swan <dprhws@edp.Arco.COM>
 #
 #  20 April 1996

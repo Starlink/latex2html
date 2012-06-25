@@ -39,6 +39,11 @@ if ($HTML_OPTIONS =~ /math/) {
 
 package main;
 
+$mathend_mark = "\n${verbatim_mark}mathend000#";
+$keepcomments_rx = "\\s*(picture|makeimage|xy|diagram|mathend)[*]?"
+  unless ($keepcomments_rx =~ /mathend/);
+
+
 sub do_env_math {
     local($_) = @_;
     local($math_mode, $failed, $labels, $comment,$img_params) = ("inline",'','');
@@ -49,19 +54,23 @@ sub do_env_math {
     local($saved) = $_;
     ($labels, $comment, $_) = &process_math_env($math_mode,$_);
     if ($failed) {
-	$_ = join ('', $comment, $labels 
+	$_ = join ('', $labels, $comment
 	    , ($USING_STYLES ? '<SPAN CLASS="MATH">' : '')
             , &process_undefined_environment("tex2html_wrap", $id, $saved)
-	    , ($USING_STYLES ? '</SPAN>' : ''))
+	    , ($USING_STYLES ? '</SPAN>' : '')
+	    , $mathend_mark )
     } elsif ($NO_SIMPLE_MATH) {
         if ($USING_STYLES) {
-            $_ = join('', $comment, $labels
-	        , '<SPAN CLASS="MATH">', $_ , "</SPAN>");
+            $_ = join('', $labels, $comment
+	        , '<SPAN CLASS="MATH">', $_ , "</SPAN>"
+		, $mathend_mark )
 	} else {
-            $_ = join('', $comment, $labels, " ", $_ );
+            $_ = join('', $labels, $comment, " ", $_ , $mathend_mark);
 	}
     } else {
-        $_ = join('', $comment, $labels, "<MATH CLASS=\"INLINE\">\n$_\n</MATH>");
+        $_ = join('', $labels, $comment
+		, "<MATH CLASS=\"INLINE\">\n$_\n</MATH>"
+		, $mathend_mark );
     }
     if (($border||($attributes))&&($HTML_VERSION > 2.1 )) { 
 	&make_table( $border, $attribs, '', '', '', $_ )
@@ -86,14 +95,16 @@ sub do_env_tex2html_wrap {
     else { $failed = 1 }; # catch non-math environments or commands
     ($labels, $comment, $_) = &process_math_env($math_mode,$_);
     if ($failed) {
-	$_ = join ('', $comment, $labels 
-             , &process_undefined_environment("tex2html_wrap", $id, $saved));
+	$_ = join ('', $labels, $comment
+             , &process_undefined_environment("tex2html_wrap", $id, $saved)
+	     , $mathend_mark );
     } elsif ($NO_SIMPLE_MATH) {
         # no need for comment/labels if already inside a math-env
         if (defined $math_outer) { s/^\s*|\s*$//g }
-	else { $_ = $comment . $labels ." ".$_; }
+	else { $_ = $labels . $comment ." ".$_ . $mathend_mark ; }
     } else { 
-        $_ = $comment . $labels . "<MATH CLASS=\"INLINE\">\n$_\n</MATH>";
+        $_ = $labels . $comment . "<MATH CLASS=\"INLINE\">\n$_\n</MATH>"
+	    . $mathend_mark ;
     }
     if (($border||($attribs))&&($HTML_VERSION > 2.1 )) { 
 	&make_table( $border, $attribs, '', '', '', $_ ) 
@@ -122,18 +133,20 @@ sub do_env_tex2html_wrap_inline {
             $env_id = ' CLASS="MATH"' if ($env_id =~ /^\s*$/);
             $_ = join ('', $labels, $comment, "<SPAN$env_id>"
                 , &process_undefined_environment("tex2html_wrap_inline", $id, $saved)
-                , "</SPAN>");
+                , "</SPAN>", $mathend_mark );
         } else {
             $_ = join ('', $labels, $comment
-                , &process_undefined_environment("tex2html_wrap_inline", $id, $saved));
+                , &process_undefined_environment("tex2html_wrap_inline", $id, $saved)
+		, $mathend_mark );
         }
     } elsif (($NO_SIMPLE_MATH)&&($USING_STYLES)) {
         $env_id = ' CLASS="MATH"' if ($env_id =~ /^\s*$/);
-        $_ = join('', $labels, $comment, "<SPAN$env_id>", $_, "</SPAN>");
+        $_ = join('', $labels, $comment, "<SPAN$env_id>", $_, "</SPAN>", $mathend_mark );
     } elsif ($NO_SIMPLE_MATH) {
-        $_ = join('', $labels, $comment, $_);
+        $_ = join('', $labels, $comment, $_, $mathend_mark );
     } else { 
-        $_ = join('', $labels, $comment, "<MATH CLASS=\"INLINE\">\n$_\n</MATH>");
+        $_ = join('', $labels, $comment
+		, "<MATH CLASS=\"INLINE\">\n$_\n</MATH>", $mathend_mark );
     }
     if (($border||($attribs))&&($HTML_VERSION > 2.1 )) { 
 	&make_table( $border, $attribs, '', '', '', $_ ) 
@@ -188,7 +201,7 @@ sub do_env_equation {
 		. (($attribs)? " $attribs" : '')
 		. ">\n<TR$mvalign>" . $seqno . $eqno
 		. "</TD>\n<TD$halign NOWRAP>$sbig"
-		, "$ebig</TD>\n</TR></TABLE>");
+		, "$ebig</TD>\n</TR></TABLE>".$mathend_mark);
 	$border = $attribs = $env_id = '';
     } else {
 	# equation number on right
@@ -198,7 +211,7 @@ sub do_env_equation {
 		. (($attribs)? " $attribs" : '')
 		. ">\n<TR$mvalign><TD></TD>"
 		. "<TD$halign NOWRAP>$sbig"
-	    , "$ebig</TD>". $seqno . $eqno ."</TD></TR>\n</TABLE>");
+	    , "$ebig</TD>". $seqno . $eqno ."</TD></TR>\n</TABLE>".$mathend_mark);
 	$border = $attribs = $env_id = '';
     }
 
@@ -230,7 +243,7 @@ sub do_env_equation {
     $pre_math = "\n<P></P><DIV$math_class>\n";
     $post_math = "\n</DIV>";
     if ($failed) {
-	$_ = join ('', $comment, $labels, $math_start
+	$_ = join ('', $labels, $comment, $math_start
 	    , &process_undefined_environment('displaymath', $id, $saved)
 	    , $math_end );
     } elsif ($NO_SIMPLE_MATH) {
@@ -267,15 +280,17 @@ sub do_env_displaymath {
 	if (($DISP_SCALE_FACTOR)&&($DISP_SCALE_FACTOR >= 1.2 ));
     ($labels, $comment, $_) = &process_math_env($math_mode,$_);
     if ($failed) {
-	$_ = join('', $comment, "<P$math_class>" , $labels
+	$_ = join('', $labels, $comment, "<P$math_class>"
             , &process_undefined_environment("displaymath", $id, $saved )
-            , '</P>' );
+            , '</P>', $mathend_mark );
     } elsif ($NO_SIMPLE_MATH) {
 	$_ =~ s/<TABLE/$ebig$&/sg; $_ =~ s/<\/TABLE>/$&$sbig/sg;
-	$_ = "$comment\n<P></P><DIV$math_class>$labels\n$sbig$_$ebig\n</DIV><P></P>" 
+	$_ = "<P>$labels$comment</P><DIV$math_class>$labels\n$sbig$_$ebig\n"
+		. "</DIV><P>$mathend_mark</P>"
     } else { 
-        $_ = join('', $comment, "<P$math_class>", $labels
-            , "$sbig\n<MATH CLASS=\"DISPLAYMATH\">\n",$_,"\n</MATH>\n$ebig</P>");
+        $_ = join('', "<P$math_class>", $labels, $comment
+            , "$sbig\n<MATH CLASS=\"DISPLAYMATH\">\n",$_
+	    , "\n</MATH>\n$ebig$mathend_mark</P>");
     }
     if (($border||($attribs))&&($HTML_VERSION > 2.1 )) { 
 	join('',"<BR>\n<DIV$math_class>\n"
@@ -772,12 +787,13 @@ sub do_env_array {
 #    ($labels, $comment, $_) = &process_math_env($math_mode,$_);
     if (($failed)&&!($NO_SIMPLE_MATH)) {
 	$_ = join ('', $labels, $comment
-	    , &process_undefined_environment("array", $id, $saved));
+	    , &process_undefined_environment("array", $id, $saved)
+	    , ($comment? $mathend_mark : ''));
 	$_ = join('','<P'
             , (($HTML_VERSION >2.0)? "$math_class" : '')
             ,'>', $labels, $comment, $_, '<BR'
             , (($HTML_VERSION >2.0)? " CLEAR=\"ALL\"" : '')
-	    , '>',"\n<P>");
+	    , '>', ($comment? $mathend_mark : ''), "\n<P>");
 	if (($border||($attribs))&&($HTML_VERSION > 2.1 )) { 
 	    $_ = join('',"<BR>\n<DIV$math_class>\n"
             , &make_table( $border, $attribs, '', '', '', $_ )
@@ -951,7 +967,7 @@ sub do_env_eqnarray {
 		, $id, $saved );
 	$_ = join(''
 	    , (($HTML_VERSION >2.0)? "<P ALIGN=\"$falign\">" : '')
-	    , $labels, $comment, $_
+	    , $labels, $comment, $_, $mathend_mark
 	    , (($HTML_VERSION >2.0)? "<BR CLEAR=\"ALL\">\n<P>" : '')
 	    );
 
@@ -965,7 +981,8 @@ sub do_env_eqnarray {
 	($sarray, $eccell, $srcell, $erow, $earray, $sempty) = ( 
 	    "\n<TABLE$env_id CELLPADDING=\"0\" "
 	    , "</TD>\n<TD WIDTH=\"10\" ALIGN=\"CENTER\" NOWRAP>"
-	    , "</TD>\n<TD ALIGN=\"LEFT\" NOWRAP>"
+	    , "</TD>\n<TD ALIGN=\"LEFT\" NOWRAP"
+		. (($HTML_VERSION >3.3)? ' WIDTH="50%"':'').'>'
 	    , "</TD></TR>", "\n</TABLE>", "</TD>\n<TD>" );
 	$sarray .= "ALIGN=\"CENTER\" WIDTH=\"100%\">";
 	$env_id = '';
@@ -976,10 +993,13 @@ sub do_env_eqnarray {
 	if ($EQN_TAGS =~ /L/) { # number on left
 	    ($srow, $slcell, $ercell) = (
 		"\n<TR$valign>". $seqno
-		, "</TD>\n<TD NOWRAP ALIGN=", '');
+		, "</TD>\n<TD NOWRAP"
+		    . (($HTML_VERSION >3.3)? ' WIDTH="50%"':'') .' ALIGN='
+		, '');
 	} else { # equation number on right
 	    ($srow, $slcell, $ercell) = (
-		"\n<TR$valign>" , "<TD NOWRAP ALIGN="
+		"\n<TR$valign>" , "<TD NOWRAP"
+		    . (($HTML_VERSION >3.3)? ' WIDTH="50%"':'') .' ALIGN='
 		, '</TD>'. $seqno );
 	}
 
@@ -1082,10 +1102,10 @@ sub do_env_eqnarray {
 	}
 	$_ = join('', $return , $earray, (($doimage)? '' : "</DIV>" ));
     } else {
-	$_ = join('', $comment, "<P$math_class>$sbig"
-	    , $labels, "\n<MATH CLASS=\"EQNARRAY\">"
+	$_ = join('', "<P$math_class>$sbig", $labels
+	    , $comment, "\n<MATH CLASS=\"EQNARRAY\">"
 	    , &do_env_array("$O$max_id${C}rcl$O$max_id$C$_")
-	    , "</MATH>\n$ebig</P>" )
+	    , "</MATH>\n$ebig</P>", $mathend_mark )
     }
     if (($border||($attribs))&&($HTML_VERSION > 2.1 )) { 
 	join('',"<BR>\n<DIV$math_class>\n"
@@ -1136,10 +1156,10 @@ sub do_env_eqnarraystar {
 #	        , &process_undefined_environment("eqnarraystar", $id, $saved));
 	        , &process_undefined_environment("eqnarray*", $id, $saved));
 	} else {
-	    $_ = join('', $comment, "<P$math_class>$sbig", $labels
+	    $_ = join('', "<P$math_class>$labels\n", $comment, $sbig
 	        , "\n<MATH CLASS=\"EQNARRAYSTAR\">"
 	        , &do_env_array("$O$max_id${C}rcl$O$max_id$C$_")
-	        , "</MATH>\n$ebig</P>" );
+	        , "</MATH>\n$ebig</P>", $mathend_mark );
 	}
     }
     if (($border||($attribs))&&($HTML_VERSION > 2.1 )) { 

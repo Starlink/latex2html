@@ -7,7 +7,7 @@
 #- The traditional #! line will be inserted automatically
 #-
 ##############################################################################
-# $Id: pstoimg.pin,v 1.16 2001/10/25 10:16:12 RRM Exp $
+# $Id: pstoimg.pin,v 1.19 2004/01/02 08:20:33 RRM Exp $
 #
 # pstoimg
 #
@@ -22,6 +22,19 @@
 ##############################################################################
 #
 # $Log: pstoimg.pin,v $
+# Revision 1.19  2004/01/02 08:20:33  RRM
+#  --  support  -interlace (as identical to  -interlaced) so as not to
+#      run afoul when  $POSIXLY_CORRECT  is set.
+#
+# Revision 1.18  2004/01/02 06:51:03  RRM
+#  --  set the default transparent-color for PNG to 'gray85'
+#  --  allow the transparent-color to be set using an environment variable
+#        $ENV{'TRANSPARENT_COLOR'}
+#
+# Revision 1.17  2003/12/31 15:06:21  RRM
+#  --  fixed bug stopping  -depth 24  from working
+#      thanks to Tino Keitel <tino.keitel@web.de>  for the report.
+#
 # Revision 1.16  2001/10/25 10:16:12  RRM
 #  --  make sure that $PNMCROPOPT  is declared before @PNMCROPOPT@
 #
@@ -259,7 +272,7 @@ BEGIN {
 use L2hos; # load OS-specific stuff
 
 my $RELEASE = '@distver@';
-my ($VERSION) = q$Revision: 1.16 $ =~ /:\s*(\S+)/;
+my ($VERSION) = q$Revision: 1.19 $ =~ /:\s*(\S+)/;
 
 $| = 1; # unbuffer STDOUT
 
@@ -343,7 +356,8 @@ my $PAGE_HMARGIN = 72;       # dvips margin: 1 inch = 72pt
 my $PAGE_VMARGIN = 72;       # dvips margin: 1 inch = 72pt
 
 # The color to be made transparent
-my $trans_color = '#ffffff';
+my $TRANSPARENT_COLOR = $ENV{'TRANSPARENT_COLOR'}||'';
+my $trans_color = $TRANSPARENT_COLOR||'#ffffff';
 
 ###############################################################################
 # Default settings
@@ -391,7 +405,7 @@ S<[ I<file2> ... ]>
 my %opt = ();
 unless(&GetOptions(\%opt, qw(-help -version -debug -discard -antialias -aaliastext
   -multipage -type=s -gif -png -out=s -depth=i -color=i -flip=s -density=i
-  -scale=f -geometry=s -margins=s -crop=s -transparent -interlaced 
+  -scale=f -geometry=s -margins=s -crop=s -transparent -interlaced -interlace
   -rightjustify=i -center=i -topjustify=s -shoreup=s -tmp=s -white -quiet))) {
   print_usage("$prompt: Error: Invalid option(s) specified.");
   exit 1;
@@ -596,7 +610,7 @@ and/or bitmap type, depending of the capabilities of external programs.
 =cut
 
 my $INTERLACE = 0; # Do not make interlaced images by default
-if($opt{interlaced}) {
+if($opt{interlaced}||$opt{interlace}) {
 #unless @gif_interlace@
   if($opt{type} eq 'gif') {
     print "$prompt: Warning: Interlaced GIFs not supported.\n";
@@ -1494,6 +1508,7 @@ sub crop_scale_etc {
       $pnmtoimg .= ' -interlace';
     }
     if($TRANSPARENT) {
+      $trans_color = $TRANSPARENT_COLOR||'gray85';
       $pnmtoimg .= ' -trans ' . L2hos->quote($trans_color);
     }
   }
@@ -1511,7 +1526,7 @@ sub crop_scale_etc {
   }
 #fi
   # run ppmquant only on color/gray images
-  if(!$type || $type =~ /(ppm|pgm)/i) {
+  if($reduce_color && (!$type || $type =~ /(ppm|pgm)/i)) {
 #if @pipes@
     if($cmd) {
       $cmd .= "| $reduce_color "
@@ -1521,7 +1536,7 @@ sub crop_scale_etc {
 #else
     &do_cmd($in,$tmp,"$reduce_color < $in") || return 0;
 #fi
-  }
+  } else { $cmd = '' }
 #fi # PPMQUANT
 
 #if @pipes@
@@ -1810,7 +1825,7 @@ This script went through a long evolution, beginning with a modification
 of Doug Crabill's E<lt>dgc@cs.purdue.eduE<gt> ps2epsi script.
 The first perl version was done by Nikos Drakos <nikos@cbl.leeds.ac.uk>.
 It was gradually improved by numerous LaTeX2HTML developers:
-Ross Moore <ross@mpce.mq.edu.au>, Jens Lippmann 
+Ross Moore <ross@maths.mq.edu.au>, Jens Lippmann 
 <lippmann@rbg.informatik.tu-darmstadt.de> and others (sorry for not
 mentioning everyone and thanks for your contributions).
 

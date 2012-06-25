@@ -12,7 +12,7 @@
 # Author: Marek Rouchal <marek@saftsack.fs.uni-bayreuth.de>
 #
 # This software is part of LaTeX2HTML, originally by Nikos Drakos
-# It is published under the Gnu Public License and comes without any
+# It is published under the GNU Public License and comes without any
 # warranty.
 #
 
