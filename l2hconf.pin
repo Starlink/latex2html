@@ -157,9 +157,10 @@ $DVIPSOPT = '@DVIPSOPT@';
 # complicated image include commands like \includegraphics, this option
 # will speed up image generation a *lot*.
 #
- $DVIPSOPT .= " -E";
+# $DVIPSOPT .= " -E";
 #
-#jos: At one time I had to disable -E due to clipped images, but it seems ok now.
+#jos: NOTE: This option is added automatically by configure
+#           (see ./config/config.pl)
 
 # (Note: this here is old, don't worry unless you really run into trouble.)
 #

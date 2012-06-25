@@ -1,6 +1,12 @@
 #- -*- perl -*-
 #
-# $Id: latex2html.pin,v 1.71 2006/12/18 jos Exp $
+# $url: svn+ssh://ccrma-gate.stanford.edu/user/j/jos/svnrc/latex2html $
+# $Rev: $
+# $Date: 2006-12-15 14:44:58 -0800 (Fri, 15 Dec 2006) $
+# --------------------------------------------------------------------
+#
+# SVN repo started from Id: latex2html.pin,v 1.70 2002/08/22 15:14:08 RRM Exp
+# with patches merged in from Red Hat FC6 version 1.71
 #
 # Comprises patches and revisions by various authors:
 #   See Changes, the log file of LaTeX2HTML.
@@ -745,7 +751,7 @@ sub driver {
 
 	#RRM: allow user-customisation, dependent on file-name
 	# e.g. add directories to $TEXINPUTS named for the file
-	# --- idea due to Fred Drake <fdrake@cnri.reston.va.us>
+	# --- idea due to Fred Drake <fdrake@acm.org>
 	&custom_driver_hook($FILE) if (defined &custom_driver_hook);
 
 # JCL(jcl-dir)

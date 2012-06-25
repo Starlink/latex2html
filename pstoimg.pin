@@ -22,6 +22,13 @@
 ##############################################################################
 #
 # $Log: pstoimg.pin,v $
+# Revision jos-2  2009/03/13  JOS
+#  --  Disable $have_geometry so gs won't produce a blank .pnm file (search for 'jos:')
+#      FIXME: THIS IS JUST A WORKAROUND - NEED TO REVERT THIS AND DEBUG GS OPTIONS
+#
+# Revision jos-1  2006/sometime  JOS
+#  --  Deleted '\n' before first '\d+' in $had_nonwhite test (search for 'jos:')
+#
 # Revision 1.16  2001/10/25 10:16:12  RRM
 #  --  make sure that $PNMCROPOPT  is declared before @PNMCROPOPT@
 #
@@ -1059,7 +1066,7 @@ sub ps2pnm {
           $bbw = int($bbw + 0.99);
           $bbh = int($bbh + 0.99);
           $GEOMETRY = "${bbw}x${bbh}";
-          $have_geometry = 1;
+#jos:          $have_geometry = 1;
           last;
           }
         }
@@ -1099,7 +1106,7 @@ sub ps2pnm {
     $bbw += 10;  # add a 5pt margin for safety
     $bbh += 40;  # add a 20pt margin for safety
     $GEOMETRY = "${bbw}x$bbh";
-    $have_geometry = 1;
+#jos:    $have_geometry = 1;
     }
   if($have_geometry) {
 #if @have_geometry@

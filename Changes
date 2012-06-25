@@ -113,7 +113,9 @@
 # the top.
 #
 #
-#--------- v2006.1 (compiled by jos) - UNOFFICIAL RELEASE (probably should change name)
+#--------- v2006.1 (compiled by jos) -----
+# UNOFFICIAL RELEASE 
+# (However, there seems to be no official release these days)
 #
 #       jos   prefs.pm:
 #               - removed -Ppdf option from $DVIPSOPT because it
