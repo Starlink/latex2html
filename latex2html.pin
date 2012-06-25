@@ -1,6 +1,6 @@
 #- -*- perl -*-
 #
-# $Id: latex2html.pin,v 1.70 2002/08/22 15:14:08 RRM Exp $
+# $Id: latex2html.pin,v 1.71 2004/01/06 23:49:54 RRM Exp $
 #
 # Comprises patches and revisions by various authors:
 #   See Changes, the log file of LaTeX2HTML.
@@ -108,7 +108,7 @@ use L2hos; # Operating system dependent routines
 # $^W = 1; # turn on warnings
 
 my $RELEASE = '@distver@';
-my ($REVISION) = q$Revision: 1.70 $ =~ /:\s*(\S+)/;
+my ($REVISION) = q$Revision: 1.71 $ =~ /:\s*(\S+)/;
 
 # The key, which delimts expressions defined in the environment
 # depends on the operating system. 
@@ -745,7 +745,7 @@ sub driver {
 
 	#RRM: allow user-customisation, dependent on file-name
 	# e.g. add directories to $TEXINPUTS named for the file
-	# --- idea due to Fred Drake <fdrake@cnri.reston.va.us>
+	# --- idea due to Fred Drake <fdrake@acm.org>
 	&custom_driver_hook($FILE) if (defined &custom_driver_hook);
 
 # JCL(jcl-dir)
@@ -6946,7 +6946,10 @@ sub make_latex{
 #    " \\expandafter\\box\\next\\edef\\next{\\egroup\\def\\noexpand\\thiseqn{\\theequation}}\\next}%\n" .
     " \\expandafter\\box\\next\\egroup}%\n" .
     "\\newcommand\\lthtmlmathtype[1]{\\gdef\\lthtmlmathenv{#1}}%\n" .
-    "\\newcommand\\lthtmllogmath{\\lthtmltypeout{l2hSize %\n" .
+    "\\newcommand\\lthtmllogmath{\\dimen0\\ht\\sizebox \\advance\\dimen0\\dp\\sizebox\n" .
+    "  \\ifdim\\dimen0>.95\\vsize\n" .  "   \\lthtmltypeout{%\n" .
+    "*** image for \\lthtmlmathenv\\space is too tall at \\the\\dimen0, reducing to .95 vsize ***}%\n" .
+    "   \\ht\\sizebox.95\\vsize \\dp\\sizebox\\z\@ \\fi\n" .  "  \\lthtmltypeout{l2hSize %\n" .
     ":\\lthtmlmathenv:\\the\\ht\\sizebox::\\the\\dp\\sizebox::\\the\\wd\\sizebox.\\preveqno}}%\n" .
     "\\newcommand\\lthtmlfigureA[1]{\\let\\\@savefreelist\\\@freelist
        \\lthtmlmathtype{#1}\\lthtmlvboxmathA}%\n" .
@@ -7908,7 +7911,7 @@ sub add_real_child_links {
     local($countUL); #counter to ensure correct tag matching
     my $root_file, $href;
     if (@subtree) {
-	local($next_depth, $file, $title, $star, $ldepth,$this_file, $prev_file);
+	local($next_depth, $file, $title, $sec_title, $star, $ldepth,$this_file, $prev_file);
 	$ldepth = $depth;
 	$prev_file = $base_file;
 #	@subtree = sort numerically @subtree;
@@ -7916,8 +7919,12 @@ sub add_real_child_links {
 	    $title = '';
 	    if ($exclude) {
 		# making TOC
+		($next_depth, $file, $sec_title) =
+			split($delim,$section_info{$next});
 		($next_depth, $file, $title, $star) =
 			split($delim,$toc_section_info{$next});
+		# use the %section_info  title, in case there are images
+		$title = $sec_title if ($sec_title =~ /image_mark>\#/);
 	    } else {
 		# making mini-TOC i.e. the child-links tables
 		$star = '';
@@ -8611,6 +8618,7 @@ sub replace_verbatim_marks {
     # Modifies $_
     my($tmp);
     s/$math_verbatim_rx/&make_comment('MATH', $verbatim{$1})/eg;
+    s/$mathend_verbatim_rx/&make_comment('MATHEND', '')/eg;
 #    s/$verbatim_mark(verbatim\*?)(\d+)#/<PRE>\n$verbatim{$2}\n<\/PRE>/go;
 ##    s/$verbatim_mark(\w*[vV]erbatim\*?)(\d+)#/\n$verbatim{$2}\n/go;
     s!$verbatim_mark(\w*[vV]erbatim\*?|tex2html_code)(\d+)#\n?!$tmp=$verbatim{$2};
@@ -8640,7 +8648,7 @@ sub replace_file_marks { &remove_file_marks }
 
 sub remove_verbatim_marks {
     # Modifies $_
-    s/$math_verbatim_rx//go;
+    s/($math_verbatim_rx|$mathend_verbatim_rx)//go;
 #    s/$verbatim_mark(verbatim\*?)(\d+)#//go;
     s/$verbatim_mark(\w*[Vv]erbatim\w*\*?)(\d+)#//go;
     s/$verbatim_mark(rawhtml|imagesonly)(\d+)#//go;
@@ -8676,7 +8684,7 @@ sub revert_verbatim_marks {
     s/$verbatim_mark(rawhtml)(\d+)#/\\begin{rawhtml}\n$verbatim{$2}\\end{rawhtml}\n/go;
     s/$verbatim_mark(imagesonly|tex2html_code)(\d+)#\n?/$verbatim{$2}/go;
     s/$verbatim_mark$image_env_rx(\d+)#/\\begin{$1}\n$verbatim{$2}\\end{$1}\n/go;
-    s/$math_verbatim_rx//go;
+    s/($math_verbatim_rx|$mathend_verbatim_rx)//go;
 }
 
 sub revert_verb_marks {
@@ -16161,6 +16169,7 @@ _IGNORED_CMDS_
 &process_commands_in_tex (<<_RAW_ARG_CMDS_);
 psfig # {} # \$args =~ s/ //g;
 usebox # {}
+framebox # [] # [] # {}
 _RAW_ARG_CMDS_
 
     # ... but these are set in a box to measure height/depth 
@@ -16170,7 +16179,6 @@ _RAW_ARG_CMDS_
 #etalchar # {} \$args =~ s/(.*)/\$\^\{\$1\}\\\$/o; 
 fbox # {}
 #frac # [] # {} # {}
-framebox # [] # [] # {}
 dag
 ddag
 l
@@ -16477,6 +16485,7 @@ sub make_isolatin1_rx {
 
     # Matches math comments, from  math.pl
     $math_verbatim_rx = "$verbatim_mark#math(\\d+)#";
+    $mathend_verbatim_rx = "$verbatim_mark#mathend([^#]*)#";
 
     # Matches math array environments
     $array_env_rx = "array|cases|\\w*matrix";

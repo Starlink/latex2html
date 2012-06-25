@@ -1,5 +1,5 @@
 #- -*- perl -*- header inserted automatically
-# $Id: texexpand.pin,v 1.11 2000/08/23 04:09:05 RRM Exp $
+# $Id: texexpand.pin,v 1.12 2004/01/02 08:08:34 RRM Exp $
 #
 # texexpand for LaTeX2HTML v2K
 
@@ -111,6 +111,11 @@
 #   jcl = Jens Lippmann <lippmann@rbg.informatik.tu-darmstadt.de>
 #
 # $Log: texexpand.pin,v $
+# Revision 1.12  2004/01/02 08:08:34  RRM
+#  --  include support for  -out <outfile>  switch to avoid incompatibility
+#      when  POSIXLY_CORRECT  is set.
+#      Thanks to Juhapekka Tolvanen <juhtolv@iki.fi> for the problem report.
+#
 # Revision 1.11  2000/08/23 04:09:05  RRM
 #  --  fixed typo using  $latexonlyenv  instead of  $latexonlytype
 #  --  keep  $mute=0  for fake-env inside  $latexonly  envs.
@@ -371,7 +376,7 @@ BEGIN {
 use L2hos;
 
 my $RELEASE = '@distver@';
-my ($VERSION) = q$Revision: 1.11 $ =~ /:\s*(\S+)/;
+my ($VERSION) = q$Revision: 1.12 $ =~ /:\s*(\S+)/;
 
 my $envkey = L2hos->pathd();
 
@@ -406,7 +411,7 @@ use Getopt::Long;
 my %opt = ();
 unless(GetOptions(\%opt, qw(-help -version -debug -verbose -w
      -do_include=s@ -dont_include=s@ -auto_exclude -unsegment
-     -save_styles=s -texinputs=s@ -output=s))) {
+     -save_styles=s -texinputs=s@ -output=s -out=s))) {
   die "$prompt Error: Invalid option(s) specified.\n";
 }
 
@@ -548,9 +553,10 @@ sub main {
 	open(STYLES,">$opt{save_styles}")
             || die "$prompt Error: Cannot open style file '$opt{save_styles}': $!\n";
     }
-    if($opt{output}) {
-	open(OUT,">$opt{output}")
-            || die "$prompt Error: Cannot open output file '$opt{output}': $!\n";
+    my $out_file = $opt{output}||$opt{out};
+    if($out_file) {
+	open(OUT,">$out_file")
+            || die "$prompt Error: Cannot open output file '$out_file': $!\n";
     }
     else {
 	open(OUT,">&STDOUT");
@@ -558,7 +564,7 @@ sub main {
 
     &process_file($infile); # the workhorse...
 
-    close(OUT) if ($opt{output});
+    close(OUT) if $out_file;
     close(STYLES) if ($opt{save_styles});
 
     print STDERR "$prompt Warning: No ${latexonlytype}end\{latexonly\} found."

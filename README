@@ -56,7 +56,7 @@ The manual page can be viewed by saying "perldoc latex2html"
 or "latex2html -help".
 
 See the online documentation at 
-   http://www-texdev.mpce.mq.edu.au/l2h/docs/manual/
+   http://www-texdev.ics.mq.edu.au/l2h/docs/manual/
 for more information and examples.
 
 Other useful links can be found at:  www.latex2html.org
@@ -73,7 +73,7 @@ Requirements
 
 Please consult the section "Requirements" of the online manual at
 
-   http://www-texdev.mpce.mq.edu.au/l2h/docs/manual/Snode2.html
+   http://www-texdev.ics.mq.edu.au/l2h/docs/manual/Snode2.html
 
 for more information as well as *active* links to any utilities
 that you may require. 
@@ -148,7 +148,7 @@ Installation
 
 Please consult the section "Installing LaTeX2HTML" of the online manual at
 
-    http://www-texdev.mpce.mq.edu.au/l2h/docs/manual/Snode3.html
+    http://www-texdev.ics.mq.edu.au/l2h/docs/manual/Snode3.html
 
 Also consult the page at
 
@@ -204,11 +204,13 @@ with the contents
            unsubscribe
 
 
-An archive of the mailing list can be browsed at:
+An archive of the mailing list, from 1999 onwards,
+can be browsed at:
 
    http://tug.org/pipermail/latex2html/
 
-This mailing list also has a searchable online archive, at
+This mailing list also has a searchable online archive,
+from 1994 up until 2003-08, at
 
    http://www.xray.mpe.mpg.de/mailing-lists/latex2html/
 
@@ -221,16 +223,16 @@ Original Author:
   Computer Based Learning Unit
   University of Leeds.
 
-Most Recent Authors:
-  Ross Moore <ross@mpce.mq.edu.au>
+Most Recent Author:
+  Ross Moore <ross@maths.mq.edu.au>
   Mathematics Department
   Macquarie University, Sydney.
 
+Former Authors:
   Marek Rouchal <marek@saftsack.fs.uni-bayreuth.de>
   Infineon Technologies AG
   Munich, Germany
 
-Former Author:
   Jens Lippmann <lippmann@rbg.informatik.tu-darmstadt.de>
   Technische Universit"at Darmstadt.
 

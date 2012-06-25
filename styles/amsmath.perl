@@ -1,4 +1,4 @@
-# $Id: amsmath.perl,v 1.21 2000/11/04 03:32:17 RRM Exp $
+# $Id: amsmath.perl,v 1.23 2003/12/31 13:03:32 RRM Exp $
 # amsmath.perl by Ross Moore <ross@mpce.mq.edu.au>  9-30-96
 #
 # Extension to LaTeX2HTML to load features from AMS-LaTeX
@@ -8,6 +8,13 @@
 # ===========
 #
 # $Log: amsmath.perl,v $
+# Revision 1.23  2003/12/31 13:03:32  RRM
+#  --  the date was occurring twice with a single author; now fixed
+#
+# Revision 1.22  2003/12/31 11:57:02  RRM
+#  --  added support for multiple authors
+#  --  many more math symbols are declared for images
+#
 # Revision 1.21  2000/11/04 03:32:17  RRM
 #  --  fixed typo where $t_author should be $t_address
 #      thanks to Bruce Miller for reporting this
@@ -178,18 +185,40 @@ sub do_cmd_title {
 
 sub do_cmd_author {
     local($_) = @_;
-    if (/\\endauthor/) {
-	$t_author = &translate_commands($`);
-	$t_author =~ s/(^\s*|\s*$)//g;
-	return($');
-    }
     &get_next_optional_argument;
-    local($rest) = $_;
-    $t_author = &missing_braces unless (
-	($rest =~ s/$next_pair_pr_rx/$t_author=$&;''/eo)
-	||($rest =~ s/$next_pair_rx/$t_author=$&;''/eo));
-    ($t_author) =  &translate_commands($t_author);
-    $rest;
+    my $next;
+    my $after = '';
+    if (/\\endauthor/) {
+	$next = $`;
+	$after = $';
+    } else {
+	$next = &missing_braces unless (
+        (s/$next_pair_pr_rx/$next = $2;''/seo)
+        ||(s/$next_pair_rx/$next = $2;''/seo));
+	$after = $_;
+   }
+    if ($next =~ /\\and/) {
+        my @author_list = split(/\s*\\and\s*/, $next);
+        my $t_author, $t_affil, $t_address;
+        foreach (@author_list) {
+            $t_author = &translate_environments($_);
+            $t_author =~ s/\s+/ /g;
+            $t_author = &simplify(&translate_commands($t_author));
+            ($t_author,$t_affil,$t_address) = split (/\s*<BR>s*/, $t_author);
+            push @authors, $t_author;
+            push @affils, $t_affil;
+            push @addresses, $t_address;
+        }
+    } else {
+        $_ = &translate_environments($next);
+        $next = &translate_commands($_);
+        ($t_author) = &simplify($next);
+        ($t_author,$t_affil,$t_address) = split (/\s*<BR>s*/, $t_author);
+        push @authors, $t_author;
+        push @affils, $t_affil if $t_affil;
+        push @addresses, $t_address if $t_address;
+    }
+    $after;
 }
 
 sub do_cmd_address {
@@ -197,6 +226,7 @@ sub do_cmd_address {
     if (/\\endaddress/) {
 	$t_address = &translate_commands($`);
 	$t_address =~ s/(^\s*|\s*$)//g;
+	push @addresses, $t_address;
 	return($');
     }
     &get_next_optional_argument;
@@ -205,6 +235,7 @@ sub do_cmd_address {
 	($rest =~ s/$next_pair_pr_rx/$t_address=$&;''/eo)
 	||($rest =~ s/$next_pair_rx/$t_address=$&;''/eo));
     ($t_address) =  &translate_commands($t_address);
+    push @addresses, $t_address;
     $rest;
 }
 
@@ -214,6 +245,7 @@ sub do_cmd_curraddr {
     local($rest) = $_;
     $rest =~ s/$next_pair_pr_rx//o;
     ($t_curraddr) =  &translate_commands($&);
+    push @curraddr, $t_curraddr;
     $rest;
 }
 
@@ -222,12 +254,14 @@ sub do_cmd_affil {
     if (/\\endaffil/) {
 	$t_affil = &translate_commands($`);
 	$t_affil =~ s/(^\s*|\s*$)//g;
+	push @affils, $t_affil;
 	return($');
     }
     &get_next_optional_argument;
     local($rest) = $_;
     $rest =~ s/$next_pair_pr_rx//o;
-    ($t_curraddr) = &translate_commands($&);
+    ($t_affil) = &translate_commands($&);
+    push @affils, $t_affil;
     $rest;
 }
 
@@ -236,7 +270,7 @@ sub do_cmd_dedicatory {
     &get_next_optional_argument;
     local($rest) = $_;
     $rest =~ s/$next_pair_pr_rx//o;
-    ($t_affil) = &translate_commands($&);
+    ($t_dedic) = &translate_commands($&);
     $rest;
 }
 
@@ -253,6 +287,7 @@ sub do_cmd_email {
     local($rest) = $_;
     $rest =~ s/$next_pair_pr_rx//o;
     ($t_email) = &make_href("mailto:$2","$2");
+    push @emails, $t_email;
     $rest;
 }
 
@@ -260,6 +295,7 @@ sub do_cmd_urladdr {
     local($_) = @_;
     s/$next_pair_pr_rx//o;
     ($t_authorURL) = &translate_commands($2);
+    push @authorURLs, $t_authorURL;
     $_;
 }
 
@@ -320,27 +356,23 @@ sub do_cmd_AmSTeX {
 }
 
 sub do_cmd_maketitle {
-    local($_) = @_;
+    local($after) = @_;
     local($the_title) = '';
     if ($t_title) {
-	$the_title .= "<H1 ALIGN=CENTER>$t_title</H1>\n";
+	$the_title = "<H1 ALIGN=CENTER>$t_title</H1>\n";
     } else { &write_warnings("This document has no title."); }
-    if ($t_author) {
-	$the_title .= "<P ALIGN=CENTER><STRONG>$t_author</STRONG></P>\n";
-    } else { &write_warnings("There is no author for this document."); }
+
+    if (($#authors > 0)||$MULTIPLE_AUTHOR_TABLE) {
+        $the_title .= &make_multipleauthors_title($alignc,$alignl);
+    } else {
+        $the_title .= &make_singleauthor_title($alignc,$alignl,$t_author
+	    , $t_affil,$t_institute,$t_date,$t_address,$t_email,$t_authorURL);
+    }
+
     if (($t_translator)&&!($t_translator=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
 	$the_title .= "<BR><P ALIGN=CENTER>Translated by $t_translator</P>\n";}
-    if (($t_affil)&&!($t_affil=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
-	$the_title .= "<BR><P ALIGN=CENTER><I>$t_affil</I></P>\n";}
     if (($t_date)&&!($t_date=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
-	$the_title .= "<BR><P ALIGN=CENTER><I>Date:</I> $t_date</P>\n";}
-
-    if ($t_address&&!($t_address=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
-	$the_title .= "<BR><P ALIGN=LEFT><FONT SIZE=-1>$t_address</FONT></P>\n";
-    } else { $the_title .= "<P ALIGN=LEFT>"}
-    if ($t_email&&!($t_email=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
-	$the_title .= "<P ALIGN=LEFT><FONT SIZE=-1>$t_email</FONT></P>\n";
-    } else { $the_title .= "</P>" }
+	$the_title .= "<BR><P ALIGN=CENTER><B>Date:</B> $t_date</P>\n";}
     if ($t_keywords) {
 	$the_title .= "<BR><P><P ALIGN=LEFT><FONT SIZE=-1>".
 	    "Key words and phrases: $t_keywords</FONT></P>\n";}
@@ -348,7 +380,24 @@ sub do_cmd_maketitle {
 	$the_title .= "<BR><P><P ALIGN=LEFT><FONT SIZE=-1>".
 	    "1991 Mathematics Subject Classification: $t_subjclass</FONT></P>\n";}
 
-    $the_title . $_ ;
+    join("\n", $the_title, "<HR>", $after);
+}
+
+sub make_singleauthor_title{
+    local($alignc,$alignl,$t_author,$t_affil,$t_institute,$t_date,
+	$t_address,$t_email,$t_authorURL) = @_;
+    my $the_title = '';
+    if ($t_author) {
+	$the_title .= "<P ALIGN=CENTER><STRONG>$t_author</STRONG>\n";
+    } else { &write_warnings("There is no author for this document."); }
+    if (($t_affil)&&!($t_affil=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
+	$the_title .= "<BR><I>$t_affil</I>\n";}
+    if ($t_address&&!($t_address=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
+	$the_title .= "<BR><FONT SIZE=-1>$t_address</FONT>\n"}
+    if ($t_email&&!($t_email=~/^\s*(($O|$OP)\d+($C|$CP))\s*\1\s*$/)) {
+	$the_title .= "<BR><FONT SIZE=-1>$t_email</FONT></P>\n";
+    } else { $the_title .= "</P>" }
+    $the_title;
 }
 
 
@@ -387,8 +436,8 @@ sub get_eqn_number {
     # an explicit \tag overrides \notag , \nonumber or *-variant
     local($labels,$tag);
     ($scan,$labels) = &extract_labels($scan); # extract labels
-    $scan =~ s/\n//g;
-    if ($scan =~ s/\\tag(\*|star\b)?\s*(($O|$OP)\d+($C|$CP))(.*)\2//) {
+#    $scan =~ s/\n//g;
+    if ($scan =~ s/\\tag(\*|star\b)?\s*(($O|$OP)\d+($C|$CP))(.*)\2//s) {
 	local($star) = $1; $tag = $5;
 	$tag = &translate_environments($tag) if ($tag =~ /\\begin/);
 	$tag = &translate_commands($tag) if ($tag =~ /\\/);
@@ -442,7 +491,7 @@ sub do_env_subequations {
 sub do_cmd_proofname { ($prf_name ? $prf_name : 'Proof')  . @_[0] }
 sub do_cmd_qed {
     local($env) = 'tex2html_wrap_inline';
-    join('', &process_math_in_latex('','',0,"\\qedsymbol"), @_) }
+    join('', &process_math_in_latex('','',0,"\\qedsymbol"), @_[0]) }
 
 sub do_env_proof {
     local($proof_contents) = @_;
@@ -555,6 +604,7 @@ hdots
 hdotsfor # &ignore_numeric_argument
 hcorrection # &ignore_numeric_argument
 vcorrection # &ignore_numeric_argument
+delimiterfactor # &ignore_numeric_argument
 topmatter
 endtopmatter
 overlong
@@ -588,19 +638,23 @@ flalign # <<\\endflalign>>
 gather # <<\\endgather>>
 multline # <<\\endmultline>>
 #overset # {} # {}
-#sideset # {} # {}
+#sideset # {} # {} # {}
 #underset # {} # {}
-#overleftarrow # {}
-#underleftarrow # {}
-#overrightarrow # {}
-#underrightarrow # {}
-#overleftrightarrow # {}
-#underleftrightarrow # {}
+overleftarrow # {}
+underleftarrow # {}
+overrightarrow # {}
+underrightarrow # {}
+overleftrightarrow # {}
+underleftrightarrow # {}
+xleftarrow # [] # {}
+xrightarrow # [] # {}
 #oversetbrace # <<\\to>> # {}
 #undersetbrace # <<\\to>> # {}
+genfrac # {} # {} # {} # {} # {} # {}
+cfrac # [] # {} # {}
+#cfrac # <<\\endcfrac>>
 lcfrac # <<\\endcfrac>>
 rcfrac # <<\\endcfrac>>
-cfrac # <<\\endcfrac>>
 CD # <<\\endCD>>
 fracwithdelims # &ignore_numeric_argument(); # {} # {}
 thickfrac # <<\\thickness>> # &ignore_numeric_argument(); # {} # {}
@@ -608,6 +662,18 @@ thickfracwithdelims # <<\\thickness>> # &ignore_numeric_argument(); # {} # {}
 boxed # {}
 mathbb # {}
 mathfrak # {}
+Hat # {}
+Breve # {}
+Grave # {}
+Bar # {}
+Dot # {}
+Check # {}
+Acute # {}
+Tilde # {}
+Vec # {}
+Ddot # {}
+dddot # {}
+ddddot # {}
 _RAW_ARG_CMDS_
 
 &process_commands_inline_in_tex (<<_RAW_ARG_CMDS_);

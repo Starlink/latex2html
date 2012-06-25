@@ -5,6 +5,7 @@ FAQ
 INSTALL
 L2hos.pm
 LICENSE
+LICENSE.old
 MANIFEST
 Makefile.in
 README
@@ -225,6 +226,7 @@ makeseg/makeseg
 makeseg/makeseg.tex
 styles
 styles/CJK.perl
+styles/SIunits.perl
 styles/TEMPLATE.perl
 styles/afrikaan.perl
 styles/alltt.perl
@@ -303,6 +305,7 @@ styles/psfrag.perl
 styles/report.perl
 styles/rgb.txt
 styles/romanian.perl
+styles/russian.perl
 styles/scottish.perl
 styles/seminar.perl
 styles/slides.perl
@@ -334,7 +337,6 @@ tests/pages.tex
 tests/pages1.eps
 tests/rrm-col.tex
 texinputs
-texinputs/floatflt.ins
 texinputs/frames.sty
 texinputs/heqn.sty
 texinputs/hthtml.sty
