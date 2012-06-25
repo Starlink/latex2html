@@ -158,7 +158,8 @@ $DVIPSOPT = '@DVIPSOPT@';
 # will speed up image generation a *lot*.
 #
  $DVIPSOPT .= " -E";
-
+#
+#jos: At one time I had to disable -E due to clipped images, but it seems ok now.
 
 # (Note: this here is old, don't worry unless you really run into trouble.)
 #
@@ -176,7 +177,9 @@ $DVIPSOPT = '@DVIPSOPT@';
 # TeX installation; e.g. " -Pcmz -Pams"  or " -Ppdf" 
 #
 # $DVIPSOPT .= " -Ppdf";
-
+#
+#jos: -Ppdf pulls in alt-rule.pro which may result in black rules under equations.
+#     Use with caution.
 
 # For efficient use of font resources, minimising disk-space use,
 # allow GhostScript to find the fonts it needs for images.

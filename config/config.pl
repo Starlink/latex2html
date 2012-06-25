@@ -1,7 +1,7 @@
 #! /usr/local/bin/perl -w
 
 ###############################################################################
-# $Id: config.pl,v 1.48 2002/08/20 11:33:54 RRM Exp $
+# $Id: config.pl,v 1.49 2002/09/27 09:26:56 RRM Exp $
 #
 # config.pl
 #
@@ -24,6 +24,15 @@
 # Changes History
 #
 # $Log: config.pl,v $
+# 2006/12/18 jos
+#  --  set version number to  2006.1  (from 2002-2-1)
+#      Initialized a new Subversion repository at CCRMA.
+#
+# Revision 1.49  2002/09/27 09:26:56  RRM
+#  --  increased version number to  2002-2-1  (from 2002-2)
+#      else automatic package software complains about checksum mismatch
+#      whenever there is a change to *any* file in the distribution
+#
 # Revision 1.48  2002/08/20 11:33:54  RRM
 #  --  increase version to  2002-2, due to changes in  latex2html.pin
 #
@@ -434,9 +443,11 @@ use L2hos;
 use vars qw(%prefs %cfg %newcfg);
 
 # This is the central place to modify the release name!!!
-my $RELEASE = '2002-2';
+my $RELEASE = '2006-1';
+#jos: my $RELEASE = '2002-2-1';
 # This one is automatically updated by CVS
-my ($VERSION) = q$Revision: 1.48 $ =~ /:\s*(\S*)/;
+my ($VERSION) = q$Revision: $ =~ /:\s*(\S*)/;
+#jos: my ($VERSION) = q$Revision: 1.49 $ =~ /:\s*(\S*)/;
 
 # --------------------------------------------------------------------------
 # Open log
