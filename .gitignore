@@ -1,3 +1,4 @@
+*.bak
 l2hconf.pm
 latex2html
 pstoimg
