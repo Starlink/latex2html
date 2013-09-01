@@ -313,7 +313,7 @@ sub do_includegraphics {
       print "\nReuse $src scaled to $w x $h" if ($VERBOSITY > 1);
       (L2hos->Copy($src,$dst) or # Would be nice to preserve timestamps, too.
        &write_warnings("\\includegraphics couldn't copy $src to tree: $!\n"))
-	unless (-f $dst) && (-M $dst < -M $src); 
+	unless (-f $dst) && (-M $dst <= -M $src);
       join('',embed_image($dst,'web image',0,"Image $name", '','','','','',
 			  qq(WIDTH="$w" HEIGHT="$h")),$save); }
     # --------------------------------------------------
