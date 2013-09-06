@@ -113,6 +113,10 @@
 # the top.
 #
 #
+#--------- 2012/11
+#
+#		fix warnings in perl 5.14
+#
 #--------- v98.1 (compiled by jcl)
 #
 #	Changes in the top-level directory:

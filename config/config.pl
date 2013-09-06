@@ -1,7 +1,7 @@
 #! /usr/local/bin/perl -w
 
 ###############################################################################
-# $Id: config.pl,v 1.49 2002/09/27 09:26:56 RRM Exp $
+# $Id: config.pl,v 1.2 2012/11/05 15:31:43 gildea Exp $
 #
 # config.pl
 #
@@ -24,6 +24,12 @@
 # Changes History
 #
 # $Log: config.pl,v $
+# Revision 1.2  2012/11/05 15:31:43  gildea
+# bump version
+#
+# Revision 1.1  2012/11/05 15:20:36  gildea
+# Initial revision
+#
 # Revision 1.49  2002/09/27 09:26:56  RRM
 #  --  increased version number to  2002-2-1  (from 2002-2)
 #      else automatic package software complains about checksum mismatch
@@ -439,9 +445,9 @@ use L2hos;
 use vars qw(%prefs %cfg %newcfg);
 
 # This is the central place to modify the release name!!!
-my $RELEASE = '2008';
+my $RELEASE = '2012';
 # This one is automatically updated by CVS
-my ($VERSION) = q$Revision: 1.49 $ =~ /:\s*(\S*)/;
+my ($VERSION) = q$Revision: 1.2 $ =~ /:\s*(\S*)/;
 
 # --------------------------------------------------------------------------
 # Open log

@@ -1,6 +1,6 @@
 #- -*- perl -*-
 #
-# $Id: latex2html.pin,v 1.71 2004/01/06 23:49:54 RRM Exp $
+# $Id: latex2html.pin,v 1.2 2012/11/05 15:33:02 gildea Exp $
 #
 # Comprises patches and revisions by various authors:
 #   See Changes, the log file of LaTeX2HTML.
@@ -108,7 +108,7 @@ use L2hos; # Operating system dependent routines
 # $^W = 1; # turn on warnings
 
 my $RELEASE = '@distver@';
-my ($REVISION) = q$Revision: 1.71 $ =~ /:\s*(\S+)/;
+my ($REVISION) = q$Revision: 1.2 $ =~ /:\s*(\S+)/;
 
 # The key, which delimts expressions defined in the environment
 # depends on the operating system. 
@@ -532,7 +532,7 @@ $CHARSET = $charset || 'iso-8859-1';
 #
 # If possible, use icons of the same type as generated images
 #
-if ($IMAGE_TYPE && defined %{"icons_$IMAGE_TYPE"}) {
+if ($IMAGE_TYPE && %{"icons_$IMAGE_TYPE"}) {
     %icons = %{"icons_$IMAGE_TYPE"};
 }
 
@@ -2112,7 +2112,7 @@ sub convert_iso_latin_chars {
 		"\nCould not find translation function for $default_language.\n\n")
 	    }
 	);
-	if ($USE_UTF ||(!$NO_UTF &&(defined %unicode_table)&&length(%unicode_table)>2)) {
+	if ($USE_UTF ||(!$NO_UTF &&(%unicode_table)&&length(%unicode_table)>2)) {
 	    &convert_to_unicode($_)};
     }
     $_ = join('', @case_processed, $_); undef(@case_processed);
@@ -9117,7 +9117,7 @@ sub real_replace_strange_accents {
     my ($charset) = "${CHARSET}_character_map_inv";
     $charset =~ s/-/_/g;
     # convert upper 8-bit characters
-    if (defined %$charset &&($CHARSET =~ /8859[_\-]1$/)) {
+    if (%$charset &&($CHARSET =~ /8859[_\-]1$/)) {
 	s/([\200-\377])/
 	    $tmp = $$charset{'&#'.ord($1).';'};
 	    &mark_string($tmp) if ($tmp =~ m!\{!);
@@ -10618,19 +10618,19 @@ sub do_rightquotes { (($HTML_VERSION < 5)? '&#8221;' : ';SPMrdquo;') }
 sub do_cmd_parbox {
     local($_) = @_;
     local($args, $contents, $dum, $pat);
-    $* = 1;			# Multiline matching ON
+    #$* = 1;			# Multiline matching ON
     ($dum,$pat) = &get_next_optional_argument; # discard this
     ($dum,$pat) = &get_next_optional_argument; # discard this
     ($dum,$pat) = &get_next_optional_argument; # discard this
     $args .= $pat if ($pat);
     $pat = &missing_braces unless (
-	(s/$next_pair_pr_rx/$pat=$2;''/eo)
-	||(s/$next_pair_rx/$pat=$2;''/eo));
+	(s/$next_pair_pr_rx/$pat=$2;''/eom)
+	||(s/$next_pair_rx/$pat=$2;''/eom));
     $args .= "{".$`.$pat."}";
     $contents = &missing_braces unless (
-	(s/$next_pair_pr_rx/$contents=$2;''/eo)
-	||(s/$next_pair_rx/$contents=$2;''/eo));
-    $* = 0;			# Multiline matching OFF
+	(s/$next_pair_pr_rx/$contents=$2;''/eom)
+	||(s/$next_pair_rx/$contents=$2;''/eom));
+    #$* = 0;			# Multiline matching OFF
     $args .= "{".$`.$contents."}";
     if ($NO_PARBOX_IMAGES) {
 	$contents = join ('', &do_cmd_par(), $contents, '</P>' );
@@ -11445,10 +11445,10 @@ sub list_helper {
 #    $/ = $savedRS; 
 #
 
-    $* = 1;			# Multiline matching ON
-    if (($tag =~ /DL/)&&$labels) {
+    #$* = 1;			# Multiline matching ON
+    if (($tag =~ /DL/m)&&$labels) {
 	local($label,$aft,$br_id);
-	s/\\item\b[\s\r]*([^\[])/do {
+	s/\\item\b[\s\r]*([^\[])/mdo {
 		$label = $labels; $aft = $1;
 		$br_id = ++$global{'max_id'};
 		$label = &translate_environments(
@@ -11456,7 +11456,7 @@ sub list_helper {
 		join('',"\\item\[" , $label, "\]$aft" );
 	    }/eg;
     }
-    $* = 0;			# Multiline matching OFF
+    #$* = 0;			# Multiline matching OFF
 
     # This deals with \item[xxx] ...
     if ($tag =~ /DL/) {
@@ -13173,9 +13173,9 @@ sub wrap_raw_arg_cmds {
 	my $padding = ($after =~ /^[a-zA-Z]/s)? ($cmd =~ /\W$/ ? '':' '):'';
 
 	if ($raw_arg_cmds{$cmd} && defined &$wrapper) {
-            $* = 1;
+            # $* = 1;
 	    ($wrap, $_) = &$wrapper("\\$cmd$star", $padding . $after);
-            $* = 0;
+            # $* = 0;
 	    # ...but don't leave an unwanted space at the beginning
 	    $_ =~ s/^ //s if($padding && $wrap !~ /\w$/m
 	    	&& (length($_) == length($after)+1) );
