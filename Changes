@@ -113,6 +113,9 @@
 # the top.
 #
 #
+#--------- 2012/11
+#
+#		fix warnings in perl 5.14
 #--------- v2006.1 (compiled by jos) -----
 # UNOFFICIAL RELEASE 
 # (However, there seems to be no official release these days)
@@ -139,6 +142,7 @@
 #       official CVS repository for latex2html died a quiet death after v98.1, 
 #       and that the v2002-2-1 release, the latest I could find, is
 #       rrm's latest available release, which was maintained up through 2002.
+
 #
 #--------- v98.1 (compiled by jcl)
 #

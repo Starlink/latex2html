@@ -1,7 +1,7 @@
 #! /usr/local/bin/perl -w
 
 ###############################################################################
-# $Id: config.pl,v 1.49 2002/09/27 09:26:56 RRM Exp $
+# $Id: config.pl,v 1.2 2012/11/05 15:31:43 gildea Exp $
 #
 # config.pl
 #
@@ -24,6 +24,11 @@
 # Changes History
 #
 # $Log: config.pl,v $
+# Revision 1.2  2012/11/05 15:31:43  gildea
+# bump version
+#
+# Revision 1.1  2012/11/05 15:20:36  gildea
+# Initial revision
 # 2006/12/18 jos
 #  --  set version number to  2006.1  (from 2002-2-1)
 #      Initialized a new Subversion repository at CCRMA.
@@ -443,11 +448,9 @@ use L2hos;
 use vars qw(%prefs %cfg %newcfg);
 
 # This is the central place to modify the release name!!!
-my $RELEASE = '2009-1';
-#jos: my $RELEASE = '2002-2-1';
+my $RELEASE = '2012-Starlink';
 # This one is automatically updated by CVS
-my ($VERSION) = q$Revision: 1.49 $ =~ /:\s*(\S*)/;
-#jos: my ($VERSION) = q$Revision: 1.49 $ =~ /:\s*(\S*)/;
+my ($VERSION) = q$Revision: 1.2 $ =~ /:\s*(\S*)/;
 
 # --------------------------------------------------------------------------
 # Open log
